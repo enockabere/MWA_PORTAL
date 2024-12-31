@@ -1,0 +1,201 @@
+.order-card {
+    color: #fff;
+}
+
+.bg-c-blue {
+    background: linear-gradient(45deg,#4099ff,#73b4ff);
+}
+
+.bg-c-green {
+    background: linear-gradient(45deg,#2ed8b6,#59e0c5);
+}
+
+.bg-c-yellow {
+    background: linear-gradient(45deg,#FFB64D,#ffcb80);
+}
+
+.bg-c-pink {
+    background: linear-gradient(45deg,#FF5370,#ff869a);
+}
+
+
+.card .card-block {
+    padding: 25px;
+}
+
+.order-card i {
+    font-size: 26px;
+}
+
+.f-left {
+    float: left;
+}
+
+.f-right {
+    float: right;
+}
+
+
+  
+  .card-block {
+    transition: opacity 0.5s ease;
+  }
+  
+  /* Optional: Apply a fade-in effect for new data */
+  .card-enter {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  
+  .card-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  
+  .card-exit {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  .card-exit-active {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  
+
+  
+  /* Leave Card Styles */
+  .card {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  
+  /* Adding new color classes for card backgrounds */
+  .leave-card-green {
+    background-color: #0b5345; /* Green background for Annual Leave */
+  }
+  
+  .leave-card-yellow {
+    background-color: #2471a3; /* Yellow background for Sick Leave */
+  }
+  
+  .leave-card-pink {
+    background-color: #6495ED; /* Pink background for Maternity Leave */
+  }
+  
+  .leave-card-blue {
+    background-color: #566573; /* Blue background for Paternity Leave */
+  }
+  /* Add more colors for new leave types */
+.leave-card-black {
+    background-color: black;
+  }
+  
+  .leave-card-green-dark {
+    background-color: #2b5f60; /* Dark green */
+  }
+  
+  .leave-card-purple {
+    background-color: purple;
+  }
+  
+  .leave-card-orange {
+    background-color: orange;
+  }
+  
+  /* Leave Card Block */
+  .card-block {
+    padding: 20px;
+    text-align: left;
+  }
+  
+
+  
+  /* Card Title */
+  .m-b-20 {
+    margin-bottom: 20px;
+  }
+  
+  .leave-card-title {
+    font-weight: bold;
+  }
+  
+  /* Leave Card Balance */
+  .text-right {
+    text-align: right;
+  }
+  
+  .leave-card-balance {
+    font-size: 36px;
+    font-weight: bold;
+  }
+  
+  /* Leave Card Info */
+  .m-b-0 {
+    margin-bottom: 0;
+  }
+  
+  .leave-card-info {
+    font-size: 11px;
+    font-weight: normal;
+  }
+  
+  /* Hover effect for leave cards */
+  .leave-card:hover {
+    transform: translateY(-10px);
+  }
+  
+  /* Fade In Transition for new data */
+  .leave-card-enter {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  
+  .leave-card-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  
+  .leave-card-exit {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  .leave-card-exit-active {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  /* CSS for the fade transition */
+.fade-enter {
+  opacity: 0;
+}
+
+.fade-enter-active {
+  opacity: 1;
+  transition: opacity 500ms;
+}
+
+.fade-exit {
+  opacity: 1;
+}
+
+.fade-exit-active {
+  opacity: 0;
+  transition: opacity 500ms;
+}
+.card-loading{
+    margin-top: 3rem !important;
+}
+/* Add a class for icon hover effect */
+.icon-hover {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  
+  .icon-hover:hover {
+    transform: scale(1.2); /* Scale up the icon on hover */
+    opacity: 0.8; /* Fade the icon a little */
+  }
+  

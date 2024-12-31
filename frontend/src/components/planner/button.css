@@ -1,0 +1,43 @@
+.floating-button {
+    position: fixed;
+    bottom: 350px;
+    right: 20px;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    padding: 15px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+  
+  .floating-button:hover {
+    background-color: #0056b3;
+  }
+  
+ /* Shake Animation */
+@keyframes shake {
+    0%, 100% {
+      transform: translateX(0);
+    }
+    20% {
+      transform: translateX(-8px);
+    }
+    40% {
+      transform: translateX(8px);
+    }
+    60% {
+      transform: translateX(-8px);
+    }
+    80% {
+      transform: translateX(8px);
+    }
+  }
+  
+  /* Extend animation duration to 1.5 seconds */
+  .shake-animation {
+    animation: shake 1.5s ease-in-out; /* Increased from 0.5s to 1.5s */
+  }
+  

@@ -1,0 +1,41 @@
+/* General calendar customization */
+.react-calendar {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    width: 900px !important;
+  }
+  
+  .react-calendar__tile--active {
+    background: #007bff;
+    color: white;
+  }
+  
+  /* Highlight weekends */
+  .weekend-day {
+    background-color: gray !important; /* Light red for weekends */
+    color: white !important;
+  }
+  
+  /* Highlight leave days */
+  .leave-day {
+    background-color: #ffc107 !important; /* Yellow for leave days */
+    color: white !important;
+  }
+  
+  /* Highlight public holidays */
+  .holiday {
+    background-color: #dc3545 !important; /* Red for holidays */
+    color: white !important;
+  }
+  
+  /* Timesheet entries */
+  .timesheet-entries {
+    margin-top: 5px;
+    font-size: 0.8em;
+    color: #007bff;
+  }
+  
+  .timesheet-entries .entry {
+    display: block;
+  }
+  

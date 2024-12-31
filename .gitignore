@@ -1,0 +1,9 @@
+venv/
+.env
+.vs/
+.env.sample
+node_modules/
+staticfiles/
+dist/
+aad.config.json
+env.sample

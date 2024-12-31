@@ -1,0 +1,59 @@
+.navigation-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 20px;
+
+  .nav-button {
+    border-radius: 50px;
+    padding: 12px 25px;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+    border: 2px solid #e2e8f0;
+    box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+
+    &:hover {
+      background-color: #f1f5f9;
+      box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .nav-icon {
+      margin-right: 10px;
+    }
+
+    &.desk {
+      border-color: #0f172a;
+      color: #0f172a;
+    }
+
+    &.room {
+      border-color: #0f172a;
+      color: #0f172a;
+    }
+
+    &.parking {
+      border-color: #38bdf8;
+      color: #38bdf8;
+    }
+
+    &.locker {
+      border-color: #7c3aed;
+      color: #7c3aed;
+    }
+
+    &.focus {
+      border-color: #22c55e;
+      color: #22c55e;
+    }
+
+    &.analytics {
+      border-color: #7c3aed;
+      color: #7c3aed;
+    }
+  }
+}

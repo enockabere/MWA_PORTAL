@@ -1,0 +1,52 @@
+.file-sidebar .pricing-plan {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .file-sidebar h6,
+  .file-sidebar p {
+    text-align: center;
+  }
+  
+  .file-sidebar form {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .file-sidebar .download-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    padding: 10px 20px;
+  }
+  
+  .file-sidebar .download-btn:hover {
+    transform: scale(1.1); /* Scale up on hover */
+  }
+  
+  .file-sidebar .download-btn:focus {
+    outline: none;
+  }
+  
+  .file-sidebar .download-btn i {
+    transition: transform 0.3s ease;
+  }
+  
+  .file-sidebar .download-btn:hover i {
+    transform: rotate(360deg); /* Rotate icon on hover */
+  }
+  
+  .custom-scrollbar {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  
+  .text-center {
+    text-align: center !important;
+  }
+  
