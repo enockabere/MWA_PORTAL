@@ -11,7 +11,7 @@ import { useLocation } from "react-router-dom";
 function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false); // State for button loading
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(""); // State for validation error
   const { setLoggedIn } = useDashboard(); // Use setLoggedIn to update login state
   const navigate = useNavigate();
@@ -52,12 +52,13 @@ function LoginForm() {
       if (response.ok) {
         const data = await response.json();
         setLoggedIn(true); // Update context login state
+        toast(data.message);
         navigate(data.redirect_url, { state: { showWelcomeToast: true } });
       } else {
-        setError("Invalid email or password.");
+        toast.error("Invalid email or password.");
       }
     } catch (error) {
-      setError("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.");
     } finally {
       setIsSubmitting(false); // Reset submitting state
     }
@@ -144,7 +145,7 @@ function LoginForm() {
                     </button>
                   </div>
                 </div>
-                <h6 className="text-muted mt-4 or">Or Sign in with</h6>
+                {/* <h6 className="text-muted mt-4 or">Or Sign in with</h6>
                 <div className="social mt-4">
                   <div className="btn-showcase">
                     <a className="btn btn-light" href="#" target="_blank">
@@ -152,7 +153,7 @@ function LoginForm() {
                       Microsoft 365 Office
                     </a>
                   </div>
-                </div>
+                </div> */}
                 {error && (
                   <div className="text-danger text-center mt-3">{error}</div>
                 )}

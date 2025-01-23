@@ -43,6 +43,7 @@ class Login_View(UserObjectMixins,View):
                             "soap_headers", soap_headers
                         )
         url = f"/QyUserSetup?$filter=EMail%20eq%20%27{email}%27"
+        employee_email = email
         async with aiohttp.ClientSession() as session:
                 task_get_user_setup = asyncio.ensure_future(
                     self.fetch_data(
@@ -82,6 +83,7 @@ class Login_View(UserObjectMixins,View):
                         await sync_to_async(request.session.__setitem__)(
                                 "E_Mail", data["EMail"]
                             )
+                        employee_email = data["EMail"]
                         if data["PhoneNo"] == None or data["PhoneNo"] == "":
                             await sync_to_async(request.session.__setitem__)(
                                 "PhoneNo", "None"
@@ -233,27 +235,49 @@ class Login_View(UserObjectMixins,View):
                                 request.session["Job_Title"] = data["Job_Title"]
                             default_password = 'Z0FBQUFBQm5Fa1RnYzhPbS1fM1hIVzNlUzVrcVBaRUFsVC1LS2lzLVNUUFV3MmdBalFweHJqMmp3X2pZdnlETm14ZUp2UGlZdFJvdUNHMUkwMHpJNnZMTzN3ck9WclcyYUE9PQ=='
                             decrypted = self.pass_decrypt(default_password)
-                            if decrypted == password:
-                                return JsonResponse({'redirect_url': '/selfservice/forgot-password/'})
-                            else:
+                            print("decrypted :", decrypted)
+                            user_password = self.pass_decrypt(data['Password'])
+                            if password == user_password and password == decrypted:
                                 return JsonResponse({'redirect_url': '/selfservice/dashboard/'})
+                                # generate_otp = self.generate_otp(4)
+                                # request.session['reset_password_otp'] = generate_otp
+                                # email_message = f"Hi {full_name}, We have sent you an email with an OTP to reset your password for the MWA Employee Self-Service Portal. Please check your email and follow the instructions to complete the reset process."
+                                # email_body = f"</br>Here is your One-Time Password (OTP): <b> {generate_otp}</b></br> Please enter this OTP on the portal to complete the password reset process. This OTP is valid for 15 minutes.</br></br> If you did not make this request, please ignore this email or contact us immediately for assistance.</br></br>"
+                                # try:
+                                #     payload = {"full_name": full_name,
+                                #                "employee_email":employee_email,
+                                #                "subject": "OTP for Password Reset",
+                                #                "email_body": email_body}
+                                #     print ("payload :", payload)
+                                #     send_otp = self.make_soap_request(
+                                #         soap_headers,
+                                #         "FnSendMail",
+                                #         full_name,
+                                #         employee_email,
+                                #         "OTP for Password Reset",
+                                #         email_body
+                                #     )
+                                #     if send_otp == True:
+                                #         return JsonResponse({'redirect_url': '/selfservice/otp/', 'message':email_message})
+                                #     else:
+                                #         return JsonResponse({'redirect_url': '/selfservice/'})
+                                # except Exception as e:
+                                #     print("send-otp-response:", str(e))
+                            elif password == user_password and password != decrypted :
+                                return JsonResponse({'redirect_url': '/selfservice/dashboard/'})
+                            else:
+                                return JsonResponse({'error': "Authentication Error: Invalid credentials"}, status=400)
                         return JsonResponse({'error': "Employee number not recognized"}, status=400)
                     return JsonResponse({'error': "User ID not recognized"}, status=400)
                 return JsonResponse({'error': "Authentication Error: Invalid credentials"}, status=400)
 
-
-        
-
 def send_otps(request):
     if request.method == 'GET':
-        # Extract the email from the query parameters (GET request)
-        email = request.GET.get('email')  # Get email from the URL query parameter
-        
+        email = request.GET.get('email') 
         if email:
             return JsonResponse({'status': 'OTP sent'})
         else:
             return JsonResponse({'error': 'Email not provided'}, status=400)
-    
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=405)
 
@@ -1742,4 +1766,41 @@ class LeaveDashboard(UserObjectMixins, View):
                 }
             return JsonResponse(ctx, safe=False)
         except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)}, status=500)
+        
+class fetch_leave_days(UserObjectMixins, View):
+    async def get(self, request):
+        try:
+            UserId = await sync_to_async(request.session.__getitem__)("User_ID")
+            current_year = datetime.datetime.now().year  # Get the current year
+            filtered_leave_data = []
+            print("request::", True)
+            print("UserId::", UserId)
+            print("current_year::", current_year)
+            async with aiohttp.ClientSession() as session:
+                task_get_leave = asyncio.ensure_future(
+                    self.simple_one_filtered_data(
+                        session,
+                        "/QyLeaveApplications",
+                        "User_ID",
+                        "eq",
+                        UserId,
+                    )
+                )
+                response = await asyncio.gather(
+                    task_get_leave,
+                )
+                for leave in response[0]:
+                    if (
+                        leave['Status'] == 'Released' and
+                        leave['Leave_Period'] == str(current_year)
+                    ):
+                        filtered_leave_data.append({
+                            "Start_Date": leave["Start_Date"],
+                            "End_Date": leave["End_Date"],
+                        })
+            return JsonResponse(filtered_leave_data, safe=False)
+
+        except Exception as e:
+            print("error::", e)
             return JsonResponse({"success": False, "error": str(e)}, status=500)

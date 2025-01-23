@@ -103,6 +103,8 @@ urlpatterns = [
         views.FnGetAnnualLeaveDashboard.as_view(),
         name="FnGetAnnualLeaveDashboard",
     ),
+
+    path("fetch-leave-days/", views.fetch_leave_days.as_view(), name="fetch_leave_days"),
         
     re_path(r"^(?!api/).*$", TemplateView.as_view(template_name="index.html")),
     re_path(r'^selfservice/.*$', TemplateView.as_view(template_name='index.html')),

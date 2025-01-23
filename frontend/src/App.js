@@ -20,6 +20,7 @@ import DPTBalances from "./components/leave/DPTBalances";
 import LeaveDashboard from "./components/leave/LeaveDashboard";
 import Logout from "./components/Layout/Logout";
 import Timesheet from "./components/timesheet/Timesheet";
+import ResendOtpForm from "./components/auth/ResendOtpForm";
 
 const App = () => {
   return (
@@ -34,6 +35,7 @@ const App = () => {
             path="/selfservice/forgot-password"
             element={<ForgetPassword />}
           />
+          <Route path="/selfservice/otp" element={<ResendOtpForm />} />
           <Route path="/selfservice/logout" element={<Logout />} />
 
           {/* Protected routes under /selfservice/dashboard */}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Breadcrumb from "../Layout/Breadcrumb";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -8,29 +8,75 @@ import ProjectSummary from "./ProjectSummary";
 import TimesheetProgress from "./TimesheetProgress";
 
 const Timesheet = () => {
-  const [entries, setEntries] = useState({
-    "2024-12-02": [
-      { task: "Team Meeting", hours: 2 },
-      { task: "Code Review", hours: 6 },
-    ],
-    "2024-12-04": [{ task: "Bug Fixing", hours: 7 }],
-    "2024-12-12": [{ task: "Leave Day", hours: 8 }],
-    "2024-12-20": [{ task: "Leave Day", hours: 8 }],
-    "2024-12-25": [{ task: "Public Holiday", hours: 8 }],
-    "2024-12-26": [{ task: "Public Holiday", hours: 8 }],
-    "2024-12-31": [{ task: "Public Holiday", hours: 8 }],
-  });
+  const [entries, setEntries] = useState({});
+  const [leaveDays, setLeaveDays] = useState([]);
+  const [region, setRegion] = useState("Nairobi");
+  const publicHolidays = ["2024-12-25", "2024-12-26", "2024-12-31"]; // Public holidays
+  const [monthInitiated, setMonthInitiated] = useState(null);
 
-  const [monthInitiated, setMonthInitiated] = useState(false); // Track whether the timesheet is initiated
-  const [region, setRegion] = useState("Nairobi"); // Default region is Nairobi
+  useEffect(() => {
+    const fetchLeaveDays = async () => {
+      try {
+        const response = await fetch("/selfservice/fetch-leave-days/");
+        console.log("Response status:", response.status);
+        console.log("Response headers:", response.headers);
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new Error(
+            "Expected JSON response but received: " + contentType
+          );
+        }
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Leave days data:", data);
+          setLeaveDays(data);
+        } else {
+          console.error("Failed to fetch leave days, status:", response.status);
+        }
+      } catch (error) {
+        console.error("Error fetching leave days:", error);
+      }
+    };
 
-  const leaveDays = ["2024-12-12", "2024-12-20"]; // Employee's leave dates
+    fetchLeaveDays();
+  }, []);
 
-  const publicHolidays = [
-    "2024-12-25", // Christmas
-    "2024-12-26", // Boxing Day
-    "2024-12-31", // New Year's Eve
-  ]; // Public holidays
+  useEffect(() => {
+    if (leaveDays.length > 0) {
+      const updatedEntries = { ...entries };
+
+      leaveDays.forEach(({ start_date, end_date }) => {
+        let currentDate = new Date(start_date);
+        const endDate = new Date(end_date);
+
+        while (currentDate <= endDate) {
+          const day = currentDate.toISOString().split("T")[0];
+          const isWeekend =
+            currentDate.getDay() === 0 || currentDate.getDay() === 6;
+          const isPublicHoliday = publicHolidays.includes(day);
+
+          if (!isWeekend && !isPublicHoliday) {
+            const hours =
+              region === "Nairobi"
+                ? currentDate.getDay() === 5
+                  ? 5 // Friday in Nairobi
+                  : 8.5 // Weekday in Nairobi
+                : 8; // Weekday in other regions
+
+            if (!updatedEntries[day]) {
+              updatedEntries[day] = [];
+            }
+
+            updatedEntries[day].push({ task: "Leave Day", hours });
+          }
+
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+      });
+
+      setEntries(updatedEntries);
+    }
+  }, [leaveDays, region]);
 
   return (
     <div>
@@ -46,7 +92,7 @@ const Timesheet = () => {
               <div className="card-body">
                 <TimesheetCalendar
                   entries={entries}
-                  leaveDays={leaveDays}
+                  leaveDays={leaveDays.map((ld) => ld.start_date)}
                   publicHolidays={publicHolidays}
                   region={region} // Pass region to calendar
                   style={{

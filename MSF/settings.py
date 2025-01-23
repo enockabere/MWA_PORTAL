@@ -16,7 +16,7 @@ ERROR_TEMPLATE = "auth/{}.html"
 
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
-ALLOWED_HOSTS = [".localhost", ".127.0.0.1", ".20.83.145.159", ".appdev.msf.or.ke"]
+ALLOWED_HOSTS = [".localhost", ".127.0.0.1", ".52.188.196.134", ".appdev.msf.or.ke"]
 
 
 INSTALLED_APPS = [
@@ -143,8 +143,8 @@ WEB_SERVICE_UID= config ("WEB_SERVICE_UID")
 WEB_SERVICE_PWD= config("WEB_SERVICE_PWD")
 
 
-O_DATA = "http://20.83.145.159:7048/BC250/ODataV4/Company('MWA'){}"
-BASE_URL = 'http://20.83.145.159:7047/BC250/WS/MWA/Codeunit/CuSelfService'
+O_DATA = "http://52.188.196.134:7048/BC250/ODataV4/Company('MWA'){}"
+BASE_URL = 'http://52.188.196.134:7047/BC250/WS/MWA/Codeunit/CuSelfService'
 
 AZURE_AD_CLIENT_ID = config("AZURE_AD_CLIENT_ID")
 AZURE_AD_CLIENT_SECRET = config("AZURE_AD_CLIENT_SECRET")

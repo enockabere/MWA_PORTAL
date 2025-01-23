@@ -1,3 +1,4 @@
+import random
 from django.shortcuts import render
 import requests
 from django.conf import settings as config
@@ -110,6 +111,12 @@ class UserObjectMixins(object):
             client = Client(config.BASE_URL, transport=Transport(session=session))
             response = executor.submit(client.service[endpoint], *params).result()
         return response
+    
+    def generate_otp(self,num_digits):
+        if num_digits <= 0:
+            raise ValueError("The number of digits must be a positive integer.")
+        otp = ''.join(str(random.randint(0, 9)) for _ in range(num_digits))
+        return otp
 
     def upload_attachment(self, soap_headers, *params):
         global session
