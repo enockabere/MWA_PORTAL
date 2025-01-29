@@ -98,6 +98,25 @@ const Plans = () => {
     fetchPlans();
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A"; // Handle empty or null dates
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const suffix =
+      day % 10 === 1 && day !== 11
+        ? "st"
+        : day % 10 === 2 && day !== 12
+        ? "nd"
+        : day % 10 === 3 && day !== 13
+        ? "rd"
+        : "th";
+    const options = { month: "long", year: "numeric" };
+    const formattedDate = new Intl.DateTimeFormat("en-US", options).format(
+      date
+    );
+    return `${day}${suffix} ${formattedDate}`;
+  };
+
   return (
     <div>
       <Breadcrumb pageTitle="My Leave Plans" breadcrumb="Leave Plans" />
@@ -183,7 +202,7 @@ const Plans = () => {
                       {currentItems.map((item) => (
                         <tr key={item.No_}>
                           <td>{item.Employee_Name}</td>
-                          <td>{item.Date}</td>
+                          <td>{formatDate(item.Date)}</td>
                           <td>{item.Leave_Period}</td>
                           <td>{item.Days_Planned}</td>
                           <td>{item.Submitted ? "Submitted" : "Open"}</td>
@@ -213,7 +232,7 @@ const Plans = () => {
                               alt="team-member"
                             />
                             <div className="flex-grow-1">
-                              <p className="mb-0">{item.Date}</p>
+                              <p className="mb-0">{formatDate(item.Date)}</p>
                             </div>
                           </div>
                           <div className="row details">

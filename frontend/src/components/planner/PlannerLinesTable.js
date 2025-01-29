@@ -1,115 +1,120 @@
-import React, { useEffect } from "react";
-import $ from "jquery"; // Ensure jQuery is imported
-import "datatables.net"; // Ensure DataTables is imported
-import "datatables.net-dt/css/dataTables.dataTables.min.css"; // DataTables CSS
+import React, { useState } from "react";
+import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrashAlt } from "@fortawesome/free-solid-svg-icons"; // Import the trash icon
-import "./table.css"; // Import the table CSS file
+import { faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+import { Modal } from "react-bootstrap";
+import { toast } from "react-toastify";
 
-const PlannerLinesTable = ({ data }) => {
-  const columns = [
-    { name: "Leave_Period", label: "Leave Period" },
-    { name: "Start_Date", label: "Start Date" },
-    { name: "End_Date", label: "End Date" },
-    { name: "Days_Planned", label: "Days Planned" },
-    { name: "action", label: "Action" },
-  ];
+const PlannerLinesTable = ({ data, onFetchSamples }) => {
+  const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const csrfToken = document
+    .querySelector('meta[name="csrf-token"]')
+    .getAttribute("content");
 
-  const handleDeleteClick = (id) => {};
-
-  const handleDownload = () => {
-    const table = document.getElementById("datatable");
-    let csv = [];
-    const rows = table.querySelectorAll("tr");
-
-    rows.forEach((row) => {
-      const cells = row.querySelectorAll("td, th");
-      let rowData = [];
-      cells.forEach((cell) => {
-        rowData.push(cell.innerText);
-      });
-      csv.push(rowData.join(","));
-    });
-
-    const csvString = csv.join("\n");
-    const blob = new Blob([csvString], { type: "text/csv" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "planner_lines.csv";
-    link.click();
+  const handleDeleteClick = (plan) => {
+    console.log("Data:", data); // Log the entire data object
+    console.log("Document_No:", plan.DocumentNo, "Line_No:", plan.LineNo); // Use the correct property names
+    setSelectedPlan(plan);
+    setShowModal(true);
   };
 
-  const handlePrint = () => {
-    const table = document.getElementById("datatable");
-    const printWindow = window.open("", "_blank");
-    printWindow.document.write("<html><head><title>Print Table</title>");
-    printWindow.document.write(
-      "<style>table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid #ddd; padding: 8px; text-align: left; } </style>"
-    );
-    printWindow.document.write("</head><body>");
-    printWindow.document.write(table.outerHTML);
-    printWindow.document.write("</body></html>");
-    printWindow.document.close();
-    printWindow.print();
-  };
+  const handleDeleteConfirm = async () => {
+    setLoading(true);
+    try {
+      // Use the DocumentNo and LineNo from the selectedPlan object
+      const { DocumentNo, LineNo } = selectedPlan;
 
-  // Initialize DataTable on component mount
-  useEffect(() => {
-    const $table = $("#datatable");
-    if ($table.length) {
-      // Initialize DataTable here
-      $table.DataTable({
-        responsive: true, // Make the table responsive
-      });
-
-      // Cleanup DataTable on component unmount
-      return () => {
-        if ($table.length) {
-          $table.DataTable().destroy(true); // Destroy DataTable on cleanup
+      // Pass the correct data in the POST request
+      await axios.post(
+        `/selfservice/FnLeavePlannerLine/${DocumentNo}/`,
+        {
+          lineNo: LineNo,
+          MyAction: "delete",
+          startDate: "2025-01-01T00:00:00.000Z",
+          endDate: "2025-01-01T00:00:00.000Z",
+        },
+        {
+          headers: {
+            "X-CSRFToken": csrfToken,
+            "Content-Type": "application/json",
+          },
         }
-      };
+      );
+
+      // Close the modal and fetch the updated data
+      setShowModal(false);
+      onFetchSamples(); // Use DocumentNo to fetch samples after deletion
+      toast.success("Plan deleted successfully!");
+    } catch (error) {
+      toast.error(
+        "Error deleting plan: " +
+          (error.response?.data?.error || "Unknown error")
+      );
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  };
 
   return (
-    <div className="p-3">
-      <table id="datatable" className="display responsive">
-        <thead>
+    <div className="card p-3">
+      <h4 className="my-3">Leave Planner Lines</h4>
+      <table className="table table-striped table-bordered">
+        <thead className="thead-dark">
           <tr>
-            {columns.map((column) => (
-              <th key={column.name}>{column.label}</th>
-            ))}
+            <th>Leave Period</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Days Planned</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
           {data.map((row, index) => (
             <tr key={index}>
-              {columns.map((column) => (
-                <td key={column.name}>
-                  {column.name === "action" ? (
-                    <button
-                      onClick={() => handleDeleteClick(row.Leave_Period)}
-                      className="delete-button"
-                    >
-                      <FontAwesomeIcon icon={faTrashAlt} />
-                    </button>
-                  ) : (
-                    row[column.name]
-                  )}
-                </td>
-              ))}
+              <td>{row.Leave_Period}</td>
+              <td>{row.Start_Date}</td>
+              <td>{row.End_Date}</td>
+              <td>{row.Days_Planned}</td>
+              <td>
+                <FontAwesomeIcon
+                  icon={faTrashAlt}
+                  className="text-danger cursor-pointer"
+                  onClick={() => handleDeleteClick(row)}
+                  style={{ cursor: "pointer" }}
+                />
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
-      {/* <div className="table-controls">
-        <button onClick={handleDownload} className="btn btn-secondary">
-          Download CSV
-        </button>
-        <button onClick={handlePrint} className="btn btn-primary">
-          Print
-        </button>
-      </div> */}
+
+      <Modal show={showModal} onHide={() => setShowModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Deletion</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Are you sure you want to delete this plan?</Modal.Body>
+        <Modal.Footer>
+          <button
+            className="btn btn-secondary"
+            onClick={() => setShowModal(false)}
+          >
+            Cancel
+          </button>
+          <button
+            className="btn btn-danger"
+            onClick={handleDeleteConfirm}
+            disabled={loading}
+          >
+            {loading ? (
+              <div className="spinner-border text-light" role="status"></div>
+            ) : (
+              "Delete"
+            )}
+          </button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };
