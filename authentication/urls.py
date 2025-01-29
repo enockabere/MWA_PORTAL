@@ -98,7 +98,8 @@ urlpatterns = [
     path("LeaveBalances/", views.LeaveBalances.as_view(), name="LeaveBalances"),
     path("DashboardReports/", views.DashboardReports.as_view(), name="DashboardReports"),
     path("LeaveDashboard/", views.LeaveDashboard.as_view(), name="LeaveDashboard"),
-     path(
+    path("all-leave-balance/", views.AllLeaveBalances.as_view(), name="AllLeaveBalances"),
+    path(
         "FnGetAnnualLeaveDashboard/",
         views.FnGetAnnualLeaveDashboard.as_view(),
         name="FnGetAnnualLeaveDashboard",

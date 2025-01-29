@@ -4,57 +4,59 @@ import { useSpring, animated } from "react-spring";
 import "./balances.css";
 
 const LeaveBalances = () => {
-  const [leaveData, setLeaveData] = useState([]); // Leave data state
-  const [loading, setLoading] = useState(true); // Loading spinner state
-  const [isRefreshing, setIsRefreshing] = useState(false); // For data refresh indicator
+  const [leaveData, setLeaveData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    const fetchLeaveData = () => {
-      setIsRefreshing(true);
+    const fetchLeaveData = async () => {
+      if (leaveData.length > 5) {
+        setIsRefreshing(true);
+      }
 
-      // Simulate fetching data (replace with your actual API call)
-      const leaveTypes = [
-        "Annual Leave",
-        "Sick Leave",
-        "Maternity Leave",
-        "Paternity Leave",
-      ];
-      const newData = Array.from({ length: 4 }, (_, index) => ({
-        type: leaveTypes[Math.floor(Math.random() * leaveTypes.length)],
-        balance: Math.floor(Math.random() * 10) + 1,
-        totalTaken: Math.floor(Math.random() * 20),
-        icon: "fa-calendar", // Use calendar icon for all
-        color: [
-          "leave-card-green",
-          "leave-card-yellow",
-          "leave-card-pink",
-          "leave-card-blue",
-        ][index],
-      }));
+      try {
+        const response = await fetch("/selfservice/all-leave-balance/");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-      // Add the black card data to the array (same as other leave types)
-      newData.push({
-        type: leaveTypes[Math.floor(Math.random() * leaveTypes.length)], // Dynamic leave type
-        balance: Math.floor(Math.random() * 10) + 1,
-        totalTaken: Math.floor(Math.random() * 20),
-        icon: "fa-calendar", // Calendar icon for consistency
-        color: "bg-dark text-white", // Style for the black card
-      });
+        const data = await response.json();
+        const parsedData = typeof data === "string" ? JSON.parse(data) : data;
+        const leaveTypes = Object.keys(parsedData);
+        const leaveBalances = Object.values(parsedData);
+
+        const newData = leaveTypes.map((type, index) => ({
+          type,
+          balance: leaveBalances[index],
+          icon: "fa-calendar",
+          color: [
+            "leave-card-green",
+            "leave-card-yellow",
+            "leave-card-pink",
+            "leave-card-blue",
+          ][index % 4],
+        }));
+
+        setLeaveData(newData);
+      } catch (error) {
+        console.error("Failed to fetch leave data:", error);
+      }
 
       setTimeout(() => {
-        setLeaveData(newData); // Update leave data
-        setLoading(false); // Stop initial loading spinner
-        setIsRefreshing(false); // Stop refreshing indicator
-      }, 1500); // Simulate delay for data fetching
+        setLoading(false);
+        setIsRefreshing(false);
+      }, 1500);
     };
 
     fetchLeaveData();
 
-    // Periodically refresh data
-    const interval = setInterval(fetchLeaveData, 8000);
+    const interval =
+      leaveData.length > 5 ? setInterval(fetchLeaveData, 8000) : null;
 
-    return () => clearInterval(interval); // Clean up on unmount
-  }, []);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [leaveData]);
 
   const iconAnimation = useSpring({
     transform: isRefreshing ? "scale(1)" : "scale(1.2)",
@@ -64,7 +66,6 @@ const LeaveBalances = () => {
 
   return (
     <div className="leave-balances">
-      {/* Loader */}
       {loading && (
         <div className="loader-container card-loading d-flex justify-content-center align-items-center">
           <Bars color="#00BFFF" height={80} width={80} />
@@ -73,9 +74,8 @@ const LeaveBalances = () => {
 
       {!loading && (
         <>
-          {/* First row: 3 cards */}
           <div className="row gy-2 mb-2 gx-2">
-            {leaveData.slice(0, 3).map((leave, index) => (
+            {leaveData.slice(0, 5).map((leave, index) => (
               <div key={index} className="col-md-4">
                 <div
                   className={`card ${leave.color} h-100 order-card leave-card`}
@@ -84,84 +84,26 @@ const LeaveBalances = () => {
                     <h6 className="m-b-20 text-white leave-card-title">
                       {leave.type} Balance
                     </h6>
-                    <h2 className="text-right leave-card-balance text-white">
+                    <h2
+                      className="text-right leave-card-balance text-white"
+                      style={{ fontSize: "1.5rem" }} // Reduced font size
+                    >
                       <animated.i
                         className={`fa ${leave.icon} f-left text-white`}
                         style={iconAnimation}
                       />
                       <span className="text-white">{leave.balance}</span>
                     </h2>
-                    <p className="m-b-0 text-white leave-card-info">
-                      Total Taken
-                      <span className="f-right text-white">{`${leave.totalTaken} days`}</span>
-                    </p>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-
-          {/* Second row: 1 card + 1 black card + loader */}
-          <div className="row gy-2 mb-2 gx-2">
-            {leaveData.slice(3, 4).map((leave, index) => (
-              <div key={index} className="col-md-4">
-                <div
-                  className={`card ${leave.color} h-100 order-card leave-card`}
-                >
-                  <div className="card-block leave-card-block">
-                    <h6 className="m-b-20 text-white leave-card-title">
-                      {leave.type} Balance
-                    </h6>
-                    <h2 className="text-right leave-card-balance text-white">
-                      <animated.i
-                        className={`fa ${leave.icon} f-left text-white`}
-                        style={iconAnimation}
-                      />
-                      <span className="text-white">{leave.balance}</span>
-                    </h2>
-                    <p className="m-b-0 text-white leave-card-info">
-                      Total Taken
-                      <span className="f-right text-white">{`${leave.totalTaken} days`}</span>
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            {/* Black card */}
-            <div className="col-md-4">
-              <div className="card bg-dark text-white h-100 order-card leave-card">
-                <div className="card-block leave-card-block">
-                  <h6 className="m-b-20 leave-card-title text-white">
-                    {leaveData[4]?.type || "Loading..."}{" "}
-                    {/* Dynamic leave type */}
-                  </h6>
-                  <h2 className="text-right leave-card-balance text-white">
-                    <animated.i
-                      className="fa fa-calendar f-left text-white"
-                      style={iconAnimation}
-                    />
-                    <span>{leaveData[4]?.balance || "Loading..."}</span>{" "}
-                    {/* Show the balance */}
-                  </h2>
-                  <p className="m-b-0 leave-card-info text-white">
-                    Total Taken
-                    <span className="f-right text-white">
-                      {`${leaveData[4]?.totalTaken || "Loading..."} days`}{" "}
-                      {/* Show Total Taken */}
-                    </span>
-                  </p>
-                </div>
-              </div>
+          {leaveData.length > 5 && isRefreshing && (
+            <div className="d-flex justify-content-center align-items-center">
+              <Bars color="#00BFFF" height={60} width={60} />
             </div>
-
-            {/* Loader */}
-            {isRefreshing && (
-              <div className="col-md-4 d-flex justify-content-center align-items-center">
-                <Bars color="#00BFFF" height={60} width={60} />
-              </div>
-            )}
-          </div>
+          )}
         </>
       )}
     </div>

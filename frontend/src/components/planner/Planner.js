@@ -28,13 +28,13 @@ const Planner = () => {
   );
   const [plans, setPlans] = useState([]);
   const [countdownTime, setCountdownTime] = useState(null);
+  const inactivityTimeout = useRef(null);
+
   const handleCountdownStart = (time) => {
     setCountdownTime(time);
   };
-  const inactivityTimeout = useRef(null);
 
   useEffect(() => {
-    // Store `retrievedCode` and `activeTab` in sessionStorage on state update
     sessionStorage.setItem("retrievedCode", retrievedCode);
     sessionStorage.setItem("activeTab", activeTab);
   }, [retrievedCode, activeTab]);
@@ -44,47 +44,48 @@ const Planner = () => {
       if (!isPrevious) {
         return [...new Set([...prev, activeTab])];
       }
-      return prev; // Do not add the current tab to completed when going back
+      return prev;
     });
     setActiveTab(nextTab);
   };
 
   const handleCodeRetrieved = (code) => {
     setRetrievedCode(code);
-    handleNextStep("bank-wizard"); // Move to the next tab after code retrieval
+    handleNextStep("bank-wizard");
+  };
+
+  // Fetch plans for the given retrievedCode (pk)
+  const fetchPlans = async (pk) => {
+    try {
+      const response = await fetch(`/selfservice/FnLeavePlannerLine/${pk}/`);
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      const result = await response.json();
+      if (Array.isArray(result.data)) {
+        // If no plans exist, set new ones, otherwise append
+        setPlans(result.data);
+        sessionStorage.setItem("plans", JSON.stringify(result.data)); // Save to sessionStorage
+      } else {
+        toast.error("Fetched data is not in the expected format.");
+      }
+    } catch (error) {
+      console.error("Failed to fetch plans:", error);
+      toast.error("Failed to fetch plans.");
+    }
   };
 
   const isTabClickable = (tab) => {
-    // Allow only the current or completed tabs to be clickable
     return completedTabs.includes(tab) || activeTab === tab;
   };
 
-  const handleAddPlan = (newPlan) => {
-    setPlans((prevPlans) => {
-      const updatedPlans = [...prevPlans, newPlan];
-      return updatedPlans;
-    });
-    toast.success("Plan added successfully!", {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-    });
-  };
-
-  const handleFetchSamples = (data) => {
-    setPlans(data);
-  };
   const resetInactivityTimeout = () => {
     if (inactivityTimeout.current) {
       clearTimeout(inactivityTimeout.current);
     }
     inactivityTimeout.current = setTimeout(() => {
       sessionStorage.clear();
-      setActiveTab("wizard-info"); // Reset to default tab
+      setActiveTab("wizard-info");
       setRetrievedCode("");
       setPlans([]);
       toast.warning("Session has expired due to inactivity.", {
@@ -96,17 +97,15 @@ const Planner = () => {
         draggable: true,
         progress: undefined,
       });
-    }, 300000); // Timeout duration (e.g., 5 minutes)
+    }, 300000);
   };
 
   useEffect(() => {
-    // Reset timeout on user interaction
     const handleUserActivity = () => resetInactivityTimeout();
     window.addEventListener("mousemove", handleUserActivity);
     window.addEventListener("keypress", handleUserActivity);
     window.addEventListener("click", handleUserActivity);
 
-    // Set initial timeout
     resetInactivityTimeout();
 
     return () => {
@@ -117,7 +116,6 @@ const Planner = () => {
     };
   }, []);
 
-  // Decrease countdownTime every second
   useEffect(() => {
     if (countdownTime > 0) {
       const timer = setInterval(() => {
@@ -128,8 +126,22 @@ const Planner = () => {
   }, [countdownTime]);
 
   useEffect(() => {
+    if (activeTab === "wizard-info") {
+      sessionStorage.removeItem("retrievedCode");
+      setRetrievedCode("");
+    } else if (retrievedCode) {
+      fetchPlans(retrievedCode);
+    }
+
     if (!retrievedCode) {
-      setActiveTab("wizard-info"); // Redirect to the first step if `retrievedCode` is missing
+      setActiveTab("wizard-info");
+    }
+  }, [activeTab, retrievedCode]);
+
+  useEffect(() => {
+    // Log whenever retrievedCode changes
+    if (retrievedCode) {
+      fetchPlans(retrievedCode); // Fetch plans whenever retrievedCode changes
     }
   }, [retrievedCode]);
 
@@ -150,7 +162,6 @@ const Planner = () => {
                         role="tablist"
                         aria-orientation="vertical"
                       >
-                        {/* Tab Links */}
                         {[
                           "wizard-info",
                           "bank-wizard",
@@ -163,10 +174,15 @@ const Planner = () => {
                             }`}
                             role="tab"
                             style={{
-                              pointerEvents: "none", // Completely disable pointer events for all tabs
-                              cursor: "not-allowed", // Visual indication that tabs are not clickable
-                              opacity: activeTab === tab ? 1 : 0.5, // Highlight active tab visually
+                              pointerEvents: isTabClickable(tab)
+                                ? "auto"
+                                : "none",
+                              cursor: isTabClickable(tab)
+                                ? "pointer"
+                                : "not-allowed",
+                              opacity: activeTab === tab ? 1 : 0.5,
                             }}
+                            onClick={() => handleNextStep(tab)}
                           >
                             <div className="horizontal-wizard">
                               <div className="stroke-icon-wizard">
@@ -210,7 +226,6 @@ const Planner = () => {
                             onCodeRetrieved={handleCodeRetrieved}
                           />
                         </div>
-
                         {/* Step 2: Leave Planner Lines */}
                         <div
                           className={`tab-pane fade ${
@@ -222,26 +237,27 @@ const Planner = () => {
                             <div className="col-md-12">
                               <PlannerLineForm
                                 pk={retrievedCode}
-                                onFetchSamples={handleFetchSamples}
+                                onFetchSamples={fetchPlans}
                                 onAddPlan={handleNextStep}
                               />
                             </div>
                             <div className="mt-3">
-                              <LinesTable plans={plans} />
+                              <LinesTable
+                                plans={plans}
+                                pk={retrievedCode}
+                                onFetchSamples={fetchPlans}
+                              />
                             </div>
                           </div>
                           <PlannerStepNavigation
                             activeTab={activeTab}
-                            handleNextStep={(nextTab) =>
-                              handleNextStep(nextTab)
-                            }
+                            handleNextStep={handleNextStep}
                             pk={retrievedCode}
                             onStartCountdown={handleCountdownStart}
                             myAction={myAction}
                             setMyAction={setMyAction}
                           />
                         </div>
-
                         {/* Step 3: Completed */}
                         <div
                           className={`tab-pane fade ${
@@ -272,7 +288,17 @@ const Planner = () => {
           </div>
         </div>
       </div>
-      <ToastContainer />
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </div>
   );
 };

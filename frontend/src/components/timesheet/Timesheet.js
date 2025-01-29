@@ -6,11 +6,13 @@ import TimesheetCalendar from "./TimesheetCalendar";
 import TimesheetForm from "./TimesheetForm";
 import ProjectSummary from "./ProjectSummary";
 import TimesheetProgress from "./TimesheetProgress";
+import { useDashboard } from "../context/DashboardContext";
 
 const Timesheet = () => {
+  const { dashboardData, setLoggedIn } = useDashboard();
   const [entries, setEntries] = useState({});
   const [leaveDays, setLeaveDays] = useState([]);
-  const [region, setRegion] = useState("Nairobi");
+  const [region, setRegion] = useState(dashboardData.user_data.sectionCode);
   const publicHolidays = ["2024-12-25", "2024-12-26", "2024-12-31"]; // Public holidays
   const [monthInitiated, setMonthInitiated] = useState(null);
 

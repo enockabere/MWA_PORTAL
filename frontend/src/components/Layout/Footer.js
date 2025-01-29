@@ -11,10 +11,7 @@ const Footer = () => {
           </div>
           <div className="col-md-6 p-0">
             <p className="heart mb-0">
-              Hand crafted &amp; made with
-              <svg className="footer-icon">
-                <use href={mwaLogo} />
-              </svg>
+              Powered by <span className="text-primary">Sy-intelli</span>
             </p>
           </div>
         </div>

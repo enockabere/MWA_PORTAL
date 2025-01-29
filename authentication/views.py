@@ -418,6 +418,7 @@ class FnLeavePlannerLine(UserObjectMixins, View):
                 "soap_headers"
             )
             data = json.loads(request.body)
+            print(data)
             lineNo = int(data.get('lineNo', 0)) 
             startDate = dates.strptime(data.get('startDate'), "%Y-%m-%dT%H:%M:%S.%fZ")
             endDate = dates.strptime(data.get('endDate'), "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -1120,7 +1121,7 @@ class DashboardData(UserObjectMixins, View):
             pendingLeave = []
             Document_Types = [
                 "19",
-                "20",
+                "LeaveApplication",
             ]
 
             async with aiohttp.ClientSession() as session:
@@ -1455,6 +1456,15 @@ class HRLeaveReports(UserObjectMixins, View):
                     supervisorTitle,
                 )
 
+                payload = {"employeeNo": employeeNo,
+                           "filenameFromApp": filenameFromApp,
+                           "sectionCode": sectionCode,
+                           "departmentCode": departmentCode,
+                           "supervisorEmployeeNo": supervisorEmployeeNo,
+                           "supervisorTitle": supervisorTitle}
+
+                print(payload)
+
             buffer = BytesIO.BytesIO()
             content = base64.b64decode(response)
             buffer.write(content)
@@ -1472,9 +1482,9 @@ class Approval(UserObjectMixins, View):
             approvals = []
             User_ID = await sync_to_async(request.session.__getitem__)("User_ID")
             Document_Types = [
-                "18",
-                "20",
-                "25",
+                "LeaveAdjustment",
+                "LeaveApplication",
+                "Leave Recall",
             ]
             async with aiohttp.ClientSession() as session:
                 task_open_approvals = asyncio.ensure_future(
@@ -1774,9 +1784,6 @@ class fetch_leave_days(UserObjectMixins, View):
             UserId = await sync_to_async(request.session.__getitem__)("User_ID")
             current_year = datetime.datetime.now().year  # Get the current year
             filtered_leave_data = []
-            print("request::", True)
-            print("UserId::", UserId)
-            print("current_year::", current_year)
             async with aiohttp.ClientSession() as session:
                 task_get_leave = asyncio.ensure_future(
                     self.simple_one_filtered_data(
@@ -1799,8 +1806,23 @@ class fetch_leave_days(UserObjectMixins, View):
                             "Start_Date": leave["Start_Date"],
                             "End_Date": leave["End_Date"],
                         })
+
+            print(filtered_leave_data)
             return JsonResponse(filtered_leave_data, safe=False)
 
         except Exception as e:
             print("error::", e)
+            return JsonResponse({"success": False, "error": str(e)}, status=500)
+        
+class AllLeaveBalances(UserObjectMixins, View):
+    def get(self, request):
+        try:
+            soap_headers = request.session["soap_headers"]
+            employeeNo = request.session["Employee_No_"]
+            response = self.make_soap_request(
+                soap_headers, "fnGetAllLeaveBalances", employeeNo
+            )
+            return JsonResponse(response, safe=False)
+        except Exception as e:
+            print(e)
             return JsonResponse({"success": False, "error": str(e)}, status=500)

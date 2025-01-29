@@ -63,13 +63,21 @@ const ApprovalModal = ({
       ]);
 
       setAdjustmentData(AdjustmentResponse.data);
-      const adjustmentLines = AdjustmentLinesResponse.data.map((item) => ({
-        EmployeeName: item.EmployeeName,
-        LeaveCode: item.LeaveCode,
-        LeaveAdjEntryType: item.LeaveAdjEntryType,
-        NewEntitlement: item.NewEntitlement,
-        TransactionType: item.TransactionType,
-      }));
+
+      const adjustmentLines = Array.isArray(AdjustmentLinesResponse.data.data)
+        ? AdjustmentLinesResponse.data.data.map((item) => ({
+            EmployeeName: item.EmployeeName,
+            LeaveCode: item.LeaveCode,
+            LeaveAdjEntryType: item.LeaveAdjEntryType,
+            NewEntitlement: item.NewEntitlement,
+            TransactionType: item.TransactionType,
+          }))
+        : [];
+
+      if (!adjustmentLines.length) {
+        console.warn("No adjustment lines found or data is not an array.");
+      }
+
       setAdjustmentLinesData(adjustmentLines);
       setLoading(false);
     } catch (error) {
@@ -93,18 +101,18 @@ const ApprovalModal = ({
   };
 
   useEffect(() => {
-    if (selectedApplication?.DocumentType === "20") {
+    if (selectedApplication?.DocumentType === "LeaveApplication") {
       setLoading(true);
       setRelieverData([]);
       setAttachmentsData([]);
       setLeaveData(null);
       fetchLeaveDetails();
-    } else if (selectedApplication?.DocumentType === "18") {
+    } else if (selectedApplication?.DocumentType === "LeaveAdjustment") {
       setLoading(true);
       setAdjustmentData(null);
       setAdjustmentLinesData([]);
       fetchAdjustmentDetails();
-    } else if (selectedApplication?.DocumentType === "25") {
+    } else if (selectedApplication?.DocumentType === "Leave Recall") {
       setLoading(true);
       setRecallData(null);
       fetchRecallDetails();
@@ -165,11 +173,13 @@ const ApprovalModal = ({
                           <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                           <line x1={12} y1={17} x2={12} y2={17} />
                         </svg>{" "}
-                        {selectedApplication?.DocumentType === "20"
+                        {selectedApplication?.DocumentType ===
+                        "LeaveApplication"
                           ? "Leave"
-                          : selectedApplication?.DocumentType === "18"
+                          : selectedApplication?.DocumentType ===
+                            "LeaveAdjustment"
                           ? "Leave Adjustment"
-                          : selectedApplication?.DocumentType === "25"
+                          : selectedApplication?.DocumentType === "Leave Recall"
                           ? "Leave Recall"
                           : ""}{" "}
                         Approval
@@ -187,7 +197,8 @@ const ApprovalModal = ({
                         <p>Loading...</p>
                       ) : (
                         <div className="container">
-                          {selectedApplication?.DocumentType === "20" && (
+                          {selectedApplication?.DocumentType ===
+                            "LeaveApplication" && (
                             <div>
                               <div className="row">
                                 <div className="col-md-12">
@@ -276,7 +287,8 @@ const ApprovalModal = ({
                               </div>
                             </div>
                           )}
-                          {selectedApplication?.DocumentType === "18" && (
+                          {selectedApplication?.DocumentType ===
+                            "LeaveAdjustment" && (
                             <div>
                               <div className="row">
                                 <div className="col-md-12">
@@ -328,7 +340,8 @@ const ApprovalModal = ({
                               </div>
                             </div>
                           )}
-                          {selectedApplication?.DocumentType === "25" && (
+                          {selectedApplication?.DocumentType ===
+                            "Leave Recall" && (
                             <div>
                               <div className="row">
                                 <div className="col-md-12">
@@ -346,37 +359,34 @@ const ApprovalModal = ({
             </div>
             <div className="row my-2">
               <div className="col-xl-12 box-col-12">
-                <div className="file-sidebar">
-                  <div className="card">
-                    <div className="card-body custom-scrollbar">
-                      <ul>
-                        {selectedApplication?.Status === "Open" && (
-                          <div>
-                            <li>
-                              <ApproveDocument
-                                Id={selectedApplication?.DocumentNo}
-                                TableID={selectedApplication?.TableID}
-                                Entry_No_={selectedApplication?.Entry_No_}
-                                statusApproveRejectDelegate="Approve"
-                                approvalComment=""
-                                DocumentType={selectedApplication?.DocumentType}
-                                onApplicationSubmitted={onApplicationSubmitted}
-                              />
-                            </li>
-                            <li>
-                              <RejectDocument
-                                Id={selectedApplication?.DocumentNo}
-                                TableID={selectedApplication?.TableID}
-                                Entry_No_={selectedApplication?.Entry_No_}
-                                statusApproveRejectDelegate="Reject"
-                                DocumentType={selectedApplication?.DocumentType}
-                                onCancelSubmission={onCancelSubmission}
-                              />
-                            </li>
-                          </div>
-                        )}
-                      </ul>
-                    </div>
+                <div className="card">
+                  <div className="card-body">
+                    {selectedApplication?.Status === "Open" && (
+                      <div className="row">
+                        <div className="col-md-3">
+                          <ApproveDocument
+                            Id={selectedApplication?.DocumentNo}
+                            TableID={selectedApplication?.TableID}
+                            Entry_No_={selectedApplication?.Entry_No_}
+                            statusApproveRejectDelegate="Approve"
+                            approvalComment=""
+                            DocumentType={selectedApplication?.DocumentType}
+                            onApplicationSubmitted={onApplicationSubmitted}
+                          />
+                        </div>
+                        <div className="col-md-5">
+                          <RejectDocument
+                            Id={selectedApplication?.DocumentNo}
+                            TableID={selectedApplication?.TableID}
+                            Entry_No_={selectedApplication?.Entry_No_}
+                            statusApproveRejectDelegate="Reject"
+                            DocumentType={selectedApplication?.DocumentType}
+                            onCancelSubmission={onCancelSubmission}
+                          />
+                        </div>
+                        <div className="col-md-4"></div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

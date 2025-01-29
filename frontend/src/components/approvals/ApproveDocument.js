@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
 const ApproveDocument = ({
   Id,
@@ -55,11 +57,11 @@ const ApproveDocument = ({
   // Determine the button text dynamically based on DocumentType
   const getButtonText = () => {
     switch (DocumentType) {
-      case "20":
+      case "LeaveApplication":
         return "Approve Leave Application";
-      case "18":
+      case "LeaveAdjustment":
         return "Approve Leave Adjustment";
-      case "25":
+      case "Leave Recall":
         return "Approve Leave Recall";
       default:
         return "Approve Document";
@@ -78,7 +80,13 @@ const ApproveDocument = ({
             Submitting...
           </>
         ) : (
-          getButtonText()
+          <>
+            {getButtonText()}
+            <FontAwesomeIcon
+              icon={faArrowRight}
+              style={{ marginLeft: "8px" }}
+            />
+          </>
         )}
       </button>
 

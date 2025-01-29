@@ -20,19 +20,28 @@ const AdjustmentModal = ({
     axios
       .get(`/selfservice/LeaveAdjustmentLine/${selectedApplication.Code}/`)
       .then((response) => {
-        const formattedData = response.data.map((item) => ({
-          Name: item.EmployeeName,
-          LeaveType: item.LeaveCode,
-          AdjEntryType: item.LeaveAdjEntryType,
-          NewEntitlement: item.NewEntitlement,
-          TransactionType: item.TransactionType,
-        }));
+        const linesArray = response.data.data; // Adjust this based on the structure of your response
+        if (!Array.isArray(linesArray)) {
+          console.error("Expected an array but got:", typeof linesArray);
+          setLoading(false);
+          return;
+        }
+
+        const formattedData = linesArray.map((item) => {
+          console.log("Mapping item:", item); // Log each item being mapped
+          return {
+            Name: item.EmployeeName,
+            LeaveType: item.LeaveCode,
+            AdjEntryType: item.LeaveAdjEntryType,
+            NewEntitlement: item.NewEntitlement,
+            TransactionType: item.TransactionType,
+          };
+        });
         setLinesData(formattedData);
         setLoading(false);
       })
       .catch((error) => {
         setLoading(false);
-        console.error("Error fetching relievers:", error);
       });
   };
 

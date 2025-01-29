@@ -29,14 +29,15 @@ const PlannerLineForm = ({ pk, onFetchSamples }) => {
       bootstrapModal.show();
     }
   };
+
+  const [animate, setAnimate] = useState(false);
+
   useEffect(() => {
-    const savedData = JSON.parse(localStorage.getItem("plannerLineData"));
-    if (savedData && pk) {
-      onFetchSamples(savedData);
-    } else {
-      fetchSampleData();
-    }
-  }, [pk]);
+    // Trigger animation on mount
+    setAnimate(true);
+    const timer = setTimeout(() => setAnimate(false), 1500); // End animation after 1.5 seconds
+    return () => clearTimeout(timer); // Cleanup on unmount
+  }, []);
 
   const handleStartDateChange = (date) => {
     setFormData((prevData) => ({
@@ -49,38 +50,6 @@ const PlannerLineForm = ({ pk, onFetchSamples }) => {
   const handleEndDateChange = (date) => {
     setFormData((prevData) => ({ ...prevData, endDate: date }));
   };
-
-  const fetchSampleData = async () => {
-    try {
-      const { data: sampleData } = await axios.get(
-        `/selfservice/FnLeavePlannerLine/${pk}/`,
-        {
-          headers: { "X-CSRFToken": csrfToken },
-        }
-      );
-      if (sampleData && sampleData.data.length > 0) {
-        localStorage.setItem("plannerLineData", JSON.stringify(sampleData));
-        onFetchSamples(sampleData); // Passing data to parent
-      } else {
-        localStorage.removeItem("plannerLineData");
-        onFetchSamples([]); // Passing empty array if no data
-      }
-    } catch (error) {
-      if (error.response && error.response.status !== 404) {
-        toast.error("Failed to fetch sample data.");
-      }
-      onFetchSamples([]); // Passing empty array on error
-    }
-  };
-
-  const [animate, setAnimate] = useState(false);
-
-  useEffect(() => {
-    // Trigger animation on mount
-    setAnimate(true);
-    const timer = setTimeout(() => setAnimate(false), 1500); // End animation after 1.5 seconds
-    return () => clearTimeout(timer); // Cleanup on unmount
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -117,7 +86,9 @@ const PlannerLineForm = ({ pk, onFetchSamples }) => {
           lineNo: 0,
           MyAction: "insert",
         });
-        fetchSampleData(); // Re-fetch sample data after successful submission
+
+        // Call the parent fetch function to update the list of plans
+        onFetchSamples(pk); // This will trigger the parent's function to fetch and update the plans
       } catch (error) {
         if (error.response && error.response.data.error) {
           toast.error(error.response.data.error);
@@ -155,7 +126,7 @@ const PlannerLineForm = ({ pk, onFetchSamples }) => {
       >
         <div className="modal-dialog" role="document">
           <div className="modal-content">
-            <div className="modal-header  border-0">
+            <div className="modal-header border-0">
               <h4>
                 New Leave <strong className="text-danger">Planner</strong> Line
               </h4>
@@ -171,9 +142,8 @@ const PlannerLineForm = ({ pk, onFetchSamples }) => {
                 <p>
                   Enter your expected leave start and end dates to begin
                   scheduling your leave plan. This will help you organize and
-                  manage your upcoming time off effectively
+                  manage your upcoming time off effectively.
                 </p>
-                {/* Loader */}
                 {loading && (
                   <div className="d-flex justify-content-center mt-5">
                     <Bars color="#00BFFF" height={30} width={30} />

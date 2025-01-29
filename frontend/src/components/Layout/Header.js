@@ -13,7 +13,7 @@ const Header = ({ notificationCount, avatarSrc }) => {
       <div className="header-wrapper row m-0">
         <div className="header-logo-wrapper col-auto p-0">
           <div className="logo-wrapper">
-            <a href="index.html">
+            <a href="#">
               <img
                 className="img-fluid for-light"
                 height="20"

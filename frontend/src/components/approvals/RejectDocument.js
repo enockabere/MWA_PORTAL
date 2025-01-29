@@ -4,6 +4,9 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
+import { Modal, Button } from "react-bootstrap";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTimes } from "@fortawesome/free-solid-svg-icons";
 
 const RejectDocument = ({
   Id,
@@ -15,6 +18,7 @@ const RejectDocument = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+  const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
 
   const csrfToken = document
@@ -35,6 +39,7 @@ const RejectDocument = ({
       approvalComment: data,
     });
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -84,17 +89,17 @@ const RejectDocument = ({
       console.error("Error details:", error);
     } finally {
       setIsSubmitting(false);
+      setShowModal(false); // Close modal on submission
     }
   };
 
-  // Determine the button text dynamically based on DocumentType
   const getButtonText = () => {
     switch (DocumentType) {
-      case "20":
+      case "LeaveApplication":
         return "Cancel Leave Application Approval";
-      case "18":
-        return "Cancel Leave Adjustmen Approval";
-      case "25":
+      case "LeaveAdjustment":
+        return "Cancel Leave Adjustment Approval";
+      case "Leave Recall":
         return "Cancel Leave Recall Approval";
       default:
         return "Cancel Document Approval";
@@ -102,59 +107,70 @@ const RejectDocument = ({
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="form-group">
-        <label className="form-label" htmlFor="description">
-          Reason
-        </label>
-        <CKEditor
-          editor={ClassicEditor}
-          data={formData.approvalComment}
-          onChange={handleEditorChange}
-          config={{
-            placeholder: "Type your details here...",
-            toolbar: [
-              "heading",
-              "|",
-              "bold",
-              "italic",
-              "link",
-              "bulletedList",
-              "numberedList",
-              "|",
-              "blockQuote",
-              "undo",
-              "redo",
-            ],
-            // Set custom height in config
-            height: "300px", // Increase this value as needed
-          }}
-          style={{ height: "300px" }} // Optionally add inline style
-        />
-        {errors.approvalComment && (
-          <div className="text-danger">{errors.approvalComment}</div>
-        )}
-      </div>
-      <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-        {isSubmitting ? (
-          <>
-            <span
-              className="spinner-border spinner-border-sm"
-              style={{ marginRight: "8px" }}
-            ></span>
-            Submitting...
-          </>
-        ) : (
-          getButtonText()
-        )}
-      </button>
+    <>
+      {/* Button to trigger modal */}
+      <Button variant="danger" onClick={() => setShowModal(true)}>
+        {getButtonText()}{" "}
+        <FontAwesomeIcon icon={faTimes} style={{ marginLeft: "8px" }} />
+      </Button>
 
-      {submitError && (
-        <div className="alert alert-danger mt-2" role="alert">
-          {submitError}
-        </div>
-      )}
-    </form>
+      {/* Modal */}
+      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{getButtonText()}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <form onSubmit={handleSubmit}>
+            <div className="row">
+              <div className="col-md-12">
+                <label className="form-label" htmlFor="description">
+                  Reason
+                </label>
+                <CKEditor
+                  editor={ClassicEditor}
+                  data={formData.approvalComment}
+                  onChange={handleEditorChange}
+                  config={{
+                    placeholder: "Type your details here...",
+                    toolbar: [
+                      "heading",
+                      "|",
+                      "bold",
+                      "italic",
+                      "link",
+                      "bulletedList",
+                      "numberedList",
+                      "|",
+                      "blockQuote",
+                      "undo",
+                      "redo",
+                    ],
+                  }}
+                />
+                {errors.approvalComment && (
+                  <div className="text-danger">{errors.approvalComment}</div>
+                )}
+              </div>
+            </div>
+            <div className="row mt-3">
+              <div className="col-md-12 text-end">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setShowModal(false)}
+                  className="me-2"
+                >
+                  Close
+                </Button>
+                <Button type="submit" variant="primary" disabled={isSubmitting}>
+                  {isSubmitting ? "Submitting..." : "Submit"}
+                </Button>
+              </div>
+            </div>
+          </form>
+        </Modal.Body>
+      </Modal>
+    </>
   );
 };
 

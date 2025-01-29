@@ -19,7 +19,7 @@ export const DashboardProvider = ({ children }) => {
       First_Name: "Enock",
       Middle_Name: "Maeba",
       Last_Name: "Abere",
-      sectionCode: "IT",
+      sectionCode: "KENYA",
       Department: "IT",
       Supervisor_Title: "Digital Consultant",
       Supervisor: "Nehemiah Makau",
