@@ -1,26 +1,6 @@
 import React from "react";
 
-// Dummy project data
-const projectData = [
-  { project: "Project Alpha", percentage: 40, hoursWorked: 32 },
-  { project: "Project Beta", percentage: 30, hoursWorked: 24 },
-  { project: "Project Gamma", percentage: 20, hoursWorked: 16 },
-  { project: "Project Delta", percentage: 10, hoursWorked: 8 },
-];
-
-const ProjectSummary = () => {
-  // Calculate total hours worked
-  const totalHoursWorked = projectData.reduce(
-    (acc, project) => acc + project.hoursWorked,
-    0
-  );
-
-  // Ensure the total percentage is always 100
-  const totalPercentage = projectData.reduce(
-    (acc, project) => acc + project.percentage,
-    0
-  );
-
+const ProjectSummary = ({ projects }) => {
   return (
     <div>
       <h5>Project Summary</h5>
@@ -29,28 +9,32 @@ const ProjectSummary = () => {
           <thead>
             <tr>
               <th>Project</th>
-              <th>Percentage Assigned</th>
-              <th>Hours Worked</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>% Allocation</th>
+              <th>Supervisor</th>
             </tr>
           </thead>
           <tbody>
-            {projectData.map((project, index) => (
-              <tr key={index}>
-                <td>{project.project}</td>
-                <td>{project.percentage}%</td>
-                <td>{project.hoursWorked} hrs</td>
+            {projects && projects.length > 0 ? (
+              projects.map((project, index) => (
+                <tr key={index}>
+                  <td>{project.ProjectTask}</td>
+                  <td>{project.ProjectStartDate}</td>
+                  <td>{project.ProjectEndDate}</td>
+                  <td>{project.Allocation}%</td>
+                  <td>{project.SupervisorName}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" className="text-center">
+                  No projects assigned.
+                </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
-      </div>
-      <div className="my-4">
-        <p>
-          <strong>Total Hours Worked:</strong> {totalHoursWorked} hrs
-        </p>
-        <p>
-          <strong>Total Percentage Assigned:</strong> {totalPercentage}%
-        </p>
       </div>
     </div>
   );

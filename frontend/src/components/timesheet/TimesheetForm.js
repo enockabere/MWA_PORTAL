@@ -6,26 +6,16 @@ import {
   faCheckCircle,
 } from "@fortawesome/free-solid-svg-icons";
 
-const TimesheetForm = ({
-  entries,
-  setEntries,
-  monthInitiated,
-  setMonthInitiated,
-  region: parentRegion, // Read-only region passed from parent
-}) => {
+const TimesheetForm = ({ Initiated, region, currentTimesheet, onInitiate }) => {
   const today = new Date().toISOString().split("T")[0]; // Default to today's date
   const [date, setDate] = useState(today);
   const [hours, setHours] = useState("");
-  const [region, setRegion] = useState(parentRegion); // Set region from parent, it should be read-only
 
   // Region-specific max hours
   const getMaxHours = () => {
     switch (region) {
-      case "Nairobi":
-        if (new Date(date).getDay() === 5) {
-          return 5; // Limit to 5 hours on Friday
-        }
-        return 8.5;
+      case "KENYA":
+        return new Date(date).getDay() === 5 ? 5 : 8.5; // Limit to 5 hours on Friday
       case "Ethiopia":
       case "Global":
         return 8;
@@ -34,13 +24,11 @@ const TimesheetForm = ({
     }
   };
 
-  // Check if the selected date is a weekend
   const isWeekend = (selectedDate) => {
-    const dateObj = new Date(selectedDate);
-    return dateObj.getDay() === 6 || dateObj.getDay() === 0; // 6 = Saturday, 0 = Sunday
+    const day = new Date(selectedDate).getDay();
+    return day === 6 || day === 0; // Saturday or Sunday
   };
 
-  // Validate hours based on region and day
   const validateHours = () => {
     const maxHours = getMaxHours();
     if (!hours || hours <= 0 || hours > maxHours) {
@@ -52,42 +40,22 @@ const TimesheetForm = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    // Validate input
-    if (!date || !validateHours()) {
-      return;
-    }
-
-    // Add the entry
-    setEntries((prevEntries) => ({
-      ...prevEntries,
-      [date]: [
-        ...(prevEntries[date] || []), // Keep existing entries for the day
-        { task: "Custom Entry", hours: parseFloat(hours) },
-      ],
-    }));
+    if (!date || !validateHours()) return;
 
     toast.success("Timesheet entry added!");
     setHours(""); // Reset hours input
   };
 
-  const handleToggleInitiateTimesheet = () => {
-    if (monthInitiated) {
-      setMonthInitiated(false); // Mark the month as not initiated
-      toast.info("Timesheet initiation reset.");
-    } else {
-      setMonthInitiated(true); // Mark the month as initiated
-      toast.success("Timesheet initiated!");
-    }
+  const handleInitiateTimesheet = () => {
+    if (onInitiate) onInitiate(); // Call parent function to update the state
   };
 
-  // Get the current month and year
   const currentMonth = new Date().toLocaleString("default", { month: "long" });
   const currentYear = new Date().getFullYear();
 
   return (
     <div>
-      {!monthInitiated ? (
+      {Initiated ? (
         <div>
           <h5 className="mb-2">Timesheet Entry</h5>
           <form onSubmit={handleSubmit} className="mb-4">
@@ -115,7 +83,7 @@ const TimesheetForm = ({
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 className="form-control"
-                max={today} // Prevent future dates
+                max={today}
               />
               {isWeekend(date) && (
                 <small className="text-danger">
@@ -138,13 +106,13 @@ const TimesheetForm = ({
                 min="0"
                 max={getMaxHours()}
                 placeholder="Enter hours"
-                disabled={isWeekend(date)} // Disable hours input if it's a weekend
+                disabled={isWeekend(date)}
               />
             </div>
             <button
               type="submit"
               className="btn btn-primary w-100"
-              disabled={isWeekend(date)} // Disable submit if it's a weekend
+              disabled={isWeekend(date)}
             >
               <FontAwesomeIcon icon={faCalendarPlus} className="me-2" />
               Add Entry
@@ -152,11 +120,8 @@ const TimesheetForm = ({
           </form>
         </div>
       ) : (
-        <div>
-          <button
-            onClick={handleToggleInitiateTimesheet}
-            className="btn btn-primary mb-3"
-          >
+        <div className="text-center">
+          <button onClick={handleInitiateTimesheet} className="btn btn-primary">
             Initiate Timesheet for {currentMonth} {currentYear}{" "}
             <FontAwesomeIcon icon={faCheckCircle} className="me-2" />
           </button>

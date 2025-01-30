@@ -7,78 +7,69 @@ import TimesheetForm from "./TimesheetForm";
 import ProjectSummary from "./ProjectSummary";
 import TimesheetProgress from "./TimesheetProgress";
 import { useDashboard } from "../context/DashboardContext";
+import { Modal, Button } from "react-bootstrap";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEye } from "@fortawesome/free-solid-svg-icons";
 
 const Timesheet = () => {
-  const { dashboardData, setLoggedIn } = useDashboard();
-  const [entries, setEntries] = useState({});
-  const [leaveDays, setLeaveDays] = useState([]);
+  const { dashboardData } = useDashboard();
   const [region, setRegion] = useState(dashboardData.user_data.sectionCode);
-  const publicHolidays = ["2024-12-25", "2024-12-26", "2024-12-31"]; // Public holidays
-  const [monthInitiated, setMonthInitiated] = useState(null);
+  const [Initiated, setInitiated] = useState(false);
+  const [currentTimesheet, setCurrentTimesheet] = useState(null);
+  const [timesheetEntries, setTimesheetEntries] = useState([]);
+  const [projects, setProjects] = useState([]); // Store projects list
+  const [showModal, setShowModal] = useState(false); // Manage modal visibility
 
-  useEffect(() => {
-    const fetchLeaveDays = async () => {
-      try {
-        const response = await fetch("/selfservice/fetch-leave-days/");
-        console.log("Response status:", response.status);
-        console.log("Response headers:", response.headers);
-        const contentType = response.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-          throw new Error(
-            "Expected JSON response but received: " + contentType
-          );
-        }
-        if (response.ok) {
-          const data = await response.json();
-          console.log("Leave days data:", data);
-          setLeaveDays(data);
-        } else {
-          console.error("Failed to fetch leave days, status:", response.status);
-        }
-      } catch (error) {
-        console.error("Error fetching leave days:", error);
+  const fetchTimesheet = async () => {
+    try {
+      const response = await fetch("/selfservice/get-current-timesheet/");
+      if (!response.ok) {
+        console.error("Failed to fetch timesheet");
+        return;
       }
-    };
 
-    fetchLeaveDays();
-  }, []);
+      const data = await response.json();
+      if (Object.keys(data).length > 0) {
+        setCurrentTimesheet(data);
+        setInitiated(true);
+        fetchTimesheetByPk(data.Code);
+      } else {
+        setInitiated(false);
+      }
+    } catch (error) {
+      console.error("Error fetching timesheet:", error);
+    }
+  };
+
+  const fetchTimesheetByPk = async (pk) => {
+    try {
+      const response = await fetch(`/selfservice/get-timesheet-entries/${pk}/`);
+      const entries = await response.json();
+      setTimesheetEntries(entries);
+      setInitiated(true);
+    } catch (error) {
+      console.error(`Error fetching timesheet with pk=${pk}:`, error);
+    }
+  };
+
+  const fetchProjects = async () => {
+    try {
+      const response = await fetch("/selfservice/get-user-projects/"); // Django view URL
+      if (!response.ok) {
+        console.error("Failed to fetch projects");
+        return;
+      }
+      const projectList = await response.json();
+      setProjects(projectList); // Store projects in state
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+    }
+  };
 
   useEffect(() => {
-    if (leaveDays.length > 0) {
-      const updatedEntries = { ...entries };
-
-      leaveDays.forEach(({ start_date, end_date }) => {
-        let currentDate = new Date(start_date);
-        const endDate = new Date(end_date);
-
-        while (currentDate <= endDate) {
-          const day = currentDate.toISOString().split("T")[0];
-          const isWeekend =
-            currentDate.getDay() === 0 || currentDate.getDay() === 6;
-          const isPublicHoliday = publicHolidays.includes(day);
-
-          if (!isWeekend && !isPublicHoliday) {
-            const hours =
-              region === "Nairobi"
-                ? currentDate.getDay() === 5
-                  ? 5 // Friday in Nairobi
-                  : 8.5 // Weekday in Nairobi
-                : 8; // Weekday in other regions
-
-            if (!updatedEntries[day]) {
-              updatedEntries[day] = [];
-            }
-
-            updatedEntries[day].push({ task: "Leave Day", hours });
-          }
-
-          currentDate.setDate(currentDate.getDate() + 1);
-        }
-      });
-
-      setEntries(updatedEntries);
-    }
-  }, [leaveDays, region]);
+    fetchTimesheet();
+    fetchProjects(); // Fetch projects on mount
+  }, []);
 
   return (
     <div>
@@ -92,92 +83,64 @@ const Timesheet = () => {
           <div className="col-lg-8">
             <div className="card h-100">
               <div className="card-body">
-                <TimesheetCalendar
-                  entries={entries}
-                  leaveDays={leaveDays.map((ld) => ld.start_date)}
-                  publicHolidays={publicHolidays}
-                  region={region} // Pass region to calendar
-                  style={{
-                    width: "100%",
-                    maxWidth: "1200px",
-                    margin: "0 auto",
-                  }}
-                />
-                <div className="mt-3 border p-2">
-                  <h5>Legend:</h5>
-                  <div className="d-flex align-items-center mb-2">
-                    <span
-                      style={{
-                        width: "20px",
-                        height: "20px",
-                        backgroundColor: "yellow",
-                        display: "inline-block",
-                        marginRight: "10px",
-                      }}
-                    ></span>
-                    <span>Leave Day</span>
-                  </div>
-                  <div className="d-flex align-items-center mb-2">
-                    <span
-                      style={{
-                        width: "20px",
-                        height: "20px",
-                        backgroundColor: "red",
-                        display: "inline-block",
-                        marginRight: "10px",
-                      }}
-                    ></span>
-                    <span>Public Holiday</span>
-                  </div>
-                  <div className="d-flex align-items-center mb-2">
-                    <span
-                      style={{
-                        width: "20px",
-                        height: "20px",
-                        backgroundColor: "blue",
-                        display: "inline-block",
-                        marginRight: "10px",
-                      }}
-                    ></span>
-                    <span>Timesheet Entry</span>
-                  </div>
-                  <div className="d-flex align-items-center mb-2">
-                    <span
-                      style={{
-                        width: "20px",
-                        height: "20px",
-                        backgroundColor: "gray",
-                        display: "inline-block",
-                        marginRight: "10px",
-                      }}
-                    ></span>
-                    <span>Weekend</span>
-                  </div>
+                <div>
+                  <TimesheetCalendar
+                    entries={timesheetEntries}
+                    style={{
+                      width: "100%",
+                      maxWidth: "1200px",
+                      margin: "0 auto",
+                    }}
+                  />
+                </div>
+
+                {/* Button to Open Project Summary Modal */}
+                <div className="my-3">
+                  <Button variant="primary" onClick={() => setShowModal(true)}>
+                    <FontAwesomeIcon icon={faEye} className="me-2" /> View
+                    Assigned Projects
+                  </Button>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Second Column - Project Summary and Progress */}
+          {/* Second Column - Timesheet Form and Progress */}
           <div className="col-lg-4">
             <div className="card h-100">
               <div className="card-body">
                 <TimesheetForm
-                  entries={entries}
-                  setEntries={setEntries}
-                  monthInitiated={monthInitiated}
-                  setMonthInitiated={setMonthInitiated}
-                  region={region} // Pass region to form
-                  setRegion={setRegion} // Set region
+                  Initiated={Initiated}
+                  region={region}
+                  currentTimesheet={currentTimesheet}
                 />
-                <ProjectSummary />
-                <TimesheetProgress entries={entries} />
+                <TimesheetProgress entries={timesheetEntries} />
               </div>
             </div>
           </div>
         </div>
-        {/* Legend Section */}
       </div>
+
+      {/* Bootstrap Modal for Project Summary */}
+      <Modal
+        show={showModal}
+        onHide={() => setShowModal(false)}
+        size="lg"
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Assigned Projects</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <ProjectSummary projects={projects} />
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
       <ToastContainer />
     </div>
   );

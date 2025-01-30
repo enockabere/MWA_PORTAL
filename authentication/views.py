@@ -1826,3 +1826,70 @@ class AllLeaveBalances(UserObjectMixins, View):
         except Exception as e:
             print(e)
             return JsonResponse({"success": False, "error": str(e)}, status=500)
+        
+class GetCurrentTimesheet(UserObjectMixins, View):
+    async def get(self, request):
+        try:
+            UserId = await sync_to_async(request.session.__getitem__)("User_ID")
+            
+            async with aiohttp.ClientSession() as session:
+                task_get_plan_lines = asyncio.ensure_future(
+                    self.simple_one_filtered_data(
+                        session, "/QyTimeSheetHeader", "CreatedBy", "eq", UserId
+                    )
+                )
+                response = await asyncio.gather(task_get_plan_lines)
+                all_timesheets = [x for x in response[0]]
+                current_month = dates.now().month
+                current_year = dates.now().year
+                current_timesheets = [
+                    ts for ts in all_timesheets 
+                    if dates.strptime(ts["PeriodStartDate"], "%Y-%m-%d").month == current_month and 
+                    dates.strptime(ts["PeriodStartDate"], "%Y-%m-%d").year == current_year
+                ]
+            timesheet = current_timesheets[0] if current_timesheets else {}
+
+            return JsonResponse(timesheet, safe=False)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, safe=False)
+
+        
+class GetTimesheetEntries(UserObjectMixins, View):
+    async def get(self, request, pk):
+        try:
+            UserId = await sync_to_async(request.session.__getitem__)("User_ID")
+            timesheets_entries = []
+            
+            async with aiohttp.ClientSession() as session:
+                task_get_plan_lines = asyncio.ensure_future(
+                    self.simple_one_filtered_data(
+                        session, "/QyTimeSheetEntries", "DocumentNo", "eq", pk
+                    )
+                )
+                response = await asyncio.gather(task_get_plan_lines)
+                timesheets_entries = [x for x in response[0] if x['SubmittedBy'] == UserId]
+            return JsonResponse(timesheets_entries, safe=False)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, safe=False)
+        
+class GetTimesheetProjects(UserObjectMixins, View):
+    async def get(self, request):
+        try:
+            Employee_No_ = await sync_to_async(request.session.__getitem__)("Employee_No_")
+            timesheets_projects = []
+            
+            async with aiohttp.ClientSession() as session:
+                lines = asyncio.ensure_future(
+                    self.simple_one_filtered_data(
+                        session, "/QyTimesheetByProject", "EmployeeNo", "eq", Employee_No_
+                    )
+                )
+                response = await asyncio.gather(lines)
+                timesheets_projects = [x for x in response[0] if x['Status'] == "Open"]
+
+            print(timesheets_projects)
+            return JsonResponse(timesheets_projects, safe=False)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, safe=False)
+
+        

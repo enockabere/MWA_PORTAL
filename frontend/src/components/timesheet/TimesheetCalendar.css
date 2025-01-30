@@ -10,30 +10,57 @@
     color: white;
   }
   
-  /* Highlight weekends */
-  .weekend-day {
-    background-color: gray !important; /* Light red for weekends */
-    color: white !important;
-  }
-  
-  /* Highlight leave days */
-  .leave-day {
-    background-color: #ffc107 !important; /* Yellow for leave days */
-    color: white !important;
-  }
-  
-  /* Highlight public holidays */
-  .holiday {
-    background-color: #dc3545 !important; /* Red for holidays */
-    color: white !important;
-  }
-  
-  /* Timesheet entries */
-  .timesheet-entries {
-    margin-top: 5px;
-    font-size: 0.8em;
-    color: #007bff;
-  }
+/* Calendar tile styles */
+.holiday-tile {
+  background-color: red !important;
+  color: white !important;
+}
+
+.leave-day-tile {
+  background-color: yellow !important;
+  color: black !important;
+  border-radius: 50%;
+}
+
+/* Legend container */
+.calendar-legend {
+  margin-top: 20px;
+}
+
+/* Legend item layout */
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+/* Circle before the text */
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* Specific colors */
+.legend-holiday .legend-color {
+  background-color: red;
+}
+
+.legend-leave .legend-color {
+  background-color: yellow;
+}
+
+
+/* Hide zero-hour entries in the calendar */
+.hours-worked {
+  font-weight: bold;
+  color: black;
+  font-size: 14px;
+}
+
   
   .timesheet-entries .entry {
     display: block;

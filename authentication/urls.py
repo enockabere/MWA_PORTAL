@@ -106,6 +106,9 @@ urlpatterns = [
     ),
 
     path("fetch-leave-days/", views.fetch_leave_days.as_view(), name="fetch_leave_days"),
+    path("get-current-timesheet/", views.GetCurrentTimesheet.as_view(), name="GetCurrentTimesheet"),
+    path("get-timesheet-entries/<str:pk>/", views.GetTimesheetEntries.as_view(), name="GetTimesheetEntries"),
+    path("get-user-projects/", views.GetTimesheetProjects.as_view(), name="GetTimesheetProjects"),
         
     re_path(r"^(?!api/).*$", TemplateView.as_view(template_name="index.html")),
     re_path(r'^selfservice/.*$', TemplateView.as_view(template_name='index.html')),

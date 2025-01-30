@@ -28,7 +28,7 @@ const TimesheetProgress = ({ entries }) => {
 
   return (
     <div>
-      <h6>Timesheet Days Remaining To Submission</h6>
+      <h6> Days Remaining To Submission</h6>
       <div className="progress mt-1" style={{ height: "30px" }}>
         <div
           className={`progress-bar px-2 bg-primary`} // Add bg-success for green color
