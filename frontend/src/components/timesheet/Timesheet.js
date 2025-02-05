@@ -71,6 +71,10 @@ const Timesheet = () => {
     fetchProjects(); // Fetch projects on mount
   }, []);
 
+  const refreshTimesheets = () => {
+    fetchTimesheet();
+  };
+
   return (
     <div>
       <Breadcrumb
@@ -113,8 +117,11 @@ const Timesheet = () => {
                   Initiated={Initiated}
                   region={region}
                   currentTimesheet={currentTimesheet}
+                  entries={timesheetEntries}
+                  onInitiate={refreshTimesheets}
+                  onAddEntry={fetchTimesheetByPk}
                 />
-                <TimesheetProgress entries={timesheetEntries} />
+                {Initiated && <TimesheetProgress />}
               </div>
             </div>
           </div>

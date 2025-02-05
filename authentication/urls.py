@@ -96,6 +96,7 @@ urlpatterns = [
         name="LeaveAdjustmentLine",
     ),
     path("LeaveBalances/", views.LeaveBalances.as_view(), name="LeaveBalances"),
+    path("initiate-timesheet/", views.InitiateTimesheet.as_view(), name="InitiateTimesheet"),
     path("DashboardReports/", views.DashboardReports.as_view(), name="DashboardReports"),
     path("LeaveDashboard/", views.LeaveDashboard.as_view(), name="LeaveDashboard"),
     path("all-leave-balance/", views.AllLeaveBalances.as_view(), name="AllLeaveBalances"),
@@ -105,10 +106,15 @@ urlpatterns = [
         name="FnGetAnnualLeaveDashboard",
     ),
 
+    path("timesheet-entry/", views.TimesheetEntry.as_view(), name="TimesheetEntry"),
+
     path("fetch-leave-days/", views.fetch_leave_days.as_view(), name="fetch_leave_days"),
     path("get-current-timesheet/", views.GetCurrentTimesheet.as_view(), name="GetCurrentTimesheet"),
     path("get-timesheet-entries/<str:pk>/", views.GetTimesheetEntries.as_view(), name="GetTimesheetEntries"),
     path("get-user-projects/", views.GetTimesheetProjects.as_view(), name="GetTimesheetProjects"),
+    path("get-max-timesheet-entries/", views.GetMaxEntriesPerRegion.as_view(), name="GetMaxEntriesPerRegion"),
+    path("get-timesheets/", views.GetTimesheets.as_view(), name="GetTimesheets"),
+    
         
     re_path(r"^(?!api/).*$", TemplateView.as_view(template_name="index.html")),
     re_path(r'^selfservice/.*$', TemplateView.as_view(template_name='index.html')),

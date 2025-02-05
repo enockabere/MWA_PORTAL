@@ -1,49 +1,59 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
-const TimesheetProgress = ({ entries }) => {
-  const today = new Date();
-  const currentMonth = today.getMonth(); // Current month (0-based index)
-  const currentYear = today.getFullYear();
+const TimesheetProgress = () => {
+  const [remainingDays, setRemainingDays] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [isDue, setIsDue] = useState(false);
 
-  // Get the last day of the current month
-  const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
-
-  // Calculate remaining days until the end of the month
-  const remainingDays = Math.ceil(
-    (lastDayOfMonth - today) / (1000 * 60 * 60 * 24)
-  );
-
-  // Calculate the number of days the user has already filled entries for
-  const filledEntries = Object.keys(entries).filter((date) => {
-    const entryDate = new Date(date);
-    return (
-      entryDate.getMonth() === currentMonth &&
-      entryDate.getFullYear() === currentYear
+  useEffect(() => {
+    const today = new Date();
+    const lastDayOfMonth = new Date(
+      today.getFullYear(),
+      today.getMonth() + 1,
+      0
     );
-  }).length;
+    const totalDaysInMonth = lastDayOfMonth.getDate();
+    const daysPassed = today.getDate();
+    const daysRemaining = totalDaysInMonth - daysPassed;
 
-  // Calculate total days in the current month
-  const totalDaysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  const progress = Math.min((filledEntries / totalDaysInMonth) * 100, 100); // Calculate progress percentage
+    setRemainingDays(daysRemaining);
+    setProgress(((daysPassed / totalDaysInMonth) * 100).toFixed(2));
+    setIsDue(daysRemaining <= 0); // Submission is due if remaining days is 0 or negative
+  }, []);
 
   return (
     <div>
-      <h6> Days Remaining To Submission</h6>
-      <div className="progress mt-1" style={{ height: "30px" }}>
-        <div
-          className={`progress-bar px-2 bg-primary`} // Add bg-success for green color
-          role="progressbar"
-          style={{ width: `${progress}%` }}
-          aria-valuenow={progress}
-          aria-valuemin="0"
-          aria-valuemax="100"
-        >
-          {remainingDays} Days
-        </div>
-      </div>
-      {filledEntries === totalDaysInMonth && (
+      {remainingDays > 0 ? (
+        <>
+          <h6 className="mt-3">Days Remaining To Submission</h6>
+          <div className="progress mt-1" style={{ height: "30px" }}>
+            <div
+              className="progress-bar px-2 bg-warning"
+              role="progressbar"
+              style={{
+                width: `${progress}%`,
+                transition: "width 1s ease-in-out",
+              }}
+              aria-valuenow={progress}
+              aria-valuemin="0"
+              aria-valuemax="100"
+            >
+              {remainingDays} Days
+            </div>
+          </div>
+        </>
+      ) : (
+        <p className="mt-3 text-danger">Timesheet submission is due today!</p>
+      )}
+
+      {isDue && (
         <div className="mt-3">
-          <button className="btn btn-success">Submit Timesheet</button>
+          <button className="btn btn-warning w-100">
+            <FontAwesomeIcon icon={faArrowRight} className="me-2" /> Submit
+            Timesheet
+          </button>
         </div>
       )}
     </div>

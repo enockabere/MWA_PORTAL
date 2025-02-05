@@ -21,6 +21,7 @@ import LeaveDashboard from "./components/leave/LeaveDashboard";
 import Logout from "./components/Layout/Logout";
 import Timesheet from "./components/timesheet/Timesheet";
 import ResendOtpForm from "./components/auth/ResendOtpForm";
+import MyTimesheets from "./components/timesheet/MyTimesheets";
 
 const App = () => {
   return (
@@ -55,6 +56,7 @@ const App = () => {
             <Route path="balances" element={<DPTBalances />} />
             <Route path="leave-dashboard" element={<LeaveDashboard />} />
             <Route path="timesheet-entries" element={<Timesheet />} />
+            <Route path="my-timesheets" element={<MyTimesheets />} />
           </Route>
         </Routes>
       </Router>

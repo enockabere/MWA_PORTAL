@@ -346,8 +346,8 @@ const Sidebar = () => {
                     </Link>
                   </li>
                   <li>
-                    <Link to="/selfservice/dashboard/policies/hr-policies">
-                      Reports
+                    <Link to="/selfservice/dashboard/my-timesheets">
+                      My Timesheets
                     </Link>
                   </li>
                 </ul>

@@ -19,6 +19,7 @@ import io as BytesIO
 import base64
 from django.http import HttpResponse
 import datetime
+from decimal import Decimal
 
 
 class Login_View(UserObjectMixins,View):
@@ -176,15 +177,7 @@ class Login_View(UserObjectMixins,View):
                                 "full_name", full_name
                             )
 
-                            if (
-                                data["Global_Dimension_1_Code"] == None
-                                or data["Global_Dimension_1_Code"] == ""
-                            ):
-                                await sync_to_async(request.session.__setitem__)(
-                                    "sectionCode", "None"
-                                )
-                            else:
-                                await sync_to_async(request.session.__setitem__)(
+                            await sync_to_async(request.session.__setitem__)(
                                     "sectionCode", data["Global_Dimension_1_Code"]
                                 )
 
@@ -969,13 +962,7 @@ class azure_ad_callback(UserObjectMixins, View):
                                             full_name += " " + last_name
                                         request.session["full_name"] = full_name
 
-                                        if (
-                                            employee["Global_Dimension_1_Code"] == None
-                                            or employee["Global_Dimension_1_Code"] == ""
-                                        ):
-                                            request.session["sectionCode"] = "None"
-                                        else:
-                                            request.session["sectionCode"] = employee[
+                                        request.session["sectionCode"] = employee[
                                                 "Global_Dimension_1_Code"
                                             ]
 
@@ -1462,9 +1449,6 @@ class HRLeaveReports(UserObjectMixins, View):
                            "departmentCode": departmentCode,
                            "supervisorEmployeeNo": supervisorEmployeeNo,
                            "supervisorTitle": supervisorTitle}
-
-                print(payload)
-
             buffer = BytesIO.BytesIO()
             content = base64.b64decode(response)
             buffer.write(content)
@@ -1806,8 +1790,6 @@ class fetch_leave_days(UserObjectMixins, View):
                             "Start_Date": leave["Start_Date"],
                             "End_Date": leave["End_Date"],
                         })
-
-            print(filtered_leave_data)
             return JsonResponse(filtered_leave_data, safe=False)
 
         except Exception as e:
@@ -1887,9 +1869,102 @@ class GetTimesheetProjects(UserObjectMixins, View):
                 response = await asyncio.gather(lines)
                 timesheets_projects = [x for x in response[0] if x['Status'] == "Open"]
 
-            print(timesheets_projects)
             return JsonResponse(timesheets_projects, safe=False)
         except Exception as e:
             return JsonResponse({"error": str(e)}, safe=False)
 
-        
+class GetMaxEntriesPerRegion(UserObjectMixins, View):
+    async def get(self, request):
+        try:
+            sectionCode = await sync_to_async(request.session.__getitem__)("sectionCode")
+            
+            async with aiohttp.ClientSession() as session:
+                section = asyncio.ensure_future(
+                    self.simple_one_filtered_data(
+                        session, "/QyHoursPerCountry", "Code", "eq", sectionCode
+                    )
+                )
+                response = await asyncio.gather(section)
+                sections = [x for x in response[0]]
+            section = sections[0] if sections else {}
+
+            return JsonResponse(section, safe=False)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, safe=False)
+
+
+class InitiateTimesheet(UserObjectMixins, View):   
+    def post(self, request):
+        try:
+            soap_headers = request.session["soap_headers"]
+            employeeNo = request.session["Employee_No_"]
+            user_id = request.session["User_ID"]
+            start_date = dates.today().strftime("%Y-%m-%d") 
+            
+            response = self.make_soap_request(
+                soap_headers, "FnCreateTimeSheet", employeeNo, start_date, user_id
+            )
+            
+            if response != "0" and response != "":  # Fixing the condition
+                return JsonResponse({"success": True, "message": "Timesheet initiated successfully!"})
+
+            return JsonResponse({"success": False, "message": "Failed to initiate timesheet."})
+            
+        except Exception as e:
+            print(e)
+            return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+
+class TimesheetEntry(UserObjectMixins,View):   
+    def post(self, request):
+        try:
+            soap_headers = request.session.get("soap_headers", {})
+
+            data = json.loads(request.body)
+
+            document_no = data.get("DocumentNo")
+            entry_no = data.get("EntryNo")
+            date_str = data.get("Date")
+            hours_worked_str = data.get("HoursWorked")
+            if not all([document_no, entry_no, date_str, hours_worked_str]):
+                return JsonResponse({"success": False, "error": "Missing required fields"}, status=400)
+
+            try:
+                entry_no = int(entry_no)  # Convert EntryNo to integer
+                date = dates.strptime(date_str, "%Y-%m-%d").date()  # Convert Date to date object
+                hours_worked = Decimal(hours_worked_str)  # Convert HoursWorked to decimal
+            except (ValueError, TypeError) as e:
+                return JsonResponse({"success": False, "error": f"Invalid data format: {str(e)}"}, status=400)
+
+            # Make SOAP request
+            response = self.make_soap_request(
+                soap_headers, "fnModifyTimesheetLines", document_no, entry_no, date, hours_worked
+            )
+            
+            if response == True:
+                return JsonResponse({"success": True, "message": "Timesheet entry added successfully!"})
+            else:
+                return JsonResponse({"success": False, "error": "Failed to add timesheet entry"}, status=400)
+
+        except Exception as e:
+            print("Error:", e)
+            return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+class GetTimesheets(UserObjectMixins, View):
+    async def get(self, request):
+        try:
+            Employee_No_ = await sync_to_async(request.session.__getitem__)("Employee_No_")
+            timesheets = []
+            
+            async with aiohttp.ClientSession() as session:
+                headers = asyncio.ensure_future(
+                    self.simple_one_filtered_data(
+                        session, "/QyTimeSheetHeader", "EmployeeNo", "eq", Employee_No_
+                    )
+                )
+                response = await asyncio.gather(headers)
+                timesheets = [x for x in response[0]]
+
+            return JsonResponse(timesheets, safe=False)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, safe=False)

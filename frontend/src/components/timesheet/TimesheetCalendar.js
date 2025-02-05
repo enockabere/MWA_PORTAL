@@ -92,7 +92,7 @@ const TimesheetCalendar = ({ entries }) => {
       </div>
 
       {/* Legend for Holidays & Leave Days */}
-      <div className="calendar-legend">
+      <div className="calendar-legend border-2 border-t-primary p-2 b-r-2">
         <h6>Legend</h6>
         <div className="legend-item legend-holiday">
           <span
