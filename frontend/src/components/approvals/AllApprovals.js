@@ -2,17 +2,14 @@ import React, { useState, useEffect } from "react";
 import Breadcrumb from "../Layout/Breadcrumb";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faBullseye,
   faFolderOpen,
   faCheckCircle,
-  faSquarePlus,
-  faTable,
-  faThLarge,
+  faEye,
 } from "@fortawesome/free-solid-svg-icons";
-import Avatar from "../../../static/img/logo/pp.png";
 import Pagination from "../Layout/Pagination";
 import ApprovalModal from "./ApprovalModal";
 import Preloader from "../Layout/Preloader";
+import { Modal, Button } from "react-bootstrap"; // Import React Bootstrap components
 
 const AllApprovals = () => {
   const itemsPerPage = 3;
@@ -24,10 +21,11 @@ const AllApprovals = () => {
     approved: [],
     rejected: [],
   });
+  const [showModal, setShowModal] = useState(false); // State to control modal visibility
+
   const [loading, setLoading] = useState(true);
   const [paginationLoading, setPaginationLoading] = useState(false);
   const [tabLoading, setTabLoading] = useState(false);
-  const [isTableView, setIsTableView] = useState(false);
 
   const fetchApplications = async () => {
     try {
@@ -85,23 +83,46 @@ const AllApprovals = () => {
   };
 
   const handleItemClick = (item) => {
-    setSelectedApplication(item);
-    const modal = new window.bootstrap.Modal(
-      document.getElementById("bd-example-modal-xl")
-    );
-    modal.show();
+    setSelectedApplication(item || null);
+    setShowModal(true); // Show the modal
   };
 
   const handleModalClose = () => {
+    setShowModal(false); // Hide the modal
     setSelectedApplication(null);
-    const modal = new window.bootstrap.Modal(
-      document.getElementById("bd-example-modal-xl")
-    );
-    modal.hide();
   };
 
   const refreshApplications = () => {
     fetchApplications();
+  };
+
+  // Date formatting function
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+
+    const day = date.getDate();
+    const month = date.toLocaleString("default", { month: "short" });
+    const year = date.getFullYear();
+
+    // Determine the suffix (st, nd, rd, th)
+    const suffix = (day) => {
+      if (day > 3 && day < 21) return "th"; // Catch 4th-20th
+      switch (day % 10) {
+        case 1:
+          return "st";
+        case 2:
+          return "nd";
+        case 3:
+          return "rd";
+        default:
+          return "th";
+      }
+    };
+
+    const formattedDate = `${date.toLocaleString("default", {
+      weekday: "short",
+    })}, ${day}${suffix(day)} ${month}, ${year}`;
+    return formattedDate;
   };
 
   return (
@@ -153,17 +174,6 @@ const AllApprovals = () => {
                     </li>
                   </ul>
                 </div>
-                <div className="col-md-6 p-0 text-end">
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => setIsTableView(!isTableView)}
-                  >
-                    <FontAwesomeIcon icon={isTableView ? faThLarge : faTable} />{" "}
-                    {isTableView
-                      ? "Switch to Card View"
-                      : "Switch to Table View"}
-                  </button>
-                </div>
               </div>
             </div>
           </div>
@@ -176,7 +186,7 @@ const AllApprovals = () => {
                   <Preloader message="Loading tab, please wait..." />
                 ) : paginationLoading ? (
                   <Preloader message="Loading page, please wait..." />
-                ) : isTableView ? (
+                ) : (
                   <table className="table table-striped my-3">
                     <thead>
                       <tr>
@@ -185,6 +195,7 @@ const AllApprovals = () => {
                         <th>Sender Name</th>
                         <th>Due Date</th>
                         <th>Last Modified</th>
+                        <th>Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -193,51 +204,24 @@ const AllApprovals = () => {
                           <td>{item.DocumentType}</td>
                           <td>{item.Status}</td>
                           <td>{item.Sender_Name}</td>
-                          <td>{item.Due_Date}</td>
-                          <td>{item.Last_Date_Time_Modified}</td>
+                          <td>{formatDate(item.Due_Date)}</td>
+                          <td>{formatDate(item.Last_Date_Time_Modified)}</td>
+                          <td>
+                            <button
+                              className="btn btn-primary"
+                              onClick={() => handleItemClick(item)}
+                            >
+                              <FontAwesomeIcon
+                                icon={faEye}
+                                style={{ marginRight: "3px" }}
+                              />{" "}
+                              View
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
-                ) : (
-                  <div className="row">
-                    {currentItems.map((item) => (
-                      <div
-                        key={item.Entry_No_}
-                        className="col-xxl-4 col-lg-4 box-col-33 col-md-6"
-                      >
-                        <div
-                          className="project-box"
-                          onClick={() => handleItemClick(item)}
-                        >
-                          <span className="badge badge-secondary">
-                            {item.Status}
-                          </span>
-                          <h3 className="f-w-600">{item.DocumentType}</h3>
-                          <div className="d-flex">
-                            <img
-                              className="img-20 me-2 rounded-circle"
-                              src={Avatar}
-                              alt="team-member"
-                            />
-                            <div className="flex-grow-1">
-                              <p className="mb-0">{item.Due_Date}</p>
-                            </div>
-                          </div>
-                          <div className="row details">
-                            <div className="col-6">Sender Name</div>
-                            <div className="col-6 font-secondary">
-                              {item.Sender_Name}
-                            </div>
-                            <div className="col-6">Last Modified</div>
-                            <div className="col-6 font-secondary">
-                              {item.Last_Date_Time_Modified}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
                 )}
                 <Pagination
                   currentPage={currentPage}
@@ -251,7 +235,11 @@ const AllApprovals = () => {
           </div>
         </div>
       </div>
+
+      {/* React Bootstrap Modal */}
       <ApprovalModal
+        show={showModal} // Pass the show state
+        onHide={handleModalClose} // Pass the function to hide the modal
         selectedApplication={selectedApplication}
         onApplicationSubmitted={refreshApplications}
         onCancelSubmission={refreshApplications}

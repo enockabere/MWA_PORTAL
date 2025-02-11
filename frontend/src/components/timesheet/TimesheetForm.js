@@ -16,6 +16,7 @@ const TimesheetForm = ({
   onAddEntry,
 }) => {
   const today = new Date().toISOString().split("T")[0];
+  const [loadingAddEntry, setLoadingAddEntry] = useState(false);
   const [date, setDate] = useState(today);
   const [hours, setHours] = useState("");
   const [error, setError] = useState("");
@@ -25,6 +26,7 @@ const TimesheetForm = ({
     HoursWorkedFri: 8,
   });
   const [selectedEntry, setSelectedEntry] = useState(null);
+  const [isInitiatedLoading, setIsInitiatedLoading] = useState(true); // Loading state for Initiated
   const csrfToken = document
     .querySelector('meta[name="csrf-token"]')
     ?.getAttribute("content");
@@ -49,6 +51,19 @@ const TimesheetForm = ({
 
     fetchMaxHours();
   }, [region]);
+
+  useEffect(() => {
+    // Simulate a delay for Initiated status check or async API call
+    const checkInitiatedStatus = async () => {
+      // Here you can call an API to determine if the timesheet has been initiated
+      // For now, we use a setTimeout to simulate a loading time
+      setTimeout(() => {
+        setIsInitiatedLoading(false); // Set loading to false once it's checked
+      }, 2000); // Simulate delay (2 seconds)
+    };
+
+    checkInitiatedStatus();
+  }, []); // Empty dependency array to run only once on mount
 
   useEffect(() => {
     const entry = entries.find((entry) => entry.Date === date);
@@ -78,7 +93,6 @@ const TimesheetForm = ({
     e.preventDefault();
     if (!date || isWeekend(date) || !validateHours()) return;
 
-    // Find matching entry
     const matchingEntry = entries.find((entry) => entry.Date === date);
     if (!matchingEntry) {
       toast.error("No matching entry found for the selected date.");
@@ -88,11 +102,12 @@ const TimesheetForm = ({
     const payload = {
       DocumentNo: matchingEntry.DocumentNo,
       EntryNo: matchingEntry.EntryNo,
-      Date: date, // Already in YYYY-MM-DD format
-      HoursWorked: parseFloat(hours), // Ensure it's a decimal
+      Date: date,
+      HoursWorked: parseFloat(hours),
     };
 
     try {
+      setLoadingAddEntry(true);
       const response = await fetch("/selfservice/timesheet-entry/", {
         method: "POST",
         headers: {
@@ -106,12 +121,15 @@ const TimesheetForm = ({
       if (result.success) {
         toast.success(result.message);
         onAddEntry(matchingEntry.DocumentNo);
+        setHours(""); // Reset input field
       } else {
         toast.error(result.error);
       }
     } catch (error) {
       console.error("Error submitting timesheet:", error);
       toast.error("Error submitting timesheet. Please try again.");
+    } finally {
+      setLoadingAddEntry(false);
     }
   };
 
@@ -159,78 +177,96 @@ const TimesheetForm = ({
 
   return (
     <div>
-      {Initiated ? (
-        <div>
-          <h5 className="mb-2">Timesheet Entry</h5>
-          <form onSubmit={handleSubmit} className="mb-4">
-            <div className="mb-3">
-              <label htmlFor="date" className="form-label">
-                Select Date
-              </label>
-              <input
-                type="date"
-                id="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="form-control"
-                max={today}
-              />
-              {isWeekend(date) && (
-                <small className="text-danger">
-                  Weekends are not valid for timesheet entries.
-                </small>
-              )}
-            </div>
-
-            <div className="mb-3">
-              <label htmlFor="hours" className="form-label">
-                Hours Worked (Max {getMaxHoursForDay()})
-              </label>
-              <input
-                type="number"
-                id="hours"
-                value={hours}
-                onChange={handleHoursChange}
-                className="form-control"
-                step="0.1"
-                min="0"
-                max={getMaxHoursForDay()}
-                placeholder="Enter hours"
-                disabled={isWeekend(date)}
-              />
-              {error && <small className="text-danger">{error}</small>}
-            </div>
-
-            <button
-              type="submit"
-              className="btn btn-primary w-100"
-              disabled={isWeekend(date)}
-            >
-              <FontAwesomeIcon icon={faCalendarPlus} className="me-2" />
-              Add Entry
-            </button>
-          </form>
+      {isInitiatedLoading ? (
+        <div className="text-center mb-3">
+          <FontAwesomeIcon icon={faSpinner} spin size="1x" />
+          <p>Loading...</p>
         </div>
       ) : (
-        <div className="text-center">
-          <button
-            onClick={handleInitiateTimesheet}
-            className="btn btn-primary"
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <FontAwesomeIcon icon={faSpinner} spin className="me-2" />
-                Initiating...
-              </>
-            ) : (
-              <>
-                Initiate Timesheet for {currentMonth} {currentYear}{" "}
-                <FontAwesomeIcon icon={faCheckCircle} className="me-2" />
-              </>
-            )}
-          </button>
-        </div>
+        <>
+          {Initiated ? (
+            <div>
+              <h5 className="mb-2">Timesheet Entry</h5>
+              <form onSubmit={handleSubmit} className="mb-4">
+                <div className="mb-3">
+                  <label htmlFor="date" className="form-label">
+                    Select Date
+                  </label>
+                  <input
+                    type="date"
+                    id="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    className="form-control"
+                    max={today}
+                  />
+                  {isWeekend(date) && (
+                    <small className="text-danger">
+                      Weekends are not valid for timesheet entries.
+                    </small>
+                  )}
+                </div>
+
+                <div className="mb-3">
+                  <label htmlFor="hours" className="form-label">
+                    Hours Worked (Max {getMaxHoursForDay()})
+                  </label>
+                  <input
+                    type="number"
+                    id="hours"
+                    value={hours}
+                    onChange={handleHoursChange}
+                    className="form-control"
+                    step="0.1"
+                    min="0"
+                    max={getMaxHoursForDay()}
+                    placeholder="Enter hours"
+                    disabled={isWeekend(date)}
+                  />
+                  {error && <small className="text-danger">{error}</small>}
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn btn-primary w-100"
+                  disabled={isWeekend(date) || loadingAddEntry}
+                >
+                  {loadingAddEntry ? (
+                    <>
+                      <FontAwesomeIcon icon={faSpinner} spin className="me-2" />
+                      Adding...
+                    </>
+                  ) : (
+                    <>
+                      <FontAwesomeIcon icon={faCalendarPlus} className="me-2" />
+                      Add Entry
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+          ) : (
+            <div className="text-center">
+              <button
+                onClick={handleInitiateTimesheet}
+                className="btn btn-primary"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <FontAwesomeIcon icon={faSpinner} spin className="me-2" />
+                    Initiating...
+                  </>
+                ) : (
+                  <>
+                    Initiate Timesheet for {currentMonth} {currentYear}{" "}
+                    <FontAwesomeIcon icon={faCheckCircle} className="me-2" />
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

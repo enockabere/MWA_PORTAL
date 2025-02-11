@@ -1,5 +1,4 @@
 import React from "react";
-import Avatar from "../../../static/img/logo/pp.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserCircle, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "react-toastify";
@@ -13,14 +12,17 @@ const AdjustmentApprovers = ({ approvers, pk }) => {
 
   const cancelSubmit = async () => {
     try {
-      const response = await fetch(`/selfservice/FnCancelLeaveAdjustmentApproval/${pk}/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken,
-        },
-        body: JSON.stringify({}),
-      });
+      const response = await fetch(
+        `/selfservice/FnCancelLeaveAdjustmentApproval/${pk}/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken,
+          },
+          body: JSON.stringify({}),
+        }
+      );
 
       if (response.ok) {
         toast.success("Cancel request submitted successfully!", {

@@ -15,7 +15,7 @@ const ApproveDocument = ({
   onApplicationSubmitted,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState(null);
+
   const navigate = useNavigate();
 
   const csrfToken = document
@@ -25,7 +25,6 @@ const ApproveDocument = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setSubmitError(null); // Reset error before submission
 
     const formData = {
       TableID,
@@ -46,7 +45,6 @@ const ApproveDocument = ({
       onApplicationSubmitted(); // Notify parent of success
       navigate("/selfservice/dashboard");
     } catch (error) {
-      setSubmitError("Error submitting the document. Please try again.");
       toast.error("Error submitting the document. Please try again.");
       console.error("Error details:", error);
     } finally {
@@ -89,12 +87,6 @@ const ApproveDocument = ({
           </>
         )}
       </button>
-
-      {submitError && (
-        <div className="alert alert-danger mt-2" role="alert">
-          {submitError}
-        </div>
-      )}
     </form>
   );
 };

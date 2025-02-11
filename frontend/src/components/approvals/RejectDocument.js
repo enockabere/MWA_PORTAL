@@ -117,7 +117,9 @@ const RejectDocument = ({
       {/* Modal */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton>
-          <Modal.Title>{getButtonText()}</Modal.Title>
+          <Modal.Title>
+            <h6>{getButtonText()}</h6>
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <form onSubmit={handleSubmit}>

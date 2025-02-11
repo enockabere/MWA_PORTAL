@@ -1,14 +1,21 @@
 import React from "react";
-import Avatar from "../../../static/img/logo/pp.png";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "react-toastify";
 import axios from "axios";
+import { useDashboard } from "../context/DashboardContext";
 
 const RelieverList = ({ relievers, onDeleteReliever, pk }) => {
   const csrfToken = document
     .querySelector('meta[name="csrf-token"]')
     .getAttribute("content");
+
+  const { profileImage } = useDashboard();
+
+  const imageSrc =
+    profileImage &&
+    `data:image/${profileImage.image_format};base64,${profileImage.encoded_string}`;
 
   // Function to handle deletion
   const handleDelete = async (staffNo) => {
@@ -48,7 +55,7 @@ const RelieverList = ({ relievers, onDeleteReliever, pk }) => {
           className="list-group-item list-group-item-action bg-light-hover-primary d-flex align-items-center justify-content-between"
         >
           <div className="list-wrapper gap-0 d-flex align-items-center">
-            <img className="list-img" src={Avatar} alt="profile" />
+            <img className="list-img" src={imageSrc} alt="profile" />
             <div className="list-content ms-3">
               <h5>{reliever.StaffName}</h5>
               <p>{reliever.ShortcutDimension2Code}</p>

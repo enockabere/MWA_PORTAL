@@ -7,8 +7,8 @@ const DashboardContext = createContext();
 export const useDashboard = () => useContext(DashboardContext);
 
 export const DashboardProvider = ({ children }) => {
-  // Default dashboard data
-  const [dashboardData, setDashboardData] = useState({
+  // Retrieve stored data from localStorage or use default values
+  const storedData = JSON.parse(localStorage.getItem("dashboardData")) || {
     user_data: {
       full_name: "John Doe",
       open_leave_count: 0,
@@ -33,36 +33,53 @@ export const DashboardProvider = ({ children }) => {
       Rejected: 0,
     },
     open_approvals: 0,
-  });
+  };
+
+  const [dashboardData, setDashboardData] = useState(storedData);
+
+  // Save to localStorage whenever dashboardData changes
+  useEffect(() => {
+    localStorage.setItem("dashboardData", JSON.stringify(dashboardData));
+  }, [dashboardData]);
+
+  // State for profile image (not stored persistently)
+  const [profileImage, setProfileImage] = useState(null);
 
   // Track the login status
   const [loggedIn, setLoggedIn] = useState(false);
 
-  // Fetch dashboard data if logged in
+  // Fetch dashboard data and profile image if logged in
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("/selfservice/dashboard_data/");
-        if (response.ok) {
-          const data = await response.json();
-          setDashboardData(data); // Update the dashboard data state
+        const dashboardResponse = await fetch("/selfservice/dashboard_data/");
+        if (dashboardResponse.ok) {
+          const dashboardData = await dashboardResponse.json();
+          setDashboardData(dashboardData); // Update state
         } else {
           console.error("Failed to fetch dashboard data");
         }
+
+        const profileResponse = await fetch("/selfservice/profile_picture/");
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          setProfileImage(profileData);
+        } else {
+          console.error("Failed to fetch profile image");
+        }
       } catch (error) {
-        console.error("Error fetching dashboard data:", error);
+        console.error("Error fetching data:", error);
       }
     };
 
     if (loggedIn) {
-      fetchData(); // Fetch data when logged in
+      fetchData(); // Fetch data only when logged in
     }
-  }, [loggedIn]); // Trigger fetch when loggedIn changes to true
+  }, [loggedIn]);
 
-  // Provide the dashboard data, setLoggedIn, and setDashboardData to children
   return (
     <DashboardContext.Provider
-      value={{ dashboardData, setLoggedIn, setDashboardData }}
+      value={{ dashboardData, profileImage, setLoggedIn, setDashboardData }}
     >
       {children}
     </DashboardContext.Provider>

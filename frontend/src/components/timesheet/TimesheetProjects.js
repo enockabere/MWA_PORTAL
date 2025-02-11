@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import MUIDataTable from "mui-datatables";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { useTable, usePagination } from "react-table";
+import Pagination from "../Layout/Pagination";
 
-// Format date as MM/DD/YYYY
 const formatDate = (dateString) => {
   const date = new Date(dateString);
+  if (isNaN(date)) return "-";
   const getDaySuffix = (day) => {
     if (day > 3 && day < 21) return "th";
     switch (day % 10) {
@@ -30,6 +30,8 @@ const formatDate = (dateString) => {
 
 const TimesheetProjects = ({ title = "Assigned Projects" }) => {
   const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true); // New loading state
+
   useEffect(() => {
     const fetchProjects = async () => {
       try {
@@ -41,150 +43,125 @@ const TimesheetProjects = ({ title = "Assigned Projects" }) => {
         const projectList = await response.json();
         setProjects(projectList);
       } catch (error) {
-        console.error("Error fetching max hours:", error);
+        console.error("Error fetching projects:", error);
+      } finally {
+        setLoading(false); // Set loading to false after fetching
       }
     };
     fetchProjects();
   }, []);
 
-  const columns = [
-    {
-      name: "ProjectTask",
-      label: "Project",
-      options: {
-        customBodyRender: (value) => value,
+  const columns = React.useMemo(
+    () => [
+      { Header: "Entry No", accessor: "EntryNo" },
+      { Header: "Project", accessor: "ProjectTask" },
+      {
+        Header: "Start Date",
+        accessor: "ProjectStartDate",
+        Cell: ({ value }) => formatDate(value),
       },
-    },
-    {
-      name: "ProjectStartDate",
-      label: "Start Date",
-      options: {
-        customBodyRender: (value) => formatDate(value),
+      {
+        Header: "End Date",
+        accessor: "ProjectEndDate",
+        Cell: ({ value }) => formatDate(value),
       },
-    },
-    {
-      name: "ProjectEndDate",
-      label: "End Date",
-      options: {
-        customBodyRender: (value) => formatDate(value),
-      },
-    },
-    {
-      name: "Allocation",
-      label: "Allocation",
-      options: {
-        customBodyRender: (value) => value,
-      },
-    },
-    {
-      name: "SupervisorName",
-      label: "Supervisor Name",
-      options: {
-        customBodyRender: (value) => value,
-      },
-    },
-  ];
+      { Header: "Allocation", accessor: "Allocation" },
+      { Header: "Supervisor Name", accessor: "SupervisorName" },
+    ],
+    []
+  );
 
-  const options = {
-    selectableRows: "none",
-    elevation: 0,
-    rowsPerPage: 3, // Show only 3 rows per page
-    rowsPerPageOptions: [3], // Only allow 3 rows per page
-    responsive: "standard",
-    textLabels: {
-      body: {
-        noMatch: "No projects found",
-        toolTip: "Sort",
-      },
-      pagination: {
-        next: "Next Page",
-        previous: "Previous Page",
-        rowsPerPage: "Rows per page:",
-        displayRows: "of",
-      },
-      toolbar: {
-        search: "Search",
-        downloadCsv: "Download CSV",
-        print: "Print",
-        viewColumns: "View Columns",
-        filterTable: "Filter Table",
-      },
-      filter: {
-        all: "All",
-        title: "FILTERS",
-        reset: "RESET",
-      },
-      viewColumns: {
-        title: "Show Columns",
-        titleAria: "Show/Hide Columns",
-      },
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    page,
+    prepareRow,
+    canPreviousPage,
+    canNextPage,
+    pageCount,
+    gotoPage,
+    nextPage,
+    previousPage,
+    state: { pageIndex },
+  } = useTable(
+    {
+      columns,
+      data: projects,
+      initialState: { pageIndex: 0, pageSize: 3 },
     },
-    setRowProps: (row, dataIndex, rowIndex) => {
-      return {
-        style: {
-          fontSize: "12px", // Smaller font size for rows
-        },
-      };
-    },
-    setCellHeaderProps: () => ({
-      style: {
-        fontSize: "12px", // Smaller font size for headers
-        fontWeight: "600", // Semi-bold headers
-        backgroundColor: "#f0f0f0", // Light gray background for headers
-        color: "#333", // Darker text color for headers
-      },
-    }),
-  };
-
-  const getMuiTheme = () =>
-    createTheme({
-      typography: {
-        fontFamily: "Work Sans, sans-serif",
-        fontSize: 12, // Default font size for the table
-      },
-      palette: {
-        background: { paper: "#ffffff", default: "#ffffff" },
-        mode: "light",
-      },
-      components: {
-        MUIDataTable: {
-          styleOverrides: {
-            root: {
-              boxShadow: "none", // Remove shadow
-              border: "1px solid #e0e0e0", // Add a light border
-            },
-            paper: {
-              boxShadow: "none", // Remove shadow
-            },
-          },
-        },
-        MUIDataTableHeadCell: {
-          styleOverrides: {
-            root: {
-              padding: "8px 12px", // Adjust header cell padding
-            },
-          },
-        },
-        MUIDataTableBodyCell: {
-          styleOverrides: {
-            root: {
-              padding: "8px 12px", // Adjust body cell padding
-            },
-          },
-        },
-      },
-    });
+    usePagination
+  );
 
   return (
     <div className="card p-3">
-      <ThemeProvider theme={getMuiTheme()}>
-        <MUIDataTable
-          title={title}
-          data={projects}
-          columns={columns}
-          options={options}
-        />
-      </ThemeProvider>
+      <h6 className="mb-3">{title}</h6>
+
+      {/* Loading Indicator */}
+      {loading ? (
+        <div className="text-center p-3">
+          <span className="spinner-border text-primary" role="status"></span>
+          <p>Loading projects...</p>
+        </div>
+      ) : (
+        <>
+          <table
+            {...getTableProps()}
+            className="table table-bordered table-hover my-3"
+          >
+            <thead className="thead-light">
+              {headerGroups.map((headerGroup) => (
+                <tr {...headerGroup.getHeaderGroupProps()} key={headerGroup.id}>
+                  {headerGroup.headers.map((column) => (
+                    <th
+                      {...column.getHeaderProps()}
+                      key={column.id}
+                      className="p-2 text-center"
+                    >
+                      {column.render("Header")}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody {...getTableBodyProps()}>
+              {page.length > 0 ? (
+                page.map((row) => {
+                  prepareRow(row);
+                  return (
+                    <tr {...row.getRowProps()} key={row.original.EntryNo}>
+                      {" "}
+                      {/* Use EntryNo as key */}
+                      {row.cells.map((cell) => (
+                        <td
+                          {...cell.getCellProps()}
+                          key={cell.column.id}
+                          className="p-2 text-center"
+                        >
+                          {cell.render("Cell")}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={columns.length} className="text-center p-3">
+                    No projects found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+
+          {/* Custom Pagination Component */}
+          <Pagination
+            currentPage={pageIndex + 1}
+            totalPages={pageCount}
+            onPageChange={(page) => gotoPage(page - 1)}
+          />
+        </>
+      )}
     </div>
   );
 };

@@ -1,8 +1,8 @@
 import asyncio
 import json
 import logging
-import random
-import string
+import imghdr
+from django.core.cache import cache
 import aiohttp
 from django.shortcuts import render, redirect
 from myRequest.views import UserObjectMixins
@@ -226,12 +226,26 @@ class Login_View(UserObjectMixins,View):
                                 request.session["Job_Title"] = "Job Title"
                             else:
                                 request.session["Job_Title"] = data["Job_Title"]
+                            try:
+                                get_profile_display = self.make_soap_request(
+                                    soap_headers,
+                                    "fnGetEmployeeImage",
+                                    Employee_No_
+                                )
+                                print(get_profile_display)
+                                binary_data = base64.b64decode(get_profile_display)
+                                image_format = imghdr.what(None,binary_data)
+                                cache.set("encoded_string", get_profile_display)
+                                cache.set("image_format", image_format)
+                                
+                            except Exception as e:
+                                print(e)
+                                    
                             default_password = 'Z0FBQUFBQm5Fa1RnYzhPbS1fM1hIVzNlUzVrcVBaRUFsVC1LS2lzLVNUUFV3MmdBalFweHJqMmp3X2pZdnlETm14ZUp2UGlZdFJvdUNHMUkwMHpJNnZMTzN3ck9WclcyYUE9PQ=='
                             decrypted = self.pass_decrypt(default_password)
-                            print("decrypted :", decrypted)
                             user_password = self.pass_decrypt(data['Password'])
                             if password == user_password and password == decrypted:
-                                return JsonResponse({'redirect_url': '/selfservice/dashboard/'})
+                                 return JsonResponse({'redirect_url': '/selfservice/dashboard/'})  
                                 # generate_otp = self.generate_otp(4)
                                 # request.session['reset_password_otp'] = generate_otp
                                 # email_message = f"Hi {full_name}, We have sent you an email with an OTP to reset your password for the MWA Employee Self-Service Portal. Please check your email and follow the instructions to complete the reset process."
@@ -256,6 +270,7 @@ class Login_View(UserObjectMixins,View):
                                 #         return JsonResponse({'redirect_url': '/selfservice/'})
                                 # except Exception as e:
                                 #     print("send-otp-response:", str(e))
+                                
                             elif password == user_password and password != decrypted :
                                 return JsonResponse({'redirect_url': '/selfservice/dashboard/'})
                             else:
@@ -1469,6 +1484,7 @@ class Approval(UserObjectMixins, View):
                 "LeaveAdjustment",
                 "LeaveApplication",
                 "Leave Recall",
+                "TimeSheet",
             ]
             async with aiohttp.ClientSession() as session:
                 task_open_approvals = asyncio.ensure_future(
@@ -1646,6 +1662,7 @@ class FnActionApprovals(UserObjectMixins, View):
                 Entry_No_,
                 statusApproveRejectDelegate,
                 approvalComment,
+                User_ID
             )
             if response and response != "0":
                 return JsonResponse({"success": True, "message": "Approved successfully!"})
@@ -1935,8 +1952,6 @@ class TimesheetEntry(UserObjectMixins,View):
                 hours_worked = Decimal(hours_worked_str)  # Convert HoursWorked to decimal
             except (ValueError, TypeError) as e:
                 return JsonResponse({"success": False, "error": f"Invalid data format: {str(e)}"}, status=400)
-
-            # Make SOAP request
             response = self.make_soap_request(
                 soap_headers, "fnModifyTimesheetLines", document_no, entry_no, date, hours_worked
             )
@@ -1968,3 +1983,103 @@ class GetTimesheets(UserObjectMixins, View):
             return JsonResponse(timesheets, safe=False)
         except Exception as e:
             return JsonResponse({"error": str(e)}, safe=False)
+
+
+
+class SubmitTimesheetHeader(UserObjectMixins,View):   
+    def post(self, request, pk):
+        try:
+            soap_headers = request.session.get("soap_headers", {})
+
+            response = self.make_soap_request(
+                soap_headers, "submitTimesheetHeader", pk
+            )
+            if response == True:
+                return JsonResponse({"success": True, "message": "Timesheet submitted successfully!"})
+            else:
+                return JsonResponse({"success": False, "error": "Failed to submit  timesheet entry"}, status=400)
+
+        except Exception as e:
+            print("Error:", e)
+            return JsonResponse({"success": False, "error": str(e)}, status=500)
+        
+class TimeSheetHeader(UserObjectMixins, View):
+    async def get(self, request, pk):
+        try:
+            data = {}
+
+            async with aiohttp.ClientSession() as session:
+                task = asyncio.ensure_future(
+                    self.simple_one_filtered_data(
+                        session, "/QyTimeSheetHeader", "Code", "eq", pk
+                    )
+                )
+                response = await asyncio.gather(
+                    task
+                )
+                for adjustment in response[0]:
+                    data = adjustment
+            return JsonResponse(data, safe=False)
+
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+
+class Change_Password(UserObjectMixins, View):
+    def post(self, request):
+        soap_headers = request.session.get("soap_headers", {})
+        employeeNo = request.session["Employee_No_"]
+        data = json.loads(request.body)
+        new_password = self.pass_encrypt(data.get('password'))
+
+        response = self.make_soap_request(soap_headers, "fnChangePassword", employeeNo, new_password )
+
+        print(response)
+        if response == True:
+            request.session.flush()
+            return JsonResponse({'status': 'success'}, status=200)
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
+
+class ProfilePicture(UserObjectMixins, View):
+    def get(self, request):
+        try:
+            data = {}
+            encoded_string = cache.get("encoded_string")
+            image_format = cache.get("image_format")
+            
+            data = {
+                "encoded_string": encoded_string,
+                "image_format": image_format
+            }
+            return JsonResponse(data, safe=False)
+
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)}, status=500)
+        
+    def post(self, request):
+        soap_headers = request.session.get("soap_headers", {})
+        employeeNo = request.session["Employee_No_"]
+        profile_picture = request.FILES.get("profile_picture")
+
+        if not profile_picture:
+            return JsonResponse({"success": False, "message": "No file uploaded."}, status=400)
+
+        try:
+            encoded_string = base64.b64encode(profile_picture.read()).decode("utf-8")
+            response = self.make_soap_request(soap_headers, "fnUpdateEmployeeImage", employeeNo, encoded_string)
+
+            if response:
+                print(response)
+                cache.delete("encoded_string")
+                cache.delete("image_format")
+                binary_data = base64.b64decode(response)
+                image_format = imghdr.what(None, binary_data)
+                cache.set("encoded_string", response)
+                cache.set("image_format", image_format)
+                return JsonResponse({"success": True, "message": "Profile picture updated successfully, login to continue!"})
+            else:
+                return JsonResponse({"success": False, "message": "Failed to update profile picture."}, status=500)
+        except Exception as e:
+            return JsonResponse({"success": False, "message": str(e)}, status=500)
+        
+

@@ -18,15 +18,11 @@ const SubmitTimesheet = ({ timesheetId, onHide, onShowToast }) => {
     setSubmitError(null);
 
     try {
-      await axios.post(
-        `/selfservice/FnSubmitLeavePlanner/${timesheetId}/`,
-        null,
-        {
-          headers: {
-            "X-CSRFToken": csrfToken,
-          },
-        }
-      );
+      await axios.post(`/selfservice/submit-timesheet/${timesheetId}/`, null, {
+        headers: {
+          "X-CSRFToken": csrfToken,
+        },
+      });
 
       onShowToast("Timesheet submitted successfully!", "success");
       onHide();

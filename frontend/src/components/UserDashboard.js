@@ -21,8 +21,6 @@ function UserDashboard() {
       });
     };
     const scripts = [
-      "../static/assets/js/icons/feather-icon/feather.min.js",
-      "../static/assets/js/icons/feather-icon/feather-icon.js",
       "../static/assets/js/scrollbar/simplebar.js",
       "../static/assets/js/scrollbar/custom.js",
       "../static/assets/js/config.js",

@@ -1,92 +1,32 @@
 import React from "react";
 import Breadcrumb from "./Layout/Breadcrumb";
-import Avatar from "../../static/img/logo/pp.png";
 import { useDashboard } from "./context/DashboardContext";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUserEdit, faUserCog } from "@fortawesome/free-solid-svg-icons";
+import AvatarDetails from "./AvatarDetails";
+import NextOfKin from "./NextKin/NextOfKin";
+import { toast, ToastContainer } from "react-toastify";
 
 const Profile = () => {
   const { dashboardData, setLoggedIn } = useDashboard();
+  const handleToast = (message, type) => {
+    if (type === "success") {
+      toast.success(message);
+    } else if (type === "error") {
+      toast.error(message);
+    }
+  };
   return (
     <div>
       <Breadcrumb pageTitle="My Profile" breadcrumb="My Profile" />
+      <ToastContainer position="top-right" autoClose={3000} />
       <div className="container-fluid">
         <div className="row">
           <div className="col-xl-4">
-            <div className="card">
-              <div className="card-header pb-0">
-                <h4 className="card-title mb-0">My Profile</h4>
-                <div className="card-options">
-                  <a
-                    className="card-options-collapse"
-                    href="#"
-                    data-bs-toggle="card-collapse"
-                  >
-                    <i className="fe fe-chevron-up" />
-                  </a>
-                  <a
-                    className="card-options-remove"
-                    href="#"
-                    data-bs-toggle="card-remove"
-                  >
-                    <i className="fe fe-x" />
-                  </a>
-                </div>
-              </div>
-              <div className="card-body">
-                <form>
-                  <div className="row mb-2">
-                    <div className="profile-title">
-                      <div className="d-flex">
-                        {" "}
-                        <img
-                          className="img-70 rounded-circle"
-                          alt=""
-                          src={Avatar}
-                        />
-                        <div
-                          className="flex-grow-2"
-                          style={{ marginLeft: "1rem" }}
-                        >
-                          <h3 className="mb-1 f-w-600">{`${dashboardData.user_data.full_name}`}</h3>
-                          <p>{`${dashboardData.user_data.Job_Title}`}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mb-3">
-                    <label className="form-label">Email-Address</label>
-                    <input
-                      className="form-control"
-                      placeholder={`${dashboardData.user_data.E_Mail}`}
-                      readOnly
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label className="form-label">Password</label>
-                    <input
-                      className="form-control"
-                      type="password"
-                      defaultValue="password"
-                    />
-                  </div>
-                  <div className="form-footer">
-                    <button className="btn btn-primary btn-block" disabled>
-                      <FontAwesomeIcon
-                        icon={faUserCog}
-                        style={{ marginRight: "8px" }}
-                      />
-                      Save
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
+            <AvatarDetails onShowToast={handleToast} />
           </div>
           <div className="col-xl-8">
-            <form className="card">
+            <div className="card h-100">
               <div className="card-header pb-0">
-                <h4 className="card-title mb-0">Edit Profile</h4>
+                <h4 className="card-title mb-0">Profile Information</h4>
                 <div className="card-options">
                   <a
                     className="card-options-collapse"
@@ -145,7 +85,7 @@ const Profile = () => {
                       <input
                         className="form-control"
                         type="text"
-                        placeholder={dashboardData.user_data.Employee}
+                        placeholder={dashboardData.user_data.Employee_No_}
                         readOnly
                       />
                     </div>
@@ -223,19 +163,14 @@ const Profile = () => {
                 </div>
               </div>
               <div className="card-footer text-end">
-                <button className="btn btn-primary" type="submit" disabled>
-                  <FontAwesomeIcon
-                    icon={faUserEdit}
-                    style={{ marginRight: "8px" }}
-                  />
-                  Update Profile
-                </button>
+                <NextOfKin />
               </div>
-            </form>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 };
+
 export default Profile;

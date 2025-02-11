@@ -6,7 +6,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
       <ul className="pagination pagination-success pagin-border-success">
         <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
           <a
-            className="page-link"
+            className="page-link" style={{ cursor: "pointer" }}
             onClick={() => onPageChange(currentPage - 1)}
           >
             Previous
@@ -28,7 +28,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
           }`}
         >
           <a
-            className="page-link"
+            className="page-link" style={{ cursor: "pointer" }}
             onClick={() => onPageChange(currentPage + 1)}
           >
             Next

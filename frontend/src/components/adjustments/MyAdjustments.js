@@ -2,17 +2,16 @@ import React, { useState, useEffect } from "react";
 import Breadcrumb from "../Layout/Breadcrumb";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faBullseye,
   faFolderOpen,
   faCheckCircle,
   faTable,
   faThLarge,
 } from "@fortawesome/free-solid-svg-icons";
-import Avatar from "../../../static/img/logo/pp.png";
 import Pagination from "../Layout/Pagination";
 import AdjustmentModal from "./AdjustmentModal";
 import Preloader from "../Layout/Preloader";
 import { ToastContainer } from "react-toastify";
+import { useDashboard } from "../context/DashboardContext";
 
 const MyAdjustments = () => {
   const itemsPerPage = 3;
@@ -25,6 +24,11 @@ const MyAdjustments = () => {
     approved: [],
     rejected: [],
   });
+  const { profileImage } = useDashboard();
+  const imageSrc =
+    profileImage &&
+    `data:image/${profileImage.image_format};base64,${profileImage.encoded_string}`;
+
   const [loading, setLoading] = useState(true);
   const [paginationLoading, setPaginationLoading] = useState(false);
   const [tabLoading, setTabLoading] = useState(false);
@@ -221,7 +225,7 @@ const MyAdjustments = () => {
                           <div className="d-flex">
                             <img
                               className="img-20 me-2 rounded-circle"
-                              src={Avatar}
+                              src={imageSrc}
                               alt="team-member"
                             />
                             <div className="flex-grow-1">

@@ -1,38 +1,22 @@
-import React, { useState, useEffect } from "react";
-import MUIDataTable from "mui-datatables";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-import IconButton from "@mui/material/IconButton";
+import React, { useState, useEffect, useMemo } from "react";
+import { useTable, usePagination } from "react-table";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEdit } from "@fortawesome/free-solid-svg-icons";
-import { Modal, Button, Form } from "react-bootstrap";
-import Box from "@mui/material/Box";
-import TextField from "@mui/material/TextField";
-import { Button as MUIButton } from "@mui/material";
+import {
+  faEdit,
+  faArrowRight,
+  faTimes,
+} from "@fortawesome/free-solid-svg-icons";
+import { Modal, Button, Form, Spinner } from "react-bootstrap";
+import Pagination from "../Layout/Pagination";
 
-// Format date as MM/DD/YYYY
 const formatDate = (dateString) => {
   const date = new Date(dateString);
-  const getDaySuffix = (day) => {
-    if (day > 3 && day < 21) return "th";
-    switch (day % 10) {
-      case 1:
-        return "st";
-      case 2:
-        return "nd";
-      case 3:
-        return "rd";
-      default:
-        return "th";
-    }
-  };
-
-  const dayOfMonth = date.getDate();
-  const suffix = getDaySuffix(dayOfMonth);
-  const month = date.toLocaleString("default", { month: "short" });
-  const year = date.getFullYear();
-  const weekday = date.toLocaleString("default", { weekday: "short" });
-
-  return `${weekday}, ${dayOfMonth}${suffix} ${month}, ${year}`;
+  return `${date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })}`;
 };
 
 const TimesheetEntriesTable = ({
@@ -47,6 +31,9 @@ const TimesheetEntriesTable = ({
     HoursWorkedMonThur: 0,
     HoursWorkedFri: 0,
   });
+  const [loadingRows, setLoadingRows] = useState({});
+  const [loading, setLoading] = useState(true);
+
   const csrfToken = document
     .querySelector('meta[name="csrf-token"]')
     ?.getAttribute("content");
@@ -55,37 +42,25 @@ const TimesheetEntriesTable = ({
     const fetchMaxHours = async () => {
       try {
         const response = await fetch(`/selfservice/get-max-timesheet-entries/`);
-        if (!response.ok) {
-          console.error("Failed to fetch max timesheet entries");
-          return;
+        if (response.ok) {
+          const data = await response.json();
+          setMaxHours({
+            HoursWorkedMonThur: data.HoursWorkedMonThur,
+            HoursWorkedFri: data.HoursWorkedFri,
+          });
         }
-        const data = await response.json();
-        setMaxHours({
-          HoursWorkedMonThur: data.HoursWorkedMonThur,
-          HoursWorkedFri: data.HoursWorkedFri,
-        });
       } catch (error) {
         console.error("Error fetching max hours:", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchMaxHours();
   }, []);
 
-  const getMaxHoursForDay = (dateString) => {
-    const date = new Date(dateString);
-    const dayOfWeek = date.getDay();
-
-    if (dayOfWeek >= 1 && dayOfWeek <= 4) {
-      return maxHours.HoursWorkedMonThur; // Monday to Thursday
-    } else if (dayOfWeek === 5) {
-      return maxHours.HoursWorkedFri; // Friday
-    }
-    return 0;
-  };
-
   const handleEditClick = (entry) => {
     setSelectedEntry(entry);
-    setUpdatedHours(entry.HoursWorked.toString()); // Ensure it's a string for input
+    setUpdatedHours(entry.HoursWorked.toString());
     setOpenModal(true);
   };
 
@@ -95,14 +70,13 @@ const TimesheetEntriesTable = ({
   };
 
   const handleSave = async () => {
-    // Prevent further action if it's a weekend or validation fails
     if (!validateHours()) return;
 
     const payload = {
       DocumentNo: selectedEntry.DocumentNo,
       EntryNo: selectedEntry.EntryNo,
       Date: selectedEntry.Date,
-      HoursWorked: parseFloat(updatedHours), // Ensure hours are passed as a decimal
+      HoursWorked: parseFloat(updatedHours),
     };
 
     try {
@@ -110,251 +84,240 @@ const TimesheetEntriesTable = ({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken, // CSRF token for protection
+          "X-CSRFToken": csrfToken,
         },
         body: JSON.stringify(payload),
       });
 
       const result = await response.json();
-
       if (result.success) {
         onAddEntry(selectedEntry.DocumentNo);
         handleClose();
-      } else {
-        console.error(result.error);
       }
     } catch (error) {
       console.error("Error submitting timesheet:", error);
     }
   };
 
-  useEffect(() => {
-    if (openModal) {
-      // Focus the input field when modal is open
-      const inputElement = document.querySelector("input");
-      if (inputElement) inputElement.focus();
+  const handleSubmitEntry = async (entry) => {
+    setLoadingRows((prev) => ({ ...prev, [entry.EntryNo]: true })); // Start loading
+
+    const payload = { DocumentNo: entry.DocumentNo, EntryNo: entry.EntryNo };
+
+    try {
+      const response = await fetch("/selfservice/submit-timesheet-entry/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert("Timesheet entry submitted successfully!");
+      }
+    } catch (error) {
+      console.error("Error submitting entry:", error);
+    } finally {
+      setLoadingRows((prev) => ({ ...prev, [entry.EntryNo]: false })); // Stop loading
     }
-  }, [openModal]);
+  };
 
   const validateHours = () => {
     const hours = parseFloat(updatedHours);
     const maxHoursForDay = getMaxHoursForDay(selectedEntry?.Date);
-    if (isNaN(hours) || hours < 0 || hours > maxHoursForDay) {
-      console.error("Invalid hours input");
-      return false;
-    }
-    return true;
+    return !(isNaN(hours) || hours < 0 || hours > maxHoursForDay);
   };
 
-  const columns = [
-    {
-      name: "Date",
-      label: "Date",
-      options: {
-        customBodyRender: (value) => formatDate(value),
-      },
-    },
-    {
-      name: "Weekend",
-      label: "Weekend",
-      options: {
-        customBodyRender: (value) => (value ? "Yes" : "No"),
-      },
-    },
-    {
-      name: "Holiday",
-      label: "Holiday",
-      options: {
-        customBodyRender: (value) => (value ? "Yes" : "No"),
-      },
-    },
-    {
-      name: "LeaveDay",
-      label: "Leave Day",
-      options: {
-        customBodyRender: (value) => (value ? "Yes" : "No"),
-      },
-    },
-    {
-      name: "HoursWorked",
-      label: "Hours Worked",
-      options: {
-        customBodyRender: (value, tableMeta) => {
-          const rowData = data[tableMeta.rowIndex];
-          const isEditable =
-            !rowData.Holiday && !rowData.Weekend && !rowData.LeaveDay;
+  const getMaxHoursForDay = (dateString) => {
+    const date = new Date(dateString);
+    return date.getDay() >= 1 && date.getDay() <= 4
+      ? maxHours.HoursWorkedMonThur
+      : maxHours.HoursWorkedFri;
+  };
 
-          return (
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span>{value}</span>
-              {isEditable && (
-                <IconButton
-                  onClick={() => handleEditClick(rowData)}
-                  color="primary"
-                  sx={{ padding: "4px" }}
-                >
-                  <FontAwesomeIcon icon={faEdit} style={{ color: "#1976D2" }} />
-                </IconButton>
+  const columns = useMemo(
+    () => [
+      {
+        Header: "Date",
+        accessor: "Date",
+        Cell: ({ value }) => formatDate(value),
+      },
+      {
+        Header: "Weekend",
+        accessor: "Weekend",
+        Cell: ({ value }) => (value ? "Yes" : "No"),
+      },
+      {
+        Header: "Holiday",
+        accessor: "Holiday",
+        Cell: ({ value }) => (value ? "Yes" : "No"),
+      },
+      {
+        Header: "Leave Day",
+        accessor: "LeaveDay",
+        Cell: ({ value }) => (value ? "Yes" : "No"),
+      },
+      {
+        Header: "Hours Worked",
+        accessor: "HoursWorked",
+        Cell: ({ row }) => (
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span>{row.original.HoursWorked}</span>
+            {!row.original.Holiday &&
+              !row.original.Weekend &&
+              !row.original.LeaveDay &&
+              (row.original.TimeSheetStatus === "Open" ||
+                row.original.TimeSheetStatus === "Rejected") && (
+                <FontAwesomeIcon
+                  icon={faEdit}
+                  style={{
+                    color: "#1976D2",
+                    cursor: "pointer",
+                    fontSize: "6px",
+                  }}
+                  onClick={() => handleEditClick(row.original)}
+                />
               )}
-            </div>
-          );
-        },
+          </div>
+        ),
       },
-    },
-  ];
+      {
+        Header: "Status",
+        accessor: "TimeSheetStatus",
+      },
+      {
+        Header: "Action",
+        accessor: "action",
+        Cell: ({ row }) => (
+          <Button
+            variant="success"
+            size="sm"
+            onClick={() => handleSubmitEntry(row.original)}
+            disabled={
+              loadingRows[row.original.EntryNo] ||
+              !(
+                row.original.TimeSheetStatus === "Open" ||
+                row.original.TimeSheetStatus === "Rejected"
+              )
+            }
+          >
+            {loadingRows[row.original.EntryNo] ? (
+              <span>
+                <i className="fa fa-spinner fa-spin" /> Submitting...
+              </span>
+            ) : (
+              <span>
+                Submit{" "}
+                <i
+                  className="fa fa-arrow-right "
+                  style={{ marginLeft: "3px" }}
+                />
+              </span>
+            )}
+          </Button>
+        ),
+      },
+    ],
+    [data]
+  );
 
-  const options = {
-    selectableRows: "none",
-    elevation: 0,
-    rowsPerPage: 3, // Show only 3 rows per page
-    rowsPerPageOptions: [3], // Only allow 3 rows per page
-    responsive: "standard",
-    textLabels: {
-      body: {
-        noMatch: "No entries found",
-        toolTip: "Sort",
-      },
-      pagination: {
-        next: "Next Page",
-        previous: "Previous Page",
-        rowsPerPage: "Rows per page:",
-        displayRows: "of",
-      },
-      toolbar: {
-        search: "Search",
-        downloadCsv: "Download CSV",
-        print: "Print",
-        viewColumns: "View Columns",
-        filterTable: "Filter Table",
-      },
-      filter: {
-        all: "All",
-        title: "FILTERS",
-        reset: "RESET",
-      },
-      viewColumns: {
-        title: "Show Columns",
-        titleAria: "Show/Hide Columns",
-      },
-    },
-    setRowProps: (row, dataIndex, rowIndex) => {
-      return {
-        style: {
-          fontSize: "12px", // Smaller font size for rows
-        },
-      };
-    },
-    setCellHeaderProps: () => ({
-      style: {
-        fontSize: "12px", // Smaller font size for headers
-        fontWeight: "600", // Semi-bold headers
-        backgroundColor: "#f0f0f0", // Light gray background for headers
-        color: "#333", // Darker text color for headers
-      },
-    }),
-  };
-
-  const getMuiTheme = () =>
-    createTheme({
-      typography: {
-        fontFamily: "Work Sans, sans-serif",
-        fontSize: 12, // Default font size for the table
-      },
-      palette: {
-        background: { paper: "#ffffff", default: "#ffffff" },
-        mode: "light",
-      },
-      components: {
-        MUIDataTable: {
-          styleOverrides: {
-            root: {
-              boxShadow: "none", // Remove shadow
-              border: "1px solid #e0e0e0", // Add a light border
-            },
-            paper: {
-              boxShadow: "none", // Remove shadow
-            },
-          },
-        },
-        MUIDataTableHeadCell: {
-          styleOverrides: {
-            root: {
-              padding: "8px 12px", // Adjust header cell padding
-            },
-          },
-        },
-        MUIDataTableBodyCell: {
-          styleOverrides: {
-            root: {
-              padding: "8px 12px", // Adjust body cell padding
-            },
-          },
-        },
-      },
-    });
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    page,
+    prepareRow,
+    nextPage,
+    previousPage,
+    canNextPage,
+    canPreviousPage,
+    state: { pageIndex },
+    pageCount,
+    gotoPage,
+  } = useTable({ columns, data, initialState: { pageSize: 3 } }, usePagination);
 
   return (
     <div className="card mt-3 p-3">
-      <ThemeProvider theme={getMuiTheme()}>
-        <MUIDataTable
-          title={title}
-          data={data}
-          columns={columns}
-          options={options}
-        />
-      </ThemeProvider>
+      <h6>{title}</h6>
+      {loading ? (
+        <div className="text-center my-5">
+          <Spinner animation="border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </Spinner>
+        </div>
+      ) : (
+        <>
+          <table
+            {...getTableProps()}
+            className="table table-bordered table-responsive table-hover my-3"
+            style={{ borderRadius: "5px" }}
+          >
+            <thead className="thead-dark">
+              {headerGroups.map((headerGroup) => (
+                <tr {...headerGroup.getHeaderGroupProps()}>
+                  {headerGroup.headers.map((column) => (
+                    <th {...column.getHeaderProps()}>
+                      {column.render("Header")}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody {...getTableBodyProps()}>
+              {page.map((row) => {
+                prepareRow(row);
+                return (
+                  <tr {...row.getRowProps()}>
+                    {row.cells.map((cell) => (
+                      <td {...cell.getCellProps()}>{cell.render("Cell")}</td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
 
-      <Modal
-        show={openModal}
-        onHide={handleClose}
-        aria-labelledby="modal-title"
-      >
+          <Pagination
+            currentPage={pageIndex + 1}
+            totalPages={pageCount}
+            onPageChange={(page) => gotoPage(page - 1)}
+          />
+        </>
+      )}
+
+      {/* Edit Hours Modal */}
+      <Modal show={openModal} onHide={handleClose}>
         <Modal.Header closeButton>
-          <Modal.Title id="modal-title">
+          <Modal.Title>
             <h6>
               Edit Hours Worked on{" "}
-              {selectedEntry && formatDate(selectedEntry.Date)}
+              <span className="text-primary">
+                {selectedEntry && formatDate(selectedEntry.Date)}
+              </span>
             </h6>
           </Modal.Title>
         </Modal.Header>
-
         <Modal.Body>
-          <Box
-            sx={{
-              width: 450,
-              margin: "auto",
-              padding: 3,
-              backgroundColor: "white",
-              borderRadius: 2,
-              overflow: "auto", // Ensures no layout shift issues
-            }}
-          >
-            <TextField
-              autoFocus
-              label={`Hours Worked (Max - ${getMaxHoursForDay(
-                selectedEntry?.Date
-              )} hours)`}
+          <Form.Group>
+            <Form.Label>Hours Worked</Form.Label>
+            <Form.Control
               type="number"
-              fullWidth
               value={updatedHours}
               onChange={(e) => setUpdatedHours(e.target.value)}
-              margin="normal"
-              inputProps={{
-                max: getMaxHoursForDay(selectedEntry?.Date),
-                min: 0,
-              }}
             />
-
-            <MUIButton
-              variant="contained"
-              color="success"
-              onClick={handleSave}
-              sx={{ mt: 2 }}
-            >
-              Save
-            </MUIButton>
-          </Box>
+          </Form.Group>
         </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleClose}>
+            Cancel <FontAwesomeIcon icon={faTimes} />
+          </Button>
+          <Button variant="primary" onClick={handleSave}>
+            Save Changes <FontAwesomeIcon icon={faArrowRight} />
+          </Button>
+        </Modal.Footer>
       </Modal>
     </div>
   );

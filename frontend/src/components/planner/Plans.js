@@ -13,6 +13,7 @@ import Avatar from "../../../static/img/logo/pp.png";
 import PlanDetailsModal from "./PlanDetailsModal";
 import Preloader from "../Layout/Preloader";
 import { toast, ToastContainer } from "react-toastify";
+import { useDashboard } from "../context/DashboardContext";
 
 const Plans = () => {
   const itemsPerPage = 3;
@@ -24,6 +25,11 @@ const Plans = () => {
   const [paginationLoading, setPaginationLoading] = useState(false);
   const [tabLoading, setTabLoading] = useState(false);
   const [isTableView, setIsTableView] = useState(false);
+  const { profileImage } = useDashboard();
+
+  const imageSrc = profileImage
+    ? `data:image/${profileImage.image_format};base64,${profileImage.encoded_string}`
+    : Avatar;
 
   const handleToast = (message, type) => {
     if (type === "success") {
@@ -228,7 +234,7 @@ const Plans = () => {
                           <div className="d-flex">
                             <img
                               className="img-20 me-2 rounded-circle"
-                              src={Avatar}
+                              src={imageSrc}
                               alt="team-member"
                             />
                             <div className="flex-grow-1">

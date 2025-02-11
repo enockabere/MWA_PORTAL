@@ -1,13 +1,16 @@
 import React from "react";
 import mwaLogo from "../../../static/img/logo/logo.png";
-import Avatar from "../../../static/img/logo/pp.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBell } from "@fortawesome/free-solid-svg-icons";
 import dashboard from "../../../static/img/logo/dashboard.png";
 import { useDashboard } from "../context/DashboardContext";
 
 const Header = ({ notificationCount, avatarSrc }) => {
-  const { dashboardData, setLoggedIn } = useDashboard();
+  const { dashboardData, profileImage, setLoggedIn } = useDashboard();
+  const imageSrc =
+    profileImage &&
+    `data:image/${profileImage.image_format};base64,${profileImage.encoded_string}`;
+
   return (
     <div className="page-header">
       <div className="header-wrapper row m-0">
@@ -108,7 +111,7 @@ const Header = ({ notificationCount, avatarSrc }) => {
                       <li key={index}>
                         <div className="user-notification">
                           <div>
-                            <img src={Avatar} alt="avatar" />
+                            <img src={imageSrc} alt="avatar" />
                           </div>
                           <div className="user-description">
                             <a href="letter-box.html">
@@ -156,11 +159,9 @@ const Header = ({ notificationCount, avatarSrc }) => {
             <li className="profile-nav onhover-dropdown pe-0 py-0">
               <div className="d-flex align-items-center profile-media">
                 <img
-                  className="b-r-25"
-                  src={Avatar}
-                  height="50"
-                  width="50"
-                  alt="Profile"
+                  src={imageSrc}
+                  alt="avatar"
+                  style={{ width: "50px", height: "50px" }}
                 />
                 <div className="flex-grow-1 user">
                   <span>

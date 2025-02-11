@@ -288,6 +288,19 @@ const Sidebar = () => {
                       Leave Reports
                     </Link>
                   </li>
+                  <li>
+                    <Link to="/selfservice/dashboard/my-timesheets">
+                      Timesheet Reports
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/selfservice/dashboard/my-timesheets">
+                      Payslip
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/selfservice/dashboard/my-timesheets">P9</Link>
+                  </li>
                 </ul>
               </li>
               <li className="sidebar-list">

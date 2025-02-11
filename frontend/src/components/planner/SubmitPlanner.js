@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { toast } from "react-toastify";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 

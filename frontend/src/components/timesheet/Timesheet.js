@@ -17,8 +17,8 @@ const Timesheet = () => {
   const [Initiated, setInitiated] = useState(false);
   const [currentTimesheet, setCurrentTimesheet] = useState(null);
   const [timesheetEntries, setTimesheetEntries] = useState([]);
-  const [projects, setProjects] = useState([]); // Store projects list
-  const [showModal, setShowModal] = useState(false); // Manage modal visibility
+  const [projects, setProjects] = useState([]);
+  const [showModal, setShowModal] = useState(false);
 
   const fetchTimesheet = async () => {
     try {
@@ -27,7 +27,6 @@ const Timesheet = () => {
         console.error("Failed to fetch timesheet");
         return;
       }
-
       const data = await response.json();
       if (Object.keys(data).length > 0) {
         setCurrentTimesheet(data);
@@ -54,13 +53,13 @@ const Timesheet = () => {
 
   const fetchProjects = async () => {
     try {
-      const response = await fetch("/selfservice/get-user-projects/"); // Django view URL
+      const response = await fetch("/selfservice/get-user-projects/");
       if (!response.ok) {
         console.error("Failed to fetch projects");
         return;
       }
       const projectList = await response.json();
-      setProjects(projectList); // Store projects in state
+      setProjects(projectList);
     } catch (error) {
       console.error("Error fetching projects:", error);
     }
@@ -68,7 +67,7 @@ const Timesheet = () => {
 
   useEffect(() => {
     fetchTimesheet();
-    fetchProjects(); // Fetch projects on mount
+    fetchProjects();
   }, []);
 
   const refreshTimesheets = () => {
@@ -83,22 +82,17 @@ const Timesheet = () => {
       />
       <div className="container-fluid">
         <div className="row">
-          {/* First Column - Form and Calendar */}
           <div className="col-lg-8">
             <div className="card h-100">
               <div className="card-body">
-                <div>
-                  <TimesheetCalendar
-                    entries={timesheetEntries}
-                    style={{
-                      width: "100%",
-                      maxWidth: "1200px",
-                      margin: "0 auto",
-                    }}
-                  />
-                </div>
-
-                {/* Button to Open Project Summary Modal */}
+                <TimesheetCalendar
+                  entries={timesheetEntries}
+                  style={{
+                    width: "100%",
+                    maxWidth: "1200px",
+                    margin: "0 auto",
+                  }}
+                />
                 <div className="my-3">
                   <Button variant="primary" onClick={() => setShowModal(true)}>
                     <FontAwesomeIcon icon={faEye} className="me-2" /> View
@@ -108,8 +102,6 @@ const Timesheet = () => {
               </div>
             </div>
           </div>
-
-          {/* Second Column - Timesheet Form and Progress */}
           <div className="col-lg-4">
             <div className="card h-100">
               <div className="card-body">
@@ -128,22 +120,25 @@ const Timesheet = () => {
         </div>
       </div>
 
-      {/* Bootstrap Modal for Project Summary */}
+      {/* Modal for Project Summary */}
       <Modal
         show={showModal}
         onHide={() => setShowModal(false)}
         size="lg"
         centered
       >
-        <Modal.Header closeButton>
-          <Modal.Title>Assigned Projects</Modal.Title>
+        <Modal.Header className="bg-primary text-white" closeButton>
+          <Modal.Title>
+            <h5 className="text-white">Assigned Projects</h5>
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <ProjectSummary projects={projects} />
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowModal(false)}>
-            Close
+            Close{" "}
+            <i className="fa fa-times-circle" style={{ marginLeft: "3px" }} />
           </Button>
         </Modal.Footer>
       </Modal>
