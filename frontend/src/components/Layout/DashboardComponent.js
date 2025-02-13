@@ -1,7 +1,12 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import message from "../../../static/img/bg/massage.gif";
 import books from "../../../static/img/bg/books.gif";
-import { faEye, faArrowRight, faPlus } from "@fortawesome/free-solid-svg-icons";
+import {
+  faEye,
+  faArrowRight,
+  faPlus,
+  faBrain,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Breadcrumb from "./Breadcrumb";
 import open_doc from "../../../static/img/bg/open.png";
@@ -20,6 +25,7 @@ import { useLocation } from "react-router-dom";
 
 const DashboardComponent = () => {
   const { dashboardData, setLoggedIn } = useDashboard();
+  const [showModal, setShowModal] = useState(false);
   const location = useLocation();
 
   useEffect(() => {

@@ -15,16 +15,22 @@ import {
   faEdit,
   faBrain,
 } from "@fortawesome/free-solid-svg-icons";
-import Logout from "./Logout";
+import SimpleBar from "simplebar";
+import { useDashboard } from "../context/DashboardContext";
 
 const Sidebar = () => {
   const [activeMenu, setActiveMenu] = useState("");
+  const { dashboardData } = useDashboard();
 
   const handleMenuClick = (menu) => {
     setActiveMenu(menu);
   };
 
   useEffect(() => {
+    const myElement = document.getElementById("simple-bar");
+    if (myElement) {
+      new SimpleBar(myElement, { autoHide: true });
+    }
     // Set the active menu based on the current path
     const path = window.location.pathname;
     if (path.includes("leave-request")) {
@@ -37,6 +43,13 @@ const Sidebar = () => {
       setActiveMenu("Dashboard");
     }
   }, []); // Empty dependency array to run only once on mount
+
+  useEffect(() => {
+    const simpleBarElement = document.querySelector("[data-simplebar]");
+    if (simpleBarElement) {
+      new SimpleBar(simpleBarElement);
+    }
+  }, []);
 
   return (
     <div className="sidebar-wrapper" data-layout="stroke-svg">
@@ -208,11 +221,14 @@ const Sidebar = () => {
                       My Applications
                     </Link>
                   </li>
-                  <li>
-                    <Link to="/selfservice/dashboard/balances">
-                      Leave Balances
-                    </Link>
-                  </li>
+                  {(dashboardData.user_data.HumanResourceManager ||
+                    dashboardData.user_data.HOD_User) && (
+                    <li>
+                      <Link to="/selfservice/dashboard/balances">
+                        Leave Balances
+                      </Link>
+                    </li>
+                  )}
                 </ul>
               </li>
               {/* Adjustments Menu Item */}
@@ -285,21 +301,8 @@ const Sidebar = () => {
                 <ul className="sidebar-submenu">
                   <li>
                     <Link to="/selfservice/dashboard/leave-reports">
-                      Leave Reports
+                      My Reports
                     </Link>
-                  </li>
-                  <li>
-                    <Link to="/selfservice/dashboard/my-timesheets">
-                      Timesheet Reports
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/selfservice/dashboard/my-timesheets">
-                      Payslip
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/selfservice/dashboard/my-timesheets">P9</Link>
                   </li>
                 </ul>
               </li>

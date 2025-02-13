@@ -14,27 +14,23 @@ import AdjustmentStepNavigation from "./AdjustmentStepNavigation";
 import AdjustmentApprovers from "./AdjustmentApprovers";
 
 const NewAdjustment = () => {
-  const [activeTab, setActiveTab] = useState(
-    sessionStorage.getItem("activeTab") || "wizard-info"
-  );
+  const [activeTab, setActiveTab] = useState("wizard-info");
   const [completedTabs, setCompletedTabs] = useState([]);
-  const [retrievedCode, setRetrievedCode] = useState(
-    sessionStorage.getItem("retrievedCode") || ""
-  );
+  const [retrievedCode, setRetrievedCode] = useState("");
   const [lines, setLines] = useState([]);
   const [approvers, setApprovers] = useState([]);
   const inactivityTimer = useRef(null);
-  const [lastCompletedTab, setLastCompletedTab] = useState(null);
-
   const [countdownTime, setCountdownTime] = useState(null);
+
   const handleCountdownStart = (time) => {
     setCountdownTime(time);
   };
 
   useEffect(() => {
-    sessionStorage.setItem("retrievedCode", retrievedCode);
-    sessionStorage.setItem("activeTab", activeTab);
-  }, [retrievedCode, activeTab]);
+    // Remove sessionStorage items when the page loads
+    sessionStorage.removeItem("retrievedCode");
+    sessionStorage.removeItem("activeTab");
+  }, []);
 
   const resetInactivityTimer = () => {
     if (inactivityTimer.current) {
@@ -42,7 +38,7 @@ const NewAdjustment = () => {
     }
     inactivityTimer.current = setTimeout(() => {
       handleSessionTimeout();
-    }, 300000);
+    }, 300000); // 5 minutes
   };
 
   const handleSessionTimeout = () => {
@@ -66,69 +62,20 @@ const NewAdjustment = () => {
     };
   }, []);
 
-  useEffect(() => {
-    sessionStorage.setItem("activeTab", activeTab);
-    sessionStorage.setItem("completedTabs", JSON.stringify(completedTabs));
-  }, [activeTab, completedTabs]);
-
-  const getTabIcon = (tab) => {
-    // If the tab is in completedTabs, show the check icon
-    if (completedTabs.includes(tab)) {
-      return "fa fa-check";
-    }
-    return "fa fa-angle-double-right"; // Default icon for incomplete tabs
-  };
-
   const handleNextStep = (nextTab) => {
     setCompletedTabs((prevTabs) => {
-      // Add the current activeTab to completedTabs if not already included
       if (!prevTabs.includes(activeTab)) {
         return [...prevTabs, activeTab];
       }
       return prevTabs;
     });
-    setActiveTab(nextTab); // Move to the next tab
+    setActiveTab(nextTab);
   };
 
   const handleCodeRetrieved = (applicationNo) => {
     setRetrievedCode(applicationNo);
     handleNextStep("bank-wizard");
   };
-
-  const handleAddLines = (newLine) => {
-    setLines((prevLines) => {
-      const updatedLines = [...prevLines, newLine];
-      return updatedLines;
-    });
-
-    toast.success("Adjustment Line added successfully!", {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-    });
-  };
-
-  const handleFetchLines = (data) => {
-    setLines(data);
-  };
-
-  const handleFetchApprovers = (data) => {
-    setApprovers(data);
-  };
-
-  // Decrease countdownTime every second
-  useEffect(() => {
-    if (countdownTime > 0) {
-      const timer = setInterval(() => {
-        setCountdownTime((prevTime) => prevTime - 1);
-      }, 1000);
-      return () => clearInterval(timer);
-    }
-  }, [countdownTime]);
 
   return (
     <div>
@@ -158,9 +105,6 @@ const NewAdjustment = () => {
                           role="tab"
                         >
                           <div className="horizontal-wizard">
-                            <div className="stroke-icon-wizard">
-                              <i className={getTabIcon("wizard-info")} />
-                            </div>
                             <div className="horizontal-wizard-content ml-2">
                               <h6>Leave Adjustment Form</h6>
                             </div>
@@ -173,9 +117,6 @@ const NewAdjustment = () => {
                           role="tab"
                         >
                           <div className="horizontal-wizard">
-                            <div className="stroke-icon-wizard">
-                              <i className={getTabIcon("wizard-info")} />
-                            </div>
                             <div className="horizontal-wizard-content">
                               <h6>Adjustment Lines</h6>
                             </div>
@@ -188,9 +129,6 @@ const NewAdjustment = () => {
                           role="tab"
                         >
                           <div className="horizontal-wizard">
-                            <div className="stroke-icon-wizard">
-                              <i className={getTabIcon("wizard-info")} />
-                            </div>
                             <div className="horizontal-wizard-content">
                               <h6>Completed</h6>
                             </div>
@@ -222,11 +160,7 @@ const NewAdjustment = () => {
                         >
                           <div className="row g-3">
                             <div className="col-md-12">
-                              <AdjustmentLinesForm
-                                onAddLine={handleAddLines}
-                                pk={retrievedCode}
-                                onFetchLines={handleFetchLines}
-                              />
+                              <AdjustmentLinesForm pk={retrievedCode} />
                               <div className="mt-3">
                                 <AdjustmentLinesTable lines={lines} />
                               </div>
@@ -237,7 +171,6 @@ const NewAdjustment = () => {
                             handleNextStep={handleNextStep}
                             pk={retrievedCode}
                             onStartCountdown={handleCountdownStart}
-                            onFetchApprovers={handleFetchApprovers}
                           />
                         </div>
 
@@ -252,10 +185,7 @@ const NewAdjustment = () => {
                           <div className="form-completed">
                             <div className="row">
                               <div className="col-md-6">
-                                <AdjustmentApprovers
-                                  approvers={approvers}
-                                  pk={retrievedCode}
-                                />
+                                <AdjustmentApprovers approvers={approvers} />
                               </div>
                               <div className="col-md-6">
                                 <img src={successful} alt="successful" />

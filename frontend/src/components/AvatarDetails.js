@@ -5,8 +5,7 @@ import { faCamera } from "@fortawesome/free-solid-svg-icons";
 import { useDropzone } from "react-dropzone";
 import { Modal, Button } from "react-bootstrap";
 import "./leave/DropzoneFileUpload.css";
-import PasswordChange from "./PasswordChange";
-import { useNavigate } from "react-router-dom";
+import NewPassword from "./NewPassword";
 
 const AvatarDetails = ({ onShowToast }) => {
   // Destructure onShowToast from props
@@ -14,13 +13,10 @@ const AvatarDetails = ({ onShowToast }) => {
   const [showModal, setShowModal] = useState(false); // State to control modal visibility
   const [files, setFiles] = useState([]); // State to store uploaded files
   const [uploading, setUploading] = useState(false); // State to handle upload progress
-  const navigate = useNavigate();
 
   const imageSrc =
     profileImage &&
     `data:image/${profileImage.image_format};base64,${profileImage.encoded_string}`;
-
-  console.log(imageSrc);
 
   // Handle modal open/close
   const handleShowModal = () => setShowModal(true);
@@ -80,7 +76,6 @@ const AvatarDetails = ({ onShowToast }) => {
         handleCloseModal(); // Close modal after upload
         sessionStorage.clear();
         localStorage.clear();
-        navigate("/selfservice", { state: { showToast: true } });
       } else {
         onShowToast("Failed to upload profile picture.", "error");
       }
@@ -156,8 +151,8 @@ const AvatarDetails = ({ onShowToast }) => {
               </div>
             </div>
           </div>
-          {/* Pass onShowToast to PasswordChange */}
-          <PasswordChange onShowToast={onShowToast} />
+          {/* Pass onShowToast to NewPassword */}
+          <NewPassword onShowToast={onShowToast} />
         </div>
       </div>
 

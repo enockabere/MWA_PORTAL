@@ -21,8 +21,6 @@ function UserDashboard() {
       });
     };
     const scripts = [
-      "../static/assets/js/scrollbar/simplebar.js",
-      "../static/assets/js/scrollbar/custom.js",
       "../static/assets/js/config.js",
       "../static/assets/js/sidebar-menu.js",
       "../static/assets/js/sidebar-pin.js",

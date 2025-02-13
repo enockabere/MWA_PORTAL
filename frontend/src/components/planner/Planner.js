@@ -13,15 +13,9 @@ import successful from "../../../static/img/logo/successful.gif";
 import CountdownRedirect from "../Layout/CountdownRedirect";
 
 const Planner = () => {
-  const [activeTab, setActiveTab] = useState(
-    sessionStorage.getItem("activeTab") || "wizard-info"
-  );
+  const [activeTab, setActiveTab] = useState("wizard-info"); // No sessionStorage
   const [completedTabs, setCompletedTabs] = useState([]);
   const [myAction, setMyAction] = useState("insert");
-
-  useEffect(() => {
-    sessionStorage.setItem("activeTab", activeTab);
-  }, [activeTab]);
 
   const [retrievedCode, setRetrievedCode] = useState(
     sessionStorage.getItem("retrievedCode") || ""
@@ -33,11 +27,6 @@ const Planner = () => {
   const handleCountdownStart = (time) => {
     setCountdownTime(time);
   };
-
-  useEffect(() => {
-    sessionStorage.setItem("retrievedCode", retrievedCode);
-    sessionStorage.setItem("activeTab", activeTab);
-  }, [retrievedCode, activeTab]);
 
   const handleNextStep = (nextTab, isPrevious = false) => {
     setCompletedTabs((prev) => {
@@ -51,10 +40,10 @@ const Planner = () => {
 
   const handleCodeRetrieved = (code) => {
     setRetrievedCode(code);
+    sessionStorage.setItem("retrievedCode", code);
     handleNextStep("bank-wizard");
   };
 
-  // Fetch plans for the given retrievedCode (pk)
   const fetchPlans = async (pk) => {
     try {
       const response = await fetch(`/selfservice/FnLeavePlannerLine/${pk}/`);
@@ -63,9 +52,8 @@ const Planner = () => {
       }
       const result = await response.json();
       if (Array.isArray(result.data)) {
-        // If no plans exist, set new ones, otherwise append
         setPlans(result.data);
-        sessionStorage.setItem("plans", JSON.stringify(result.data)); // Save to sessionStorage
+        sessionStorage.setItem("plans", JSON.stringify(result.data));
       } else {
         toast.error("Fetched data is not in the expected format.");
       }
@@ -84,7 +72,8 @@ const Planner = () => {
       clearTimeout(inactivityTimeout.current);
     }
     inactivityTimeout.current = setTimeout(() => {
-      sessionStorage.clear();
+      sessionStorage.removeItem("retrievedCode"); // Clear retrievedCode
+      sessionStorage.removeItem("plans");
       setActiveTab("wizard-info");
       setRetrievedCode("");
       setPlans([]);
@@ -109,7 +98,7 @@ const Planner = () => {
     resetInactivityTimeout();
 
     return () => {
-      clearTimeout(inactivityTimeout);
+      clearTimeout(inactivityTimeout.current);
       window.removeEventListener("mousemove", handleUserActivity);
       window.removeEventListener("keypress", handleUserActivity);
       window.removeEventListener("click", handleUserActivity);
@@ -137,13 +126,6 @@ const Planner = () => {
       setActiveTab("wizard-info");
     }
   }, [activeTab, retrievedCode]);
-
-  useEffect(() => {
-    // Log whenever retrievedCode changes
-    if (retrievedCode) {
-      fetchPlans(retrievedCode); // Fetch plans whenever retrievedCode changes
-    }
-  }, [retrievedCode]);
 
   return (
     <div>
@@ -213,7 +195,6 @@ const Planner = () => {
                         className="tab-content dark-field"
                         id="horizontal-wizard-tabContent"
                       >
-                        {/* Step 1: Create Plan */}
                         <div
                           className={`tab-pane fade ${
                             activeTab === "wizard-info" ? "show active" : ""
@@ -226,7 +207,6 @@ const Planner = () => {
                             onCodeRetrieved={handleCodeRetrieved}
                           />
                         </div>
-                        {/* Step 2: Leave Planner Lines */}
                         <div
                           className={`tab-pane fade ${
                             activeTab === "bank-wizard" ? "show active" : ""
@@ -258,7 +238,6 @@ const Planner = () => {
                             setMyAction={setMyAction}
                           />
                         </div>
-                        {/* Step 3: Completed */}
                         <div
                           className={`tab-pane fade ${
                             activeTab === "successful-wizard"
@@ -288,17 +267,7 @@ const Planner = () => {
           </div>
         </div>
       </div>
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
+      <ToastContainer position="top-right" autoClose={5000} />
     </div>
   );
 };

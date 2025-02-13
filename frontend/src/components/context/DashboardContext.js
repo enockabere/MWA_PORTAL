@@ -25,6 +25,7 @@ export const DashboardProvider = ({ children }) => {
       Supervisor: "Nehemiah Makau",
       Job_Position: "Web Developer",
       Job_Title: "Web Developer",
+      HumanResourceManager: false,
     },
     leave_data: {
       openLeave: 0,
@@ -35,18 +36,22 @@ export const DashboardProvider = ({ children }) => {
     open_approvals: 0,
   };
 
-  const [dashboardData, setDashboardData] = useState(storedData);
+  // Retrieve profile image from localStorage or default to null
+  const storedProfileImage =
+    JSON.parse(localStorage.getItem("profileImage")) || null;
 
-  // Save to localStorage whenever dashboardData changes
+  const [dashboardData, setDashboardData] = useState(storedData);
+  const [profileImage, setProfileImage] = useState(storedProfileImage); // Initialize with stored profile image
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  // Save to localStorage whenever dashboardData or profileImage changes
   useEffect(() => {
     localStorage.setItem("dashboardData", JSON.stringify(dashboardData));
   }, [dashboardData]);
 
-  // State for profile image (not stored persistently)
-  const [profileImage, setProfileImage] = useState(null);
-
-  // Track the login status
-  const [loggedIn, setLoggedIn] = useState(false);
+  useEffect(() => {
+    localStorage.setItem("profileImage", JSON.stringify(profileImage));
+  }, [profileImage]);
 
   // Fetch dashboard data and profile image if logged in
   useEffect(() => {
@@ -63,7 +68,7 @@ export const DashboardProvider = ({ children }) => {
         const profileResponse = await fetch("/selfservice/profile_picture/");
         if (profileResponse.ok) {
           const profileData = await profileResponse.json();
-          setProfileImage(profileData);
+          setProfileImage(profileData); // Update profile image state
         } else {
           console.error("Failed to fetch profile image");
         }

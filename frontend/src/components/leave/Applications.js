@@ -12,7 +12,7 @@ import { Link } from "react-router-dom";
 import Pagination from "../Layout/Pagination";
 import ApplicationModal from "./ApplicationModal";
 import Preloader from "../Layout/Preloader";
-import { toast, ToastContainer } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 
 const CardItem = ({ item, onClick }) => (
   <div

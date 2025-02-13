@@ -12,39 +12,35 @@ import LeaveNavigation from "./LeaveNavigation";
 import LeaveApprovers from "./LeaveApprovers";
 
 const NewLeave = () => {
-  // Load initial state from sessionStorage, or default values
-  const [activeTab, setActiveTab] = useState(
-    sessionStorage.getItem("activeTab") || "wizard-info"
-  );
+  // Remove session storage for activeTab
+  const [activeTab, setActiveTab] = useState("wizard-info");
   const [completedTabs, setCompletedTabs] = useState([]);
-  const [retrievedCode, setRetrievedCode] = useState(
-    sessionStorage.getItem("retrievedCode") || ""
-  );
+  
+  // Don't persist retrievedCode in sessionStorage
+  const [retrievedCode, setRetrievedCode] = useState("");
+  
   const [relievers, setRelievers] = useState([]);
   const [attachments, setAttachments] = useState([]);
   const [approvers, setApprovers] = useState([]);
   const inactivityTimer = useRef(null);
 
-  useEffect(() => {
-    sessionStorage.setItem("retrievedCode", retrievedCode);
-    sessionStorage.setItem("activeTab", activeTab);
-  }, [retrievedCode, activeTab]);
+  // Function to reset session on inactivity
+  const handleSessionTimeout = () => {
+    setRetrievedCode(""); // Clear retrieved code on timeout
+    toast.info("Session expired due to inactivity.", {
+      position: "top-right",
+      autoClose: 5000,
+    });
+  };
 
+  // Inactivity Timer
   const resetInactivityTimer = () => {
     if (inactivityTimer.current) {
       clearTimeout(inactivityTimer.current);
     }
     inactivityTimer.current = setTimeout(() => {
       handleSessionTimeout();
-    }, 300000);
-  };
-
-  const handleSessionTimeout = () => {
-    sessionStorage.clear();
-    toast.info("Session expired due to inactivity.", {
-      position: "top-right",
-      autoClose: 5000,
-    });
+    }, 300000); // 5 minutes
   };
 
   useEffect(() => {
@@ -60,48 +56,28 @@ const NewLeave = () => {
     };
   }, []);
 
-  useEffect(() => {
-    sessionStorage.setItem("activeTab", activeTab);
-    sessionStorage.setItem("completedTabs", JSON.stringify(completedTabs));
-  }, [activeTab, completedTabs]);
-
-  const handleNextStep = (nextTab) => {
-    setCompletedTabs((prev) => [...new Set([...prev, activeTab])]);
-    setActiveTab(nextTab);
-  };
-  const getTabIcon = (tab) => {
-    return completedTabs.includes(tab)
-      ? "fa fa-check"
-      : "fa fa-angle-double-right";
-  };
-
+  // Function to handle code retrieval
   const handleCodeRetrieved = (applicationNo) => {
     setRetrievedCode(applicationNo);
     toast.success("Application saved successfully!", {
       position: "top-right",
       autoClose: 5000,
     });
-    handleNextStep("bank-wizard"); // Move to the next tab after code retrieval
+    handleNextStep("bank-wizard");
   };
 
-  const handleFetchLines = (data) => {
-    setRelievers(data);
+  const handleNextStep = (nextTab) => {
+    setCompletedTabs((prev) => [...new Set([...prev, activeTab])]);
+    setActiveTab(nextTab);
   };
 
-  const handleFetchAttachments = (data) => {
-    setAttachments(data);
-  };
-
-  const handleFetchApprovers = (data) => {
-    setApprovers(data);
+  const getTabIcon = (tab) => {
+    return completedTabs.includes(tab) ? "fa fa-check" : "fa fa-angle-double-right";
   };
 
   return (
     <div>
-      <Breadcrumb
-        pageTitle="New Leave Application"
-        breadcrumb="Leave Application"
-      />
+      <Breadcrumb pageTitle="New Leave Application" breadcrumb="Leave Application" />
       <div className="container-fluid">
         <div className="row">
           <div className="col-sm-12">
@@ -111,13 +87,7 @@ const NewLeave = () => {
                   <div className="row g-3">
                     <div className="col-12 main-horizontal-header">
                       <div className="nav nav-pills horizontal-options">
-                        {/* Tab Links */}
-                        <a
-                          className={`nav-link ${
-                            activeTab === "wizard-info" ? "active" : ""
-                          }`}
-                          role="tab"
-                        >
+                        <a className={`nav-link ${activeTab === "wizard-info" ? "active" : ""}`} role="tab">
                           <div className="horizontal-wizard">
                             <div className="stroke-icon-wizard">
                               <i className={getTabIcon("wizard-info")} />
@@ -127,12 +97,7 @@ const NewLeave = () => {
                             </div>
                           </div>
                         </a>
-                        <a
-                          className={`nav-link ${
-                            activeTab === "bank-wizard" ? "active" : ""
-                          }`}
-                          role="tab"
-                        >
+                        <a className={`nav-link ${activeTab === "bank-wizard" ? "active" : ""}`} role="tab">
                           <div className="horizontal-wizard">
                             <div className="stroke-icon-wizard">
                               <i className={getTabIcon("bank-wizard")} />
@@ -142,12 +107,7 @@ const NewLeave = () => {
                             </div>
                           </div>
                         </a>
-                        <a
-                          className={`nav-link ${
-                            activeTab === "successful-wizard" ? "active" : ""
-                          }`}
-                          role="tab"
-                        >
+                        <a className={`nav-link ${activeTab === "successful-wizard" ? "active" : ""}`} role="tab">
                           <div className="horizontal-wizard">
                             <div className="stroke-icon-wizard">
                               <i className={getTabIcon("successful-wizard")} />
@@ -161,56 +121,30 @@ const NewLeave = () => {
                     </div>
                     <div className="col-12">
                       <div className="tab-content dark-field">
-                        {/* Step 1: Create Plan */}
-                        <div
-                          className={`tab-pane fade ${
-                            activeTab === "wizard-info" ? "show active" : ""
-                          }`}
-                        >
-                          <LeaveApplicationForm
-                            onApplicationNoRetrieved={handleCodeRetrieved}
-                          />
+                        <div className={`tab-pane fade ${activeTab === "wizard-info" ? "show active" : ""}`}>
+                          <LeaveApplicationForm onApplicationNoRetrieved={handleCodeRetrieved} />
                         </div>
 
-                        {/* Step 2: Leave Planner Lines */}
-                        <div
-                          className={`tab-pane fade ${
-                            activeTab === "bank-wizard" ? "show active" : ""
-                          }`}
-                        >
+                        <div className={`tab-pane fade ${activeTab === "bank-wizard" ? "show active" : ""}`}>
                           <div className="row g-3">
                             <div className="col-md-6">
                               <div className="card b-r-3 card-primary p-3 h-100 border border-info">
                                 <h4>
-                                  Part 1: Add Leave Reliever{" "}
-                                  <span className="text-danger">*</span>
+                                  Part 1: Add Leave Reliever <span className="text-danger">*</span>
                                 </h4>
                                 <p className="f-m-light mt-3">
-                                  Note: This section is compulsory. The
-                                  employees available to select as relievers are
+                                  Note: This section is compulsory. The employees available to select as relievers are
                                   filtered based on department.
                                 </p>
-                                <LeaveReliever
-                                  pk={retrievedCode}
-                                  onFetchRelievers={handleFetchLines}
-                                />
-                                <RelieverList
-                                  relievers={relievers}
-                                  pk={retrievedCode}
-                                  onDeleteReliever={handleFetchLines}
-                                />
+                                <LeaveReliever pk={retrievedCode} onFetchRelievers={setRelievers} />
+                                <RelieverList relievers={relievers} pk={retrievedCode} onDeleteReliever={setRelievers} />
                               </div>
                             </div>
                             <div className="col-md-6">
                               <div className="card b-r-3 card-primary p-3 h-100 border border-info">
                                 <h4>Part 2: Upload Leave Attachment</h4>
-                                <p className="f-m-light mt-3">
-                                  Note: This section is Optional.
-                                </p>
-                                <DropzoneFileUpload
-                                  pk={retrievedCode}
-                                  onFetchAttachments={handleFetchAttachments}
-                                />
+                                <p className="f-m-light mt-3">Note: This section is Optional.</p>
+                                <DropzoneFileUpload pk={retrievedCode} onFetchAttachments={setAttachments} />
                                 <AttachmentList attachments={attachments} />
                               </div>
                             </div>
@@ -219,26 +153,16 @@ const NewLeave = () => {
                             activeTab={activeTab}
                             handleNextStep={handleNextStep}
                             pk={retrievedCode}
-                            onFetchApprovers={handleFetchApprovers}
+                            onFetchApprovers={setApprovers}
                             disabled={relievers.length === 0}
                           />
                         </div>
 
-                        {/* Step 3: Completed */}
-                        <div
-                          className={`tab-pane fade ${
-                            activeTab === "successful-wizard"
-                              ? "show active"
-                              : ""
-                          }`}
-                        >
+                        <div className={`tab-pane fade ${activeTab === "successful-wizard" ? "show active" : ""}`}>
                           <div className="form-completed">
                             <div className="row">
                               <div className="col-md-6">
-                                <LeaveApprovers
-                                  approvers={approvers}
-                                  pk={retrievedCode}
-                                />
+                                <LeaveApprovers approvers={approvers} pk={retrievedCode} />
                               </div>
                               <div className="col-md-6">
                                 <img src={successful} alt="successful" />

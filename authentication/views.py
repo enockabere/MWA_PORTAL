@@ -20,6 +20,7 @@ import base64
 from django.http import HttpResponse
 import datetime
 from decimal import Decimal
+from .models import UnrecognizedQuery
 
 
 class Login_View(UserObjectMixins,View):
@@ -92,6 +93,14 @@ class Login_View(UserObjectMixins,View):
                         else:
                             await sync_to_async(request.session.__setitem__)(
                                 "PhoneNo", data["PhoneNo"]
+                            )
+                        if data["HumanResourceManager"] == None or data["HumanResourceManager"] == "":
+                            await sync_to_async(request.session.__setitem__)(
+                                "HumanResourceManager", False
+                            )
+                        else:
+                            await sync_to_async(request.session.__setitem__)(
+                                "HumanResourceManager", data["HumanResourceManager"]
                             )
                         await sync_to_async(request.session.__setitem__)(
                             "HOD_User", data["HODUser"]
@@ -232,7 +241,6 @@ class Login_View(UserObjectMixins,View):
                                     "fnGetEmployeeImage",
                                     Employee_No_
                                 )
-                                print(get_profile_display)
                                 binary_data = base64.b64decode(get_profile_display)
                                 image_format = imghdr.what(None,binary_data)
                                 cache.set("encoded_string", get_profile_display)
@@ -426,7 +434,6 @@ class FnLeavePlannerLine(UserObjectMixins, View):
                 "soap_headers"
             )
             data = json.loads(request.body)
-            print(data)
             lineNo = int(data.get('lineNo', 0)) 
             startDate = dates.strptime(data.get('startDate'), "%Y-%m-%dT%H:%M:%S.%fZ")
             endDate = dates.strptime(data.get('endDate'), "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -1099,6 +1106,8 @@ class DashboardData(UserObjectMixins, View):
             Supervisor = await sync_to_async(request.session.__getitem__)("Supervisor")
             Job_Position = await sync_to_async(request.session.__getitem__)("Job_Position")
             Job_Title = await sync_to_async(request.session.__getitem__)("Job_Title")
+            HumanResourceManager = await sync_to_async(request.session.__getitem__)("HumanResourceManager")
+
             user_data = {
                 "full_name":full_name,
                 "open_leave_count":open_leave_count,
@@ -1115,6 +1124,7 @@ class DashboardData(UserObjectMixins, View):
                 "Supervisor":Supervisor,
                 "Job_Position":Job_Position,
                 "Job_Title":Job_Title,
+                "HumanResourceManager": HumanResourceManager
             }
 
             openLeave = []
@@ -1400,52 +1410,38 @@ class FnReOpenLeavePlanner(UserObjectMixins, View):
             print(e)
             return JsonResponse({"success": False, "error": str(e)}, status=500)
         
+
 class HRLeaveReports(UserObjectMixins, View):
     async def post(self, request):
         try:
-            soap_headers = await sync_to_async(request.session.__getitem__)(
-                "soap_headers"
-            )
-            employeeNo = await sync_to_async(request.session.__getitem__)(
-                "Employee_No_"
-            )
+            soap_headers = await sync_to_async(request.session.__getitem__)("soap_headers")
+            employeeNo = await sync_to_async(request.session.__getitem__)("Employee_No_")
             data = json.loads(request.body)
-            document_type = int(data.get('document_type')) 
-            documentID = data.get("documentID")
+            print("document_type:", data)
+            document_type = int(data.get('document_type'))  # Document type identifier
+            documentID = data.get("documentID")  
+            
 
             today_date = datetime.datetime.now().strftime("%Y-%m-%d")
 
-            if document_type == 1:
+            if document_type == 1:  # Leave Statement
                 filenameFromApp = f"Leave_Statement_{today_date}.pdf"
                 response = self.make_soap_request(
-                    soap_headers,
-                    "FnGenerateLeaveStatement",
-                    employeeNo,
-                    filenameFromApp,
-                    "",
+                    soap_headers, "FnGenerateLeaveStatement", employeeNo, filenameFromApp, ""
                 )
-            elif document_type == 2:
+
+            elif document_type == 2:  # Leave Report
                 filenameFromApp = f"Leave_Report_{today_date}.pdf"
                 response = self.make_soap_request(
-                    soap_headers,
-                    "FnGenerateLeaveReport",
-                    employeeNo,
-                    filenameFromApp,
-                    documentID,
+                    soap_headers, "FnGenerateLeaveReport", employeeNo, filenameFromApp, documentID
                 )
-            elif document_type == 3:
-                sectionCode = await sync_to_async(request.session.__getitem__)(
-                    "sectionCode"
-                )
-                departmentCode = await sync_to_async(request.session.__getitem__)(
-                    "Department"
-                )
-                supervisorEmployeeNo = await sync_to_async(request.session.__getitem__)(
-                    "Supervisor"
-                )
-                supervisorTitle = await sync_to_async(request.session.__getitem__)(
-                    "Supervisor_Title"
-                )
+
+            elif document_type == 3:  # Leave Summary Report
+                sectionCode = await sync_to_async(request.session.__getitem__)("sectionCode")
+                departmentCode = await sync_to_async(request.session.__getitem__)("Department")
+                supervisorEmployeeNo = await sync_to_async(request.session.__getitem__)("Supervisor")
+                supervisorTitle = await sync_to_async(request.session.__getitem__)("Supervisor_Title")
+
                 filenameFromApp = f"Leave_Summary_Report_{today_date}.pdf"
                 response = self.make_soap_request(
                     soap_headers,
@@ -1458,22 +1454,44 @@ class HRLeaveReports(UserObjectMixins, View):
                     supervisorTitle,
                 )
 
-                payload = {"employeeNo": employeeNo,
-                           "filenameFromApp": filenameFromApp,
-                           "sectionCode": sectionCode,
-                           "departmentCode": departmentCode,
-                           "supervisorEmployeeNo": supervisorEmployeeNo,
-                           "supervisorTitle": supervisorTitle}
+            elif document_type == 4:  # Payslip
+                payslip_date = dates.strptime(data.get("date"), "%Y-%m-%d").date() 
+                filenameFromApp = f"Payslip_{payslip_date}.pdf"
+                response = self.make_soap_request(
+                    soap_headers,
+                    "fnGeneratePayslip",
+                    employeeNo,
+                    payslip_date,
+                )
+
+            elif document_type == 5:  # P9 Form
+                startDate =  dates.strptime(data.get("startDate"), "%Y-%m-%d").date() 
+                endDate =  dates.strptime(data.get("endDate"), "%Y-%m-%d").date() 
+                filenameFromApp = f"P9_{startDate}_to_{endDate}.pdf"
+                response = self.make_soap_request(
+                    soap_headers,
+                    "fnGenerateP9",
+                    employeeNo,
+                    startDate,
+                    endDate,
+                )
+
+            else:
+                return JsonResponse({"success": False, "error": "Invalid document type"}, status=400)
+
+            # Process SOAP response
             buffer = BytesIO.BytesIO()
             content = base64.b64decode(response)
             buffer.write(content)
             buffer.seek(0)
 
-            pdf_data = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            pdf_data = base64.b64encode(buffer.getvalue()).decode("utf-8")
             return JsonResponse({"success": True, "pdf_data": pdf_data, "filename": filenameFromApp})
+
         except Exception as e:
             print(e)
             return JsonResponse({"success": False, "error": str(e)}, status=500)
+
 
 class Approval(UserObjectMixins, View):
     async def get(self, request):
@@ -2033,8 +2051,6 @@ class Change_Password(UserObjectMixins, View):
         new_password = self.pass_encrypt(data.get('password'))
 
         response = self.make_soap_request(soap_headers, "fnChangePassword", employeeNo, new_password )
-
-        print(response)
         if response == True:
             request.session.flush()
             return JsonResponse({'status': 'success'}, status=200)
@@ -2058,28 +2074,48 @@ class ProfilePicture(UserObjectMixins, View):
         
     def post(self, request):
         soap_headers = request.session.get("soap_headers", {})
-        employeeNo = request.session["Employee_No_"]
+        employeeNo = request.session.get("Employee_No_")  # Prevent KeyError
         profile_picture = request.FILES.get("profile_picture")
+
+        if not employeeNo:
+            return JsonResponse({"success": False, "message": "Employee number missing."}, status=400)
 
         if not profile_picture:
             return JsonResponse({"success": False, "message": "No file uploaded."}, status=400)
 
         try:
+            # Encode the uploaded image to base64
             encoded_string = base64.b64encode(profile_picture.read()).decode("utf-8")
+
+            # Send request to update employee image
             response = self.make_soap_request(soap_headers, "fnUpdateEmployeeImage", employeeNo, encoded_string)
 
             if response:
-                print(response)
-                cache.delete("encoded_string")
-                cache.delete("image_format")
                 binary_data = base64.b64decode(response)
                 image_format = imghdr.what(None, binary_data)
+
+                if not image_format:
+                    return JsonResponse({"success": False, "message": "Invalid image format received."}, status=400)
+
+                # Update cache with new image data
                 cache.set("encoded_string", response)
                 cache.set("image_format", image_format)
-                return JsonResponse({"success": True, "message": "Profile picture updated successfully, login to continue!"})
+
+                return JsonResponse({"success": True, "message": "Profile picture updated successfully, refresh page to see updates!"})
             else:
                 return JsonResponse({"success": False, "message": "Failed to update profile picture."}, status=500)
+
         except Exception as e:
-            return JsonResponse({"success": False, "message": str(e)}, status=500)
+            return JsonResponse({"success": False, "message": f"Error: {str(e)}"}, status=500)
         
 
+class Save_Unknown_Query(View):
+    def post(self, request):
+        user_id = request.session["User_ID"]
+        data = json.loads(request.body)
+        query_text = data.get("text")
+
+        if query_text:
+            UnrecognizedQuery.objects.create(text=query_text, user_id= user_id )
+            return JsonResponse({"message": "Query saved."}, status=201)
+        return JsonResponse({"error": "Invalid request."}, status=400)

@@ -5,8 +5,6 @@ import {
   faBullseye,
   faFolderOpen,
   faCheckCircle,
-  faTable,
-  faThLarge,
 } from "@fortawesome/free-solid-svg-icons";
 import Pagination from "../Layout/Pagination";
 import Avatar from "../../../static/img/logo/pp.png";
@@ -24,12 +22,15 @@ const Plans = () => {
   const [loading, setLoading] = useState(true);
   const [paginationLoading, setPaginationLoading] = useState(false);
   const [tabLoading, setTabLoading] = useState(false);
-  const [isTableView, setIsTableView] = useState(false);
+  const [selectedYear, setSelectedYear] = useState(
+    new Date().getFullYear().toString()
+  );
+  const [availableYears, setAvailableYears] = useState([]); // State to store available years
   const { profileImage } = useDashboard();
 
-  const imageSrc = profileImage
-    ? `data:image/${profileImage.image_format};base64,${profileImage.encoded_string}`
-    : Avatar;
+  const imageSrc =
+    profileImage &&
+    `data:image/${profileImage.image_format};base64,${profileImage.encoded_string}`;
 
   const handleToast = (message, type) => {
     if (type === "success") {
@@ -44,10 +45,17 @@ const Plans = () => {
       const response = await fetch("/selfservice/LeavePlanner/");
       const data = await response.json();
 
+      // Extract unique years from the Leave_Period field
+      const uniqueYears = [...new Set(data.map((plan) => plan.Leave_Period))];
+      setAvailableYears(uniqueYears.sort()); // Sort years and store in state
+
+      // Filter plans based on the selected year
       const sortedPlans = data.reverse();
-      const allPlans = sortedPlans;
-      const openPlans = sortedPlans.filter((plan) => !plan.Submitted);
-      const submittedPlans = sortedPlans.filter((plan) => plan.Submitted);
+      const allPlans = sortedPlans.filter(
+        (plan) => plan.Leave_Period === selectedYear
+      );
+      const openPlans = allPlans.filter((plan) => !plan.Submitted);
+      const submittedPlans = allPlans.filter((plan) => plan.Submitted);
 
       setPlans({ all: allPlans, open: openPlans, submitted: submittedPlans });
       setLoading(false);
@@ -59,7 +67,7 @@ const Plans = () => {
 
   useEffect(() => {
     fetchPlans();
-  }, []);
+  }, [selectedYear]); // Refetch plans when the selected year changes
 
   const currentItems = plans[activeTab].slice(
     (currentPage - 1) * itemsPerPage,
@@ -123,6 +131,10 @@ const Plans = () => {
     return `${day}${suffix} ${formattedDate}`;
   };
 
+  const handleYearChange = (event) => {
+    setSelectedYear(event.target.value);
+  };
+
   return (
     <div>
       <Breadcrumb pageTitle="My Leave Plans" breadcrumb="Leave Plans" />
@@ -132,7 +144,7 @@ const Plans = () => {
           <div className="col-md-12 project-list">
             <div className="card">
               <div className="row">
-                <div className="col-md-6 p-0">
+                <div className="col-md-9 p-0">
                   <ul className="nav nav-tabs border-tab d-flex" role="tablist">
                     <li className="nav-item">
                       <a
@@ -169,16 +181,18 @@ const Plans = () => {
                     </li>
                   </ul>
                 </div>
-                <div className="col-md-6 p-0 text-end">
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => setIsTableView(!isTableView)}
+                <div className="col-md-3 p-0 text-end">
+                  <select
+                    className="form-select"
+                    value={selectedYear}
+                    onChange={handleYearChange}
                   >
-                    <FontAwesomeIcon icon={isTableView ? faThLarge : faTable} />{" "}
-                    {isTableView
-                      ? "Switch to Card View"
-                      : "Switch to Table View"}
-                  </button>
+                    {availableYears.map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
@@ -193,29 +207,6 @@ const Plans = () => {
                   <Preloader message="Loading tab, please wait..." />
                 ) : paginationLoading ? (
                   <Preloader message="Loading page, please wait..." />
-                ) : isTableView ? (
-                  <table className="table table-striped my-3">
-                    <thead>
-                      <tr>
-                        <th>Name</th>
-                        <th>Date</th>
-                        <th>Leave Period</th>
-                        <th>Days Planned</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {currentItems.map((item) => (
-                        <tr key={item.No_}>
-                          <td>{item.Employee_Name}</td>
-                          <td>{formatDate(item.Date)}</td>
-                          <td>{item.Leave_Period}</td>
-                          <td>{item.Days_Planned}</td>
-                          <td>{item.Submitted ? "Submitted" : "Open"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
                 ) : (
                   <div className="row">
                     {currentItems.map((item) => (
@@ -233,8 +224,13 @@ const Plans = () => {
                           <h3 className="f-w-600">{item.Employee_Name}</h3>
                           <div className="d-flex">
                             <img
-                              className="img-20 me-2 rounded-circle"
+                              className="me-2 rounded-circle"
                               src={imageSrc}
+                              style={{
+                                borderRadius: "50%",
+                                width: "30px",
+                                height: "30px",
+                              }}
                               alt="team-member"
                             />
                             <div className="flex-grow-1">

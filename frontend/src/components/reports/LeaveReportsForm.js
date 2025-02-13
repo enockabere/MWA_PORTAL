@@ -6,82 +6,104 @@ import { Bars } from "react-loader-spinner";
 import ReportModal from "./ReportModal";
 
 const LeaveReportsForm = () => {
+  const [reportType, setReportType] = useState("0");
   const [documentType, setDocumentType] = useState("0");
-  const [showDocumentIDRow, setShowDocumentIDRow] = useState(false);
-  const [showLeaveTypeRow, setShowLeaveTypeRow] = useState(false);
-  const [isDocumentIDDisabled, setIsDocumentIDDisabled] = useState(true);
-  const [isLeaveTypeDisabled, setIsLeaveTypeDisabled] = useState(true);
   const [leaveTypes, setLeaveTypes] = useState([]);
   const [leaveDocuments, setLeaveDocuments] = useState([]);
-  const [pdfData, setPdfData] = useState(null);
   const [documentID, setDocumentID] = useState("");
+  const [pdfData, setPdfData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedYear, setSelectedYear] = useState(
+    new Date().getFullYear().toString()
+  ); // For Payslip Year
+  const [selectedMonth, setSelectedMonth] = useState(
+    (new Date().getMonth() + 1).toString()
+  ); // For Payslip Month
+  const [startDate, setStartDate] = useState(""); // For P9
+  const [endDate, setEndDate] = useState(""); // For P9
+
   const csrfToken = document
     .querySelector('meta[name="csrf-token"]')
     ?.getAttribute("content");
 
-  const handleDocumentTypeChange = async (e) => {
+  // Generate the first day of the selected month and year in UTC
+  const generateDate = (year, month) => {
+    const date = new Date(Date.UTC(year, month - 1, 1)); // Use Date.UTC to avoid timezone issues
+    return date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+  };
+
+  // Generate a list of years starting from 2025 up to the current year
+  const generateYears = () => {
+    const currentYear = new Date().getFullYear();
+    const startYear = 2025; // Start from 2025
+    const years = [];
+    for (let year = currentYear; year >= startYear; year--) {
+      years.push(year);
+    }
+    return years;
+  };
+
+  const handleReportTypeChange = async (e) => {
     const selectedType = e.target.value;
-    setDocumentType(selectedType);
+    setReportType(selectedType);
+    setDocumentType("0"); // Reset document type when changing report type
+    setDocumentID(""); // Reset document ID
 
     if (selectedType === "1") {
+      // Fetch leave types
       try {
         const response = await axios.get("/selfservice/get-leave-types/", {
-          headers: {
-            "X-CSRFToken": csrfToken,
-          },
+          headers: { "X-CSRFToken": csrfToken },
         });
         setLeaveTypes(response.data);
-        toast.success("Leave types loaded successfully!");
-        setShowDocumentIDRow(false);
-        setIsDocumentIDDisabled(true);
-        setShowLeaveTypeRow(true);
-        setIsLeaveTypeDisabled(false);
       } catch (error) {
-        console.error("Error fetching leave types:", error);
         toast.error("Failed to load leave types.");
         setLeaveTypes([]);
       }
     } else if (selectedType === "2") {
+      // Fetch leave documents
       try {
         const response = await axios.get("/selfservice/Leave/", {
-          headers: {
-            "X-CSRFToken": csrfToken,
-          },
+          headers: { "X-CSRFToken": csrfToken },
         });
-        const releasedLeaves = response.data.filter(
-          (leave) => leave.Status === "Released"
+        setLeaveDocuments(
+          response.data.filter((leave) => leave.Status === "Released")
         );
-        setLeaveDocuments(releasedLeaves);
-        toast.success("Leave documents loaded successfully!");
-        setShowDocumentIDRow(true);
-        setIsDocumentIDDisabled(false);
-        setShowLeaveTypeRow(false);
-        setIsLeaveTypeDisabled(true);
       } catch (error) {
-        console.error("Error fetching leave documents:", error);
         toast.error("Failed to load leave documents.");
         setLeaveDocuments([]);
       }
-    } else {
-      setShowDocumentIDRow(false);
-      setIsDocumentIDDisabled(true);
-      setShowLeaveTypeRow(false);
-      setIsLeaveTypeDisabled(true);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true); // Show loader
+    setLoading(true);
+
+    let requestData = {
+      report_type: reportType,
+    };
+
+    if (reportType === "1") {
+      requestData.document_type = parseInt(documentType); // Leave reports (1, 2, 3)
+      requestData.documentID = documentID;
+    } else if (reportType === "2") {
+      requestData.document_type = 4; // Payslip
+      requestData.date = generateDate(
+        parseInt(selectedYear),
+        parseInt(selectedMonth)
+      ); // Automatically generate the date in UTC
+    } else if (reportType === "3") {
+      requestData.document_type = 5; // P9 Report
+      requestData.startDate = startDate;
+      requestData.endDate = endDate;
+    }
+
     try {
       const response = await axios.post(
         "/selfservice/HRLeaveReports/",
-        {
-          document_type: documentType,
-          documentID,
-        },
+        requestData,
         {
           headers: {
             "X-CSRFToken": csrfToken,
@@ -89,87 +111,92 @@ const LeaveReportsForm = () => {
           },
         }
       );
-      setLoading(false); // Hide loader
+
+      setLoading(false);
       if (response.data.success) {
         setPdfData(response.data.pdf_data);
-        setIsModalOpen(true); // Open modal
+        setIsModalOpen(true);
         toast.success("Report generated successfully!");
       } else {
         throw new Error(response.data.error || "Unknown error occurred");
       }
     } catch (error) {
-      setLoading(false); // Hide loader
-      console.error("Error generating report:", error);
+      setLoading(false);
       toast.error("Failed to generate report.");
     }
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setPdfData(null);
-  };
-
-  const downloadPdf = () => {
-    const link = document.createElement("a");
-    link.href = `data:application/pdf;base64,${pdfData}`;
-    link.download = "report.pdf";
-    link.click();
   };
 
   return (
     <div>
       <ToastContainer />
-      {/* Loader */}
       {loading && (
         <div className="d-flex justify-content-center mt-5">
           <Bars color="#00BFFF" height={30} width={30} />
         </div>
       )}
 
-      {/* Form */}
       <form method="POST" id="myForm" noValidate className="pb-5">
         <div className="row">
+          {/* Report Type */}
           <div className="form-group col-12">
             <label>
               Report Type<span className="text-danger">*</span>
             </label>
             <select
               className="form-control"
-              value={documentType}
-              onChange={handleDocumentTypeChange}
+              value={reportType}
+              onChange={handleReportTypeChange}
               required
             >
-              <option selected disabled value="0">
-                --select--
+              <option value="0" disabled>
+                -- Select --
               </option>
-              <option value="1">Leave Statement Report</option>
-              <option value="2">Leave Report</option>
-              <option value="3">Leave Summary Report</option>
+              <option value="1">Leave Reports</option>
+              <option value="2">Payslip</option>
+              <option value="3">P9 Report</option>
             </select>
           </div>
         </div>
 
-        {/* Document ID Row */}
-        {showDocumentIDRow && (
+        {/* Leave Report Options */}
+        {reportType === "1" && (
           <div className="row">
-            <div className="col-md-12">
-              <div className="form-group">
-                <label>
-                  Leave Document <span className="text-danger">*</span>
-                </label>
-                <select
-                  className="form-control"
-                  name="documentID"
-                  required
-                  disabled={isDocumentIDDisabled}
-                  value={documentID}
-                  onChange={(e) => setDocumentID(e.target.value)}
-                >
-                  <option value="0" disabled>
-                    --Select--
-                  </option>
-                  {leaveDocuments.length > 0 ? (
-                    leaveDocuments.map((leave) => (
+            <div className="form-group col-12">
+              <label>
+                Document Type<span className="text-danger">*</span>
+              </label>
+              <select
+                className="form-control"
+                value={documentType}
+                onChange={(e) => setDocumentType(e.target.value)}
+                required
+              >
+                <option value="0" disabled>
+                  -- Select --
+                </option>
+                <option value="1">Leave Statement Report</option>
+                <option value="2">Leave Report</option>
+                <option value="3">Leave Summary Report</option>
+              </select>
+            </div>
+
+            {documentType === "2" && (
+              <div className="col-md-12">
+                <div className="form-group">
+                  <label>
+                    Leave Document <span className="text-danger">*</span>
+                  </label>
+                  <select
+                    className="form-control"
+                    name="documentID"
+                    required
+                    value={documentID}
+                    onChange={(e) => setDocumentID(e.target.value)}
+                  >
+                    <option value="0" disabled>
+                      -- Select --
+                    </option>
+                    {leaveDocuments.map((leave) => (
                       <option
                         key={leave.Application_No}
                         value={leave.Application_No}
@@ -177,39 +204,82 @@ const LeaveReportsForm = () => {
                         Start Date ({leave.Start_Date}) - Resumption Date (
                         {leave.Resumption_Date})
                       </option>
-                    ))
-                  ) : (
-                    <option disabled value="0">
-                      You have not taken any leave
-                    </option>
-                  )}
-                </select>
+                    ))}
+                  </select>
+                </div>
               </div>
+            )}
+          </div>
+        )}
+
+        {/* Payslip Year and Month Picker */}
+        {reportType === "2" && (
+          <div className="row">
+            <div className="form-group col-md-6">
+              <label>
+                Year<span className="text-danger">*</span>
+              </label>
+              <select
+                className="form-select"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                required
+              >
+                {generateYears().map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group col-md-6">
+              <label>
+                Month<span className="text-danger">*</span>
+              </label>
+              <select
+                className="form-select"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                required
+              >
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                  <option key={month} value={month}>
+                    {new Date(0, month - 1).toLocaleString("default", {
+                      month: "long",
+                    })}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         )}
 
-        {/* Leave Type Row */}
-        {showLeaveTypeRow && (
+        {/* P9 Date Range Picker */}
+        {reportType === "3" && (
           <div className="row">
-            <div className="col-md-12">
-              <div className="form-group">
-                <label>
-                  Leave Type<span className="text-danger">*</span>
-                </label>
-                <select
-                  className="form-control"
-                  required
-                  disabled={isLeaveTypeDisabled}
-                >
-                  <option value="">Choose...</option>
-                  {leaveTypes.map((leave) => (
-                    <option key={leave.Code} value={leave.Code}>
-                      {leave.Description}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="form-group col-md-6">
+              <label>
+                Start Date<span className="text-danger">*</span>
+              </label>
+              <input
+                type="date"
+                className="form-control"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                required
+              />
+            </div>
+            <div className="form-group col-md-6">
+              <label>
+                End Date<span className="text-danger">*</span>
+              </label>
+              <input
+                type="date"
+                className="form-control"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                required
+              />
             </div>
           </div>
         )}
@@ -227,12 +297,10 @@ const LeaveReportsForm = () => {
         </div>
       </form>
 
-      {/* Report Modal */}
       <ReportModal
         pdfData={pdfData}
         isModalOpen={isModalOpen}
-        closeModal={closeModal}
-        downloadPdf={downloadPdf}
+        closeModal={() => setIsModalOpen(false)}
       />
     </div>
   );

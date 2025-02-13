@@ -4,9 +4,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBell } from "@fortawesome/free-solid-svg-icons";
 import dashboard from "../../../static/img/logo/dashboard.png";
 import { useDashboard } from "../context/DashboardContext";
+import { Link } from "react-router-dom";
 
-const Header = ({ notificationCount, avatarSrc }) => {
-  const { dashboardData, profileImage, setLoggedIn } = useDashboard();
+const Header = ({ notificationCount }) => {
+  const { dashboardData, profileImage } = useDashboard();
   const imageSrc =
     profileImage &&
     `data:image/${profileImage.image_format};base64,${profileImage.encoded_string}`;
@@ -111,7 +112,11 @@ const Header = ({ notificationCount, avatarSrc }) => {
                       <li key={index}>
                         <div className="user-notification">
                           <div>
-                            <img src={imageSrc} alt="avatar" />
+                            <img
+                              src={imageSrc}
+                              style={{ borderRadius: "50%" }}
+                              alt="avatar"
+                            />
                           </div>
                           <div className="user-description">
                             <a href="letter-box.html">
@@ -161,7 +166,7 @@ const Header = ({ notificationCount, avatarSrc }) => {
                 <img
                   src={imageSrc}
                   alt="avatar"
-                  style={{ width: "50px", height: "50px" }}
+                  style={{ width: "50px", height: "50px", borderRadius: "50%" }}
                 />
                 <div className="flex-grow-1 user">
                   <span>
@@ -178,34 +183,22 @@ const Header = ({ notificationCount, avatarSrc }) => {
               </div>
               <ul className="profile-dropdown onhover-show-div">
                 <li>
-                  <a href="user-profile.html">
+                  <Link to="/selfservice/dashboard/profile">
                     <i data-feather="user"></i>
                     <span>Account </span>
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="letter-box.html">
+                  <Link href="#">
                     <i data-feather="mail"></i>
                     <span>Inbox</span>
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="task.html">
-                    <i data-feather="file-text"></i>
-                    <span>Taskboard</span>
-                  </a>
-                </li>
-                <li>
-                  <a href="edit-profile.html">
-                    <i data-feather="settings"></i>
-                    <span>Settings</span>
-                  </a>
-                </li>
-                <li>
-                  <a href="login.html">
+                  <Link to="/selfservice/logout">
                     <i data-feather="log-in"></i>
                     <span>Log Out</span>
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </li>

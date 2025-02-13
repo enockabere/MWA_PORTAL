@@ -98,8 +98,8 @@ const PlanDetailsModal = ({
                 id="accordionoc"
               >
                 <div className="col-xl-12 col-lg-12 col-md-12">
-                  <div className="card border border-warning">
-                    <div className="card-header bg-warning text-white">
+                  <div className="card border border-primary">
+                    <div className="card-header bg-primary text-white">
                       <h5 className="mb-0">
                         <button
                           className="btn btn-link ps-0 text-white"

@@ -25,6 +25,7 @@
     "axios": "^1.7.7",
     "bootstrap": "^5.3.3",
     "classnames": "^2.5.1",
+    "compromise": "^14.14.4",
     "datatables.net": "^2.1.8",
     "datatables.net-dt": "^2.1.8",
     "datatables.net-react": "^1.0.0",
@@ -33,6 +34,7 @@
     "jquery": "^3.6.0",
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^3.8.4",
+    "lucide-react": "^0.475.0",
     "moment": "^2.30.1",
     "mui-datatables": "^4.3.0",
     "react": "^18.3.1",
@@ -56,6 +58,7 @@
     "react-toastify": "^10.0.6",
     "react-transition-group": "^4.4.5",
     "recharts": "^2.13.0",
+    "simplebar": "^6.3.0",
     "simplebar-react": "^3.2.6"
   },
   "devDependencies": {
