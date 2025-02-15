@@ -52,35 +52,52 @@ export const handlePendingApprovalIntent = async (
     let data = await response.json();
     const parsedData = typeof data === "string" ? JSON.parse(data) : data;
 
-    // Filter documents with Status "Open" and Type "Timesheet"
+    // Filter documents with Status "Open"
     const pendingData = parsedData.filter((doc) => doc.Status === "Open");
 
     if (pendingData.length > 0) {
-      // Filter the data to ensure all items are of type 'TimeSheet'
-      const filteredData = pendingData.filter(
+      // Define a refresh function to re-fetch pending approvals
+      const refreshApprovals = async () => {
+        await handlePendingApprovalIntent(
+          addBotMessage,
+          setRequestSent,
+          csrfToken
+        );
+      };
+
+      // Separate data by document type
+      const timesheetData = pendingData.filter(
         (item) => item.DocumentType === "TimeSheet"
       );
+      const leaveApplicationData = pendingData.filter(
+        (item) => item.DocumentType === "LeaveApplication"
+      );
 
-      if (filteredData.length > 0) {
-        // Define a refresh function to re-fetch pending approvals
-        const refreshApprovals = async () => {
-          await handlePendingApprovalIntent(
-            addBotMessage,
-            setRequestSent,
-            csrfToken
-          );
-        };
-
+      // Render the appropriate accordion based on document type
+      if (timesheetData.length > 0) {
         addBotMessage(
           "Here are your pending timesheet approvals:",
           <PendingApprovalsAccordion
-            approvals={filteredData}
+            approvals={timesheetData}
             refreshApprovals={refreshApprovals}
           />
         );
-      } else {
-        console.log("No pending timesheet approvals found.");
-        addBotMessage("No pending timesheet approvals found.");
+      }
+
+      if (leaveApplicationData.length > 0) {
+        addBotMessage(
+          "Here are your pending leave application approvals:",
+          <LeaveApplicationAccordion
+            approvals={leaveApplicationData}
+            refreshApprovals={refreshApprovals}
+          />
+        );
+      }
+
+      // If no pending approvals of either type are found
+      if (timesheetData.length === 0 && leaveApplicationData.length === 0) {
+        console.log("No pending approvals found.");
+        addBotMessage("No pending approvals found.");
       }
     } else {
       addBotMessage("You have no pending approvals at the moment.");
