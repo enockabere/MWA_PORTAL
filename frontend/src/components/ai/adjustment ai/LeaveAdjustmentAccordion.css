@@ -1,0 +1,65 @@
+.accordion-container {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .accordion-item {
+    border: 1px solid #ddd;
+    margin-bottom: 10px;
+    border-radius: 5px;
+  }
+  
+  .accordion-header button {
+    width: 100%;
+    text-align: left;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  .accordion-content {
+    padding: 10px;
+    background-color: #fff;
+  }
+  
+  .loading-text {
+    text-align: center;
+    font-style: italic;
+    color: #888;
+  }
+  
+  .action-buttons {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+  }
+  
+  .action-message {
+    margin-top: 10px;
+    color: green;
+    font-weight: bold;
+  }
+  
+  .adjustment-details,
+  .adjustment-lines {
+    margin-bottom: 20px;
+  }
+  
+  .adjustment-lines table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .adjustment-lines th,
+  .adjustment-lines td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    text-align: left;
+  }
+  
+  .adjustment-lines th {
+    background-color: #f9f9f9;
+  }

@@ -1,5 +1,7 @@
 import React from "react";
 import PendingApprovalsAccordion from "./timesheet/PendingApprovalsAccordion";
+import LeaveApplicationAccordion from "./leave requests/LeaveApplicationAccordion";
+import LeaveAdjustmentAccordion from "./adjustment ai/LeaveAdjustmentAccordion";
 
 export const handleLeaveBalanceIntent = async (
   addBotMessage,
@@ -72,6 +74,9 @@ export const handlePendingApprovalIntent = async (
       const leaveApplicationData = pendingData.filter(
         (item) => item.DocumentType === "LeaveApplication"
       );
+      const leaveAdjustmentData = pendingData.filter(
+        (item) => item.DocumentType === "LeaveAdjustment"
+      );
 
       // Render the appropriate accordion based on document type
       if (timesheetData.length > 0) {
@@ -94,8 +99,22 @@ export const handlePendingApprovalIntent = async (
         );
       }
 
-      // If no pending approvals of either type are found
-      if (timesheetData.length === 0 && leaveApplicationData.length === 0) {
+      if (leaveAdjustmentData.length > 0) {
+        addBotMessage(
+          "Here are your pending leave adjustment approvals:",
+          <LeaveAdjustmentAccordion
+            approvals={leaveAdjustmentData}
+            refreshApprovals={refreshApprovals}
+          />
+        );
+      }
+
+      // If no pending approvals of any type are found
+      if (
+        timesheetData.length === 0 &&
+        leaveApplicationData.length === 0 &&
+        leaveAdjustmentData.length === 0
+      ) {
         console.log("No pending approvals found.");
         addBotMessage("No pending approvals found.");
       }
