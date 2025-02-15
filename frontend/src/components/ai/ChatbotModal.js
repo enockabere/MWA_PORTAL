@@ -8,6 +8,8 @@ import {
   handleGreetingIntent,
   handleUnknownIntent,
   handlePendingApprovalIntent,
+  handleApprovedDocumentIntent,
+  handleRejectedDocumentIntent,
 } from "./intentHandlers";
 import { useDashboard } from "../context/DashboardContext";
 
@@ -42,6 +44,26 @@ const ChatbotModal = ({ isOpen, onClose }) => {
               onClick={(e) => handlePendingApprovals(e)}
             >
               <i>What is pending my approvals?</i>
+            </a>
+          </li>
+          <li>
+            <Clock size={10} />{" "}
+            <a
+              href="#"
+              className="text-primary"
+              onClick={(e) => handleApprovedDocuments(e)}
+            >
+              <i>Documents that I approved?</i>
+            </a>
+          </li>
+          <li>
+            <Clock size={10} />{" "}
+            <a
+              href="#"
+              className="text-primary"
+              onClick={(e) => handleRejectedDocuments(e)}
+            >
+              <i>Documents that I rejected?</i>
             </a>
           </li>
         </ol>
@@ -84,6 +106,20 @@ const ChatbotModal = ({ isOpen, onClose }) => {
     handlePendingApprovalIntent(addBotMessage, setRequestSent, csrfToken);
   };
 
+  const handleApprovedDocuments = (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setRequestSent(true);
+    handleApprovedDocumentIntent(addBotMessage, setRequestSent, csrfToken);
+  };
+
+  const handleRejectedDocuments = (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setRequestSent(true);
+    handleRejectedDocumentIntent(addBotMessage, setRequestSent, csrfToken);
+  };
+
   const handleSendMessage = async () => {
     if (!userInput.trim() || loading) return;
 
@@ -107,6 +143,12 @@ const ChatbotModal = ({ isOpen, onClose }) => {
     } else if (intent === "get_pending_approvals" && !requestSent) {
       setRequestSent(true);
       handlePendingApprovals({ preventDefault: () => {} });
+    } else if (intent === "get_approved_documents" && !requestSent) {
+      setRequestSent(true);
+      handleApprovedDocuments({ preventDefault: () => {} });
+    } else if (intent === "get_rejected_documents" && !requestSent) {
+      setRequestSent(true);
+      handleRejectedDocuments({ preventDefault: () => {} });
     } else if (intent === "greeting") {
       handleGreetingIntent(addBotMessage);
     } else {

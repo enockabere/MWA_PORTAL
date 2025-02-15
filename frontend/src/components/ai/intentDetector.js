@@ -28,6 +28,18 @@ export const detectIntent = (message, intentCache) => {
   ) {
     intentCache[message] = "get_pending_approvals";
   } else if (
+    doc.has("document that i have approved") ||
+    doc.has("documents that i approved") ||
+    doc.has("i approved")
+  ) {
+    intentCache[message] = "get_approved_documents";
+  } else if (
+    doc.has("document that i have rejected") ||
+    doc.has("documents that i rejected") ||
+    doc.has("i rejected")
+  ) {
+    intentCache[message] = "get_approved_documents";
+  } else if (
     doc.has("hello") ||
     doc.has("niaje") ||
     doc.has("vipi") ||
