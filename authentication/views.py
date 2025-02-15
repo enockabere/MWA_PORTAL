@@ -1682,7 +1682,7 @@ class FnActionApprovals(UserObjectMixins, View):
                 approvalComment,
                 User_ID
             )
-            if response and response != "0":
+            if response == True:
                 return JsonResponse({"success": True, "message": "Approved successfully!"})
             return JsonResponse({"success": False, "error": str(response)}, status=400)
 

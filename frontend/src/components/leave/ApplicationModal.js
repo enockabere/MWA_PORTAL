@@ -7,7 +7,7 @@ import ApproversTable from "./ApproversTable";
 import SubmitLeave from "./SubmitLeave";
 import CancelApproval from "./CancelApproval";
 import Preloader from "../Layout/Preloader";
-import { toast, ToastContainer } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 
 const ApplicationModal = ({
   selectedApplication,

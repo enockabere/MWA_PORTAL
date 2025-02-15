@@ -1,4 +1,5 @@
 import React from "react";
+import PendingApprovalsAccordion from "./timesheet/PendingApprovalsAccordion";
 
 export const handleLeaveBalanceIntent = async (
   addBotMessage,
@@ -51,26 +52,36 @@ export const handlePendingApprovalIntent = async (
     let data = await response.json();
     const parsedData = typeof data === "string" ? JSON.parse(data) : data;
 
-    // Filter documents with Status "Open"
-    const pendingApprovals = parsedData.filter(
-      (doc) => doc.Status.toLowerCase() === "open"
-    );
+    // Filter documents with Status "Open" and Type "Timesheet"
+    const pendingData = parsedData.filter((doc) => doc.Status === "Open");
 
-    if (pendingApprovals.length > 0) {
-      const approvalList = (
-        <ul className="pending-approval-list">
-          {pendingApprovals.map((doc, index) => (
-            <li key={index}>
-              <strong>Document No:</strong> {doc.DocumentNo} <br />
-              <strong>Type:</strong> {doc.DocumentType} <br />
-              <strong>Sender:</strong> {doc.Sender_Name} <br />
-              <strong>Due Date:</strong> {doc.Due_Date} <br />
-            </li>
-          ))}
-        </ul>
+    if (pendingData.length > 0) {
+      // Filter the data to ensure all items are of type 'TimeSheet'
+      const filteredData = pendingData.filter(
+        (item) => item.DocumentType === "TimeSheet"
       );
 
-      addBotMessage("Here are your pending approval requests:", approvalList);
+      if (filteredData.length > 0) {
+        // Define a refresh function to re-fetch pending approvals
+        const refreshApprovals = async () => {
+          await handlePendingApprovalIntent(
+            addBotMessage,
+            setRequestSent,
+            csrfToken
+          );
+        };
+
+        addBotMessage(
+          "Here are your pending timesheet approvals:",
+          <PendingApprovalsAccordion
+            approvals={filteredData}
+            refreshApprovals={refreshApprovals}
+          />
+        );
+      } else {
+        console.log("No pending timesheet approvals found.");
+        addBotMessage("No pending timesheet approvals found.");
+      }
     } else {
       addBotMessage("You have no pending approvals at the moment.");
     }
