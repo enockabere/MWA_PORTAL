@@ -1941,7 +1941,7 @@ class InitiateTimesheet(UserObjectMixins, View):
             initiation_date = data.get("initiationDate")
             
             # Convert the initiation date to the required format
-            start_date = datetime.strptime(initiation_date, "%Y-%m-%d").strftime("%Y-%m-%d")
+            start_date = dates.strptime(initiation_date, "%Y-%m-%d").strftime("%Y-%m-%d")
             
             response = self.make_soap_request(
                 soap_headers, "FnCreateTimeSheet", employeeNo, start_date, user_id
