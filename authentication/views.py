@@ -1935,13 +1935,19 @@ class InitiateTimesheet(UserObjectMixins, View):
             soap_headers = request.session["soap_headers"]
             employeeNo = request.session["Employee_No_"]
             user_id = request.session["User_ID"]
-            start_date = dates.today().strftime("%Y-%m-%d") 
+            
+            # Get the initiation date from the request body
+            data = json.loads(request.body)
+            initiation_date = data.get("initiationDate")
+            
+            # Convert the initiation date to the required format
+            start_date = datetime.strptime(initiation_date, "%Y-%m-%d").strftime("%Y-%m-%d")
             
             response = self.make_soap_request(
                 soap_headers, "FnCreateTimeSheet", employeeNo, start_date, user_id
             )
             
-            if response != "0" and response != "":  # Fixing the condition
+            if response != "0" and response != "":
                 return JsonResponse({"success": True, "message": "Timesheet initiated successfully!"})
 
             return JsonResponse({"success": False, "message": "Failed to initiate timesheet."})

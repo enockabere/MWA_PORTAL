@@ -26,7 +26,8 @@ const TimesheetForm = ({
     HoursWorkedFri: 8,
   });
   const [selectedEntry, setSelectedEntry] = useState(null);
-  const [isInitiatedLoading, setIsInitiatedLoading] = useState(true); // Loading state for Initiated
+  const [isInitiatedLoading, setIsInitiatedLoading] = useState(true);
+  const [initiationDate, setInitiationDate] = useState(today); // State for initiation date
   const csrfToken = document
     .querySelector('meta[name="csrf-token"]')
     ?.getAttribute("content");
@@ -53,17 +54,14 @@ const TimesheetForm = ({
   }, [region]);
 
   useEffect(() => {
-    // Simulate a delay for Initiated status check or async API call
     const checkInitiatedStatus = async () => {
-      // Here you can call an API to determine if the timesheet has been initiated
-      // For now, we use a setTimeout to simulate a loading time
       setTimeout(() => {
-        setIsInitiatedLoading(false); // Set loading to false once it's checked
-      }, 2000); // Simulate delay (2 seconds)
+        setIsInitiatedLoading(false);
+      }, 2000);
     };
 
     checkInitiatedStatus();
-  }, []); // Empty dependency array to run only once on mount
+  }, []);
 
   useEffect(() => {
     const entry = entries.find((entry) => entry.Date === date);
@@ -72,7 +70,7 @@ const TimesheetForm = ({
 
   const isWeekend = (selectedDate) => {
     const day = new Date(selectedDate).getDay();
-    return day === 6 || day === 0; // Saturday or Sunday
+    return day === 6 || day === 0;
   };
 
   const getMaxHoursForDay = () => {
@@ -121,7 +119,7 @@ const TimesheetForm = ({
       if (result.success) {
         toast.success(result.message);
         onAddEntry(matchingEntry.DocumentNo);
-        setHours(""); // Reset input field
+        setHours("");
       } else {
         toast.error(result.error);
       }
@@ -142,7 +140,9 @@ const TimesheetForm = ({
           "Content-Type": "application/json",
           "X-CSRFToken": csrfToken,
         },
-        body: JSON.stringify({}), // Sending an empty body
+        body: JSON.stringify({
+          initiationDate: initiationDate, // Pass the initiation date
+        }),
       });
 
       if (!response.ok) {
@@ -247,6 +247,19 @@ const TimesheetForm = ({
             </div>
           ) : (
             <div className="text-center">
+              <div className="mb-3">
+                <label htmlFor="initiationDate" className="form-label">
+                  Initiation Date
+                </label>
+                <input
+                  type="date"
+                  id="initiationDate"
+                  value={initiationDate}
+                  onChange={(e) => setInitiationDate(e.target.value)}
+                  className="form-control"
+                  max={today}
+                />
+              </div>
               <button
                 onClick={handleInitiateTimesheet}
                 className="btn btn-primary"
