@@ -110,3 +110,9 @@
     box-shadow: none !important;
     outline: none !important;
   }
+  /* ChatbotModal.css */
+.btn-outline-danger {
+  border: none; /* Remove border for a cleaner look */
+  margin-right: 5px; /* Add spacing between the Clear Chat button and the input field */
+}
+

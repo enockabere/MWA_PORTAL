@@ -391,6 +391,7 @@ class LeavePlanner(UserObjectMixins,View):
                 employeeNo,
                 myAction,
             )
+            print("response:", response)
             if response != "0" and response != None and response != "":
                 return JsonResponse({"code": response}, safe=False)
             return JsonResponse({"error": "Invalid response"}, safe=False)
@@ -2111,11 +2112,10 @@ class ProfilePicture(UserObjectMixins, View):
 
 class Save_Unknown_Query(View):
     def post(self, request):
-        user_id = request.session["User_ID"]
         data = json.loads(request.body)
         query_text = data.get("text")
 
         if query_text:
-            UnrecognizedQuery.objects.create(text=query_text, user_id= user_id )
+            UnrecognizedQuery.objects.create(text=query_text )
             return JsonResponse({"message": "Query saved."}, status=201)
         return JsonResponse({"error": "Invalid request."}, status=400)

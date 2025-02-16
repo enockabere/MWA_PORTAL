@@ -13,7 +13,7 @@ export const detectIntent = (message, intentCache) => {
   ) {
     intentCache[message] = "get_leave_balance";
   } else if (
-    doc.has("document pending") ||
+    doc.has("pending approvals") ||
     doc.has("approval") ||
     doc.has("pending approval") ||
     doc.has("approval request") ||
@@ -39,6 +39,16 @@ export const detectIntent = (message, intentCache) => {
     doc.has("i rejected")
   ) {
     intentCache[message] = "get_approved_documents";
+  } else if (
+    doc.has("new leave plan") ||
+    doc.has("new planner") ||
+    doc.has("new leave planner") ||
+    doc.has("create planner") ||
+    doc.has("create leave planner") ||
+    doc.has("create plan") ||
+    doc.has("new leave planner")
+  ) {
+    intentCache[message] = "create_leave_planner";
   } else if (
     doc.has("hello") ||
     doc.has("niaje") ||

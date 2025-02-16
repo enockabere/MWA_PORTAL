@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Modal, Button, Form, InputGroup, Spinner } from "react-bootstrap";
-import { Send, Bot, User, CheckCircle, Clock } from "lucide-react";
+import { Send, Bot, User, CheckCircle, Clock, Trash2 } from "lucide-react"; // Added Trash2 icon
 import "./ChatbotModal.css";
 import { detectIntent } from "./intentDetector";
 import {
@@ -10,6 +10,7 @@ import {
   handlePendingApprovalIntent,
   handleApprovedDocumentIntent,
   handleRejectedDocumentIntent,
+  handleCreateLeavePlannerIntent,
 } from "./intentHandlers";
 import { useDashboard } from "../context/DashboardContext";
 
@@ -66,6 +67,16 @@ const ChatbotModal = ({ isOpen, onClose }) => {
               <i>Documents that I rejected?</i>
             </a>
           </li>
+          <li>
+            <Clock size={10} />{" "}
+            <a
+              href="#"
+              className="text-primary"
+              onClick={(e) => handleCreateLeavePlanner(e)}
+            >
+              <i>New Leave Planner?</i>
+            </a>
+          </li>
         </ol>
       ),
     },
@@ -83,7 +94,7 @@ const ChatbotModal = ({ isOpen, onClose }) => {
       ...prev,
       {
         text: text,
-        component: component,
+        component: component, // Pass the component here
         sender: "bot",
         senderName: "Robot", // Bot's name
         timestamp: new Date().toLocaleTimeString(), // Current time
@@ -120,6 +131,13 @@ const ChatbotModal = ({ isOpen, onClose }) => {
     handleRejectedDocumentIntent(addBotMessage, setRequestSent, csrfToken);
   };
 
+  const handleCreateLeavePlanner = (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setRequestSent(true);
+    handleCreateLeavePlannerIntent(addBotMessage, setRequestSent, csrfToken);
+  };
+
   const handleSendMessage = async () => {
     if (!userInput.trim() || loading) return;
 
@@ -149,11 +167,80 @@ const ChatbotModal = ({ isOpen, onClose }) => {
     } else if (intent === "get_rejected_documents" && !requestSent) {
       setRequestSent(true);
       handleRejectedDocuments({ preventDefault: () => {} });
+    } else if (intent === "create_leave_planner" && !requestSent) {
+      setRequestSent(true);
+      handleCreateLeavePlanner({ preventDefault: () => {} });
     } else if (intent === "greeting") {
       handleGreetingIntent(addBotMessage);
     } else {
       handleUnknownIntent(addBotMessage, userInput, csrfToken);
     }
+  };
+
+  // Clear the chat history
+  const handleClearChat = () => {
+    setMessages([
+      {
+        text: "Hello! How can I assist you today?",
+        sender: "bot",
+        senderName: "Robot", // Bot's name
+        timestamp: new Date().toLocaleTimeString(), // Current time
+        component: (
+          <ol className="quick-links text-primary">
+            <li>
+              <CheckCircle size={10} />{" "}
+              <a
+                href="#"
+                className="text-primary"
+                onClick={(e) => handleLeaveBalance(e)}
+              >
+                <i>Check my leave balance?</i>
+              </a>
+            </li>
+            <li>
+              <Clock size={10} />{" "}
+              <a
+                href="#"
+                className="text-primary"
+                onClick={(e) => handlePendingApprovals(e)}
+              >
+                <i>What is pending my approvals?</i>
+              </a>
+            </li>
+            <li>
+              <Clock size={10} />{" "}
+              <a
+                href="#"
+                className="text-primary"
+                onClick={(e) => handleApprovedDocuments(e)}
+              >
+                <i>Documents that I approved?</i>
+              </a>
+            </li>
+            <li>
+              <Clock size={10} />{" "}
+              <a
+                href="#"
+                className="text-primary"
+                onClick={(e) => handleRejectedDocuments(e)}
+              >
+                <i>Documents that I rejected?</i>
+              </a>
+            </li>
+            <li>
+              <Clock size={10} />{" "}
+              <a
+                href="#"
+                className="text-primary"
+                onClick={(e) => handleCreateLeavePlanner(e)}
+              >
+                <i>New Leave Planner?</i>
+              </a>
+            </li>
+          </ol>
+        ),
+      },
+    ]);
   };
 
   return (
@@ -192,7 +279,8 @@ const ChatbotModal = ({ isOpen, onClose }) => {
                 </div>
                 <div className="message-text">
                   {msg.text}
-                  {msg.component && msg.component}
+                  {msg.component && <div>{msg.component}</div>}{" "}
+                  {/* Render the component here */}
                 </div>
               </div>
             </div>
@@ -207,21 +295,31 @@ const ChatbotModal = ({ isOpen, onClose }) => {
         </div>
       </Modal.Body>
       <Modal.Footer>
-        <InputGroup>
+        <InputGroup className="d-flex">
+          {/* Clear Chat Button */}
+          <Button
+            variant="outline-danger"
+            onClick={handleClearChat}
+            style={{ flex: "0 0 auto", width: "auto" }}
+          >
+            <Trash2 size={19} />
+          </Button>
           <Form.Control
             type="text"
             placeholder="Type your message..."
             value={userInput}
             onChange={(e) => setUserInput(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-            className="no-border-radius"
+            className="no-border-radius flex-grow-1"
+            style={{ margin: "0 5px" }}
           />
           <Button
             variant="primary"
             onClick={handleSendMessage}
             disabled={loading}
+            style={{ flex: "0 0 auto", width: "auto" }}
           >
-            <Send size={20} />
+            <Send size={19} />
           </Button>
         </InputGroup>
       </Modal.Footer>

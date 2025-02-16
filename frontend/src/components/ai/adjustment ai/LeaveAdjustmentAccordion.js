@@ -111,35 +111,36 @@ const LeaveAdjustmentAccordion = ({ approvals, refreshApprovals }) => {
                   <AdjustmentLines data={adjustmentLinesData} />
 
                   {/* Approve and Reject Buttons */}
-                  <div className="action-buttons">
-                    <button
-                      className="btn btn-primary approve-button"
-                      onClick={() => handleAction(doc.DocumentNo, "approve")}
-                      disabled={actionLoading[doc.DocumentNo]}
-                    >
-                      {actionLoading[doc.DocumentNo] ? (
-                        <FontAwesomeIcon icon={faSpinner} spin />
-                      ) : (
-                        <>
-                          <FontAwesomeIcon icon={faCheck} /> Approve
-                        </>
-                      )}
-                    </button>
-                    <button
-                      className="btn btn-danger reject-button"
-                      onClick={() => handleAction(doc.DocumentNo, "reject")}
-                      disabled={actionLoading[doc.DocumentNo]}
-                    >
-                      {actionLoading[doc.DocumentNo] ? (
-                        <FontAwesomeIcon icon={faSpinner} spin />
-                      ) : (
-                        <>
-                          <FontAwesomeIcon icon={faTimes} /> Reject
-                        </>
-                      )}
-                    </button>
-                  </div>
-
+                  {doc.Status === "Open" && (
+                    <div className="action-buttons">
+                      <button
+                        className="btn btn-primary approve-button"
+                        onClick={() => handleAction(doc.DocumentNo, "approve")}
+                        disabled={actionLoading[doc.DocumentNo]}
+                      >
+                        {actionLoading[doc.DocumentNo] ? (
+                          <FontAwesomeIcon icon={faSpinner} spin />
+                        ) : (
+                          <>
+                            <FontAwesomeIcon icon={faCheck} /> Approve
+                          </>
+                        )}
+                      </button>
+                      <button
+                        className="btn btn-danger reject-button"
+                        onClick={() => handleAction(doc.DocumentNo, "reject")}
+                        disabled={actionLoading[doc.DocumentNo]}
+                      >
+                        {actionLoading[doc.DocumentNo] ? (
+                          <FontAwesomeIcon icon={faSpinner} spin />
+                        ) : (
+                          <>
+                            <FontAwesomeIcon icon={faTimes} /> Reject
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
                   {/* Action Message */}
                   {actionMessage && (
                     <p className="action-message">{actionMessage}</p>

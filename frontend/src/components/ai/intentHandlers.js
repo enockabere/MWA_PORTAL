@@ -2,6 +2,8 @@ import React from "react";
 import PendingApprovalsAccordion from "./timesheet/PendingApprovalsAccordion";
 import LeaveApplicationAccordion from "./leave requests/LeaveApplicationAccordion";
 import LeaveAdjustmentAccordion from "./adjustment ai/LeaveAdjustmentAccordion";
+import LeavePlannerComponent from "./planner ai/LeavePlannerComponent";
+import axios from "axios";
 
 export const handleLeaveBalanceIntent = async (
   addBotMessage,
@@ -300,6 +302,43 @@ export const handleRejectedDocumentIntent = async (
   } catch (error) {
     console.error("Error fetching approved documents:", error);
     addBotMessage("Sorry, I couldn't retrieve  documents that you rejected.");
+  } finally {
+    setRequestSent(false);
+  }
+};
+
+export const handleCreateLeavePlannerIntent = async (
+  addBotMessage,
+  setRequestSent,
+  csrfToken
+) => {
+  try {
+    const data = new FormData();
+    data.append("plannerNo", ""); // Empty string for new planner
+    data.append("myAction", "insert"); // Action to create a new planner
+
+    // POST request to create the planner
+    const response = await axios.post("/selfservice/LeavePlanner/", data, {
+      headers: {
+        "X-CSRFToken": csrfToken,
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    if (response.status === 200 && response.data.code) {
+      const plannerNo = response.data.code; // Retrieve the plannerNo from the response
+
+      // Pass the component directly to addBotMessage
+      addBotMessage(
+        "Leave planner created successfully!",
+        <LeavePlannerComponent plannerNo={plannerNo} csrfToken={csrfToken} />
+      );
+    } else {
+      addBotMessage("Failed to create leave planner. Please try again.");
+    }
+  } catch (error) {
+    console.error("Error creating leave planner:", error);
+    addBotMessage("Sorry, I couldn't create the leave planner at the moment.");
   } finally {
     setRequestSent(false);
   }
