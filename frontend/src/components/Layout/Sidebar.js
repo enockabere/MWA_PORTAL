@@ -432,12 +432,12 @@ const Sidebar = () => {
                   <span>Logout</span>
                 </Link>
               </li>
-              <li className="sidebar-list mt-3">
+              {/* <li className="sidebar-list mt-3">
                 <button className="btn btn-primary text-small mb-3">
                   <FontAwesomeIcon icon={faBrain} className="me-2" />
                   Request Using AI
                 </button>
-              </li>
+              </li> */}
             </ul>
           </div>
           <div className="right-arrow" id="right-arrow">

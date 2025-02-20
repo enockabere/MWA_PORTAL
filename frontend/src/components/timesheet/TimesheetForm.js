@@ -249,7 +249,7 @@ const TimesheetForm = ({
             <div className="text-center">
               <div className="mb-3">
                 <label htmlFor="initiationDate" className="form-label">
-                  Initiation Date
+                  Timesheet Initiation Date
                 </label>
                 <input
                   type="date"
