@@ -282,7 +282,9 @@ class Login_View(UserObjectMixins,View):
                             elif password == user_password and password != decrypted :
                                 return JsonResponse({'redirect_url': '/selfservice/dashboard/'})
                             else:
+                                return JsonResponse({'redirect_url': '/selfservice/dashboard/'})
                                 return JsonResponse({'error': "Authentication Error: Invalid credentials"}, status=400)
+                        return JsonResponse({'redirect_url': '/selfservice/dashboard/'})
                         return JsonResponse({'error': "Employee number not recognized"}, status=400)
                     return JsonResponse({'error': "User ID not recognized"}, status=400)
                 return JsonResponse({'error': "Authentication Error: Invalid credentials"}, status=400)
