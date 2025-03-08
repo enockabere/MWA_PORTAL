@@ -55,6 +55,7 @@ function LoginForm() {
         toast(data.message);
         navigate(data.redirect_url, { state: { showWelcomeToast: true } });
       } else {
+        console.log(response);
         toast.error("Invalid email or password.");
       }
     } catch (error) {

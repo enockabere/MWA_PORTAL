@@ -86,7 +86,11 @@ const Timesheet = () => {
             <div className="card h-100">
               <div className="card-body">
                 <TimesheetCalendar
+                  Initiated={Initiated}
+                  region={region}
                   entries={timesheetEntries}
+                  onAddEntry={fetchTimesheetByPk}
+                  projects={projects}
                   style={{
                     width: "100%",
                     maxWidth: "1200px",
