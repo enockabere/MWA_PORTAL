@@ -252,7 +252,6 @@ class Login_View(UserObjectMixins,View):
                             default_password = 'Z0FBQUFBQm5Fa1RnYzhPbS1fM1hIVzNlUzVrcVBaRUFsVC1LS2lzLVNUUFV3MmdBalFweHJqMmp3X2pZdnlETm14ZUp2UGlZdFJvdUNHMUkwMHpJNnZMTzN3ck9WclcyYUE9PQ=='
                             decrypted = self.pass_decrypt(default_password)
                             user_password = self.pass_decrypt(data['Password'])
-                            print(user_password)
                             if password == user_password and password == decrypted:
                                  return JsonResponse({'redirect_url': '/selfservice/dashboard/'})  
                                 # generate_otp = self.generate_otp(4)
@@ -392,7 +391,6 @@ class LeavePlanner(UserObjectMixins,View):
                 employeeNo,
                 myAction,
             )
-            print("response:", response)
             if response != "0" and response != None and response != "":
                 return JsonResponse({"code": response}, safe=False)
             return JsonResponse({"error": "Invalid response"}, safe=False)
@@ -716,12 +714,10 @@ class LeaveApproval(UserObjectMixins, View):
 
         except KeyError as e:
             error_message = f"Missing session key: {str(e)}"
-            print(error_message)
             return JsonResponse({"success": False, "error": error_message}, status=400)
 
         except Exception as e:
             error_message = f"Unexpected error: {str(e)}"
-            print(error_message)
             return JsonResponse({"success": False, "error": error_message}, status=500)
 
 
@@ -1419,7 +1415,6 @@ class HRLeaveReports(UserObjectMixins, View):
             soap_headers = await sync_to_async(request.session.__getitem__)("soap_headers")
             employeeNo = await sync_to_async(request.session.__getitem__)("Employee_No_")
             data = json.loads(request.body)
-            print("document_type:", data)
             document_type = int(data.get('document_type'))  # Document type identifier
             documentID = data.get("documentID")  
             
@@ -1859,18 +1854,19 @@ class GetCurrentTimesheet(UserObjectMixins, View):
                 )
                 response = await asyncio.gather(task_get_plan_lines)
                 all_timesheets = [x for x in response[0]]
-                current_month = dates.now().month
-                current_year = dates.now().year
-                current_timesheets = [
-                    ts for ts in all_timesheets 
-                    if dates.strptime(ts["PeriodStartDate"], "%Y-%m-%d").month == current_month and 
-                    dates.strptime(ts["PeriodStartDate"], "%Y-%m-%d").year == current_year
+
+                # Filter timesheets where Status is "Open" and Submitted is False
+                open_timesheets = [
+                    ts for ts in all_timesheets
+                    if ts.get("Status") == "Open" and not ts.get("Submitted", True)
                 ]
-            timesheet = current_timesheets[0] if current_timesheets else {}
+
+            timesheet = open_timesheets[0] if open_timesheets else {}
 
             return JsonResponse(timesheet, safe=False)
         except Exception as e:
             return JsonResponse({"error": str(e)}, safe=False)
+
 
         
 class GetTimesheetEntries(UserObjectMixins, View):
@@ -1939,8 +1935,7 @@ class InitiateTimesheet(UserObjectMixins, View):
             
             # Get the initiation date from the request body
             data = json.loads(request.body)
-            initiation_date = data.get("initiationDate")
-            
+            initiation_date = data.get("initiationDate")           
             # Convert the initiation date to the required format
             start_date = dates.strptime(initiation_date, "%Y-%m-%d").strftime("%Y-%m-%d")
             
@@ -1958,7 +1953,7 @@ class InitiateTimesheet(UserObjectMixins, View):
             return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 
-class TimesheetEntry(UserObjectMixins,View):   
+class TimesheetEntry(UserObjectMixins, View):
     def post(self, request):
         try:
             soap_headers = request.session.get("soap_headers", {})
@@ -1969,23 +1964,45 @@ class TimesheetEntry(UserObjectMixins,View):
             entry_no = data.get("EntryNo")
             date_str = data.get("Date")
             hours_worked_str = data.get("HoursWorked")
+            project = data.get("Project", "")  
+
+            print(document_no,entry_no,date_str,hours_worked_str,project)
+
+            # Validate required fields
             if not all([document_no, entry_no, date_str, hours_worked_str]):
-                return JsonResponse({"success": False, "error": "Missing required fields"}, status=400)
+                return JsonResponse(
+                    {"success": False, "error": "Missing required fields"}, status=400
+                )
 
             try:
+                # Convert data to appropriate types
                 entry_no = int(entry_no)  # Convert EntryNo to integer
                 date = dates.strptime(date_str, "%Y-%m-%d").date()  # Convert Date to date object
                 hours_worked = Decimal(hours_worked_str)  # Convert HoursWorked to decimal
             except (ValueError, TypeError) as e:
-                return JsonResponse({"success": False, "error": f"Invalid data format: {str(e)}"}, status=400)
+                return JsonResponse(
+                    {"success": False, "error": f"Invalid data format: {str(e)}"}, status=400
+                )
+
+            # Make SOAP request with the Project field
             response = self.make_soap_request(
-                soap_headers, "fnModifyTimesheetLines", document_no, entry_no, date, hours_worked
+                soap_headers,
+                "fnModifyTimesheetLines",
+                document_no,
+                entry_no,
+                date,
+                hours_worked,
+                project,  
             )
-            
-            if response == True:
-                return JsonResponse({"success": True, "message": "Timesheet entry added successfully!"})
+
+            if response is True:
+                return JsonResponse(
+                    {"success": True, "message": "Timesheet entry added successfully!"}
+                )
             else:
-                return JsonResponse({"success": False, "error": "Failed to add timesheet entry"}, status=400)
+                return JsonResponse(
+                    {"success": False, "error": "Failed to add timesheet entry"}, status=400
+                )
 
         except Exception as e:
             print("Error:", e)

@@ -12,11 +12,11 @@ import "react-calendar/dist/Calendar.css";
 import "./TimesheetCalendar.css";
 
 const TimesheetCalendar = ({
-  entries,
+  entries = [],
   Initiated,
   region,
   onAddEntry,
-  projects,
+  projects = [],
 }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showModal, setShowModal] = useState(false);
@@ -35,10 +35,7 @@ const TimesheetCalendar = ({
     const fetchMaxHours = async () => {
       try {
         const response = await fetch(`/selfservice/get-max-timesheet-entries/`);
-        if (!response.ok) {
-          console.error("Failed to fetch max timesheet entries");
-          return;
-        }
+        if (!response.ok) throw new Error("Failed to fetch max hours");
         const data = await response.json();
         setMaxHours({
           HoursWorkedMonThur: data.HoursWorkedMonThur,
@@ -55,21 +52,26 @@ const TimesheetCalendar = ({
   // Get timesheet entries for the selected date
   const getTimesheetEntries = (date) => {
     if (!Array.isArray(entries)) {
-      console.error("Entries is not an array:", entries);
       return [];
     }
-    return entries.filter(
-      (entry) => entry.Date === moment(date).format("YYYY-MM-DD")
+
+    const formattedDate = moment(date).format("YYYY-MM-DD");
+    const filteredEntries = entries.filter(
+      (entry) => entry.Date === formattedDate
     );
+
+    return filteredEntries;
   };
 
   // Define tile content (hours worked) - Hide 0-hour entries
   const tileContent = ({ date, view }) => {
     if (view === "month") {
-      const entry = getTimesheetEntries(date)[0];
-
-      if (entry && entry.HoursWorked > 0) {
-        return <p className="hours-worked">{entry.HoursWorked}h</p>;
+      const entriesForDate = getTimesheetEntries(date);
+      if (entriesForDate.length > 0) {
+        const entry = entriesForDate[0];
+        if (entry.HoursWorked > 0) {
+          return <p className="hours-worked">{entry.HoursWorked}h</p>;
+        }
       }
     }
     return null;
@@ -78,11 +80,12 @@ const TimesheetCalendar = ({
   // Define tile class for styling weekends, holidays, leave days
   const tileClassName = ({ date, view }) => {
     if (view === "month") {
-      const entry = getTimesheetEntries(date)[0];
-      if (!entry) return "";
-
-      if (entry.Holiday) return "holiday-tile"; // Red color for holidays
-      if (entry.LeaveDay) return "leave-day-tile"; // Yellow color for leave days
+      const entriesForDate = getTimesheetEntries(date);
+      if (entriesForDate.length > 0) {
+        const entry = entriesForDate[0];
+        if (entry.Holiday) return "holiday-tile";
+        if (entry.LeaveDay) return "leave-day-tile";
+      }
     }
     return "";
   };
@@ -95,14 +98,34 @@ const TimesheetCalendar = ({
 
   // Handle date click event
   const handleDateClick = (date) => {
-    // Do not open the modal if Initiated is false, the date is in the future, or it's a weekend
+    // Log the selected date for debugging
+    console.log("Selected Date:", moment(date).format("YYYY-MM-DD"));
+
+    // Check if the date is valid for selection
     if (
       !Initiated ||
       moment(date).isAfter(moment(), "day") ||
       isWeekend(date)
     ) {
+      console.log(
+        "Date selection blocked due to initiation status, future date, or weekend."
+      );
       return;
     }
+
+    // Get entries for the selected date
+    const entriesForDate = getTimesheetEntries(date);
+    console.log("Entries for selected date:", entriesForDate);
+
+    // Check if there are entries for the selected date
+    if (entriesForDate.length > 0) {
+      const matchingEntry = entriesForDate[0]; // Assuming one entry per date
+      console.log("Matching entry found:", matchingEntry);
+    } else {
+      console.log("No entries found for the selected date.");
+    }
+
+    // Open the modal
     setPopupDate(date);
     setShowModal(true);
   };
@@ -123,7 +146,7 @@ const TimesheetCalendar = ({
 
   // Handle project selection change
   const handleProjectChange = (e) => {
-    setSelectedProject(e.target.value);
+    setSelectedProject(e.target.value); // Set the selected project EntryNo
   };
 
   // Get max hours for the selected day
@@ -133,23 +156,21 @@ const TimesheetCalendar = ({
   };
 
   // Handle form submission
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     const max = getMaxHoursForDay(popupDate);
 
-    // Validate hours worked
     if (!hoursWorked || hoursWorked <= 0 || hoursWorked > max) {
       setError(`Please enter a valid number of hours (0 - ${max}).`);
       return;
     }
 
-    // Validate project selection for USA region
     if (region === "USA" && !selectedProject) {
       setError("Please select a project.");
       return;
     }
 
-    // Find the matching entry for the selected date
     const matchingEntry = entries.find(
       (entry) => entry.Date === moment(popupDate).format("YYYY-MM-DD")
     );
@@ -163,17 +184,22 @@ const TimesheetCalendar = ({
     const payload =
       region === "USA"
         ? {
+            DocumentNo: matchingEntry.DocumentNo, // Include DocumentNo
+            EntryNo: matchingEntry.EntryNo, // Include EntryNo
             Date: moment(popupDate).format("YYYY-MM-DD"),
             HoursWorked: parseFloat(hoursWorked),
-            Project: selectedProject, // Include project for USA region
+            Project: selectedProject, // Submit the selected project EntryNo
           }
         : {
             DocumentNo: matchingEntry.DocumentNo,
             EntryNo: matchingEntry.EntryNo,
             Date: moment(popupDate).format("YYYY-MM-DD"),
             HoursWorked: parseFloat(hoursWorked),
-            Project: "", // Submit an empty string for non-USA regions
+            Project: "", // Submit an empty string for non-USA users
           };
+
+    // Log the payload for debugging
+    console.log("Payload being sent:", payload);
 
     try {
       setLoadingAddEntry(true);
@@ -189,10 +215,9 @@ const TimesheetCalendar = ({
       });
 
       const result = await response.json();
+
       if (result.success) {
-        // Call the onAddEntry callback to update the parent component
         if (onAddEntry) {
-          // Pass the DocumentNo to onAddEntry (similar to TimesheetForm)
           onAddEntry(matchingEntry.DocumentNo);
         }
         setShowModal(false);
@@ -202,7 +227,6 @@ const TimesheetCalendar = ({
         setError(result.error || "Failed to add entry. Please try again.");
       }
     } catch (error) {
-      console.error("Error adding timesheet entry:", error);
       setError("Error adding timesheet entry. Please try again.");
     } finally {
       setLoadingAddEntry(false);
@@ -326,7 +350,7 @@ const TimesheetCalendar = ({
                 >
                   <option value="">Select a project</option>
                   {projects.map((project, index) => (
-                    <option key={index} value={project.ProjectTask}>
+                    <option key={index} value={project.EntryNo}>
                       {project.ProjectTask}
                     </option>
                   ))}

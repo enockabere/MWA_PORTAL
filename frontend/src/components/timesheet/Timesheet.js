@@ -42,6 +42,7 @@ const Timesheet = () => {
 
   const fetchTimesheetByPk = async (pk) => {
     try {
+      console.log("fetching entries for:", pk);
       const response = await fetch(`/selfservice/get-timesheet-entries/${pk}/`);
       const entries = await response.json();
       setTimesheetEntries(entries);
@@ -111,11 +112,7 @@ const Timesheet = () => {
               <div className="card-body">
                 <TimesheetForm
                   Initiated={Initiated}
-                  region={region}
-                  currentTimesheet={currentTimesheet}
-                  entries={timesheetEntries}
                   onInitiate={refreshTimesheets}
-                  onAddEntry={fetchTimesheetByPk}
                 />
                 {Initiated && <TimesheetProgress />}
               </div>

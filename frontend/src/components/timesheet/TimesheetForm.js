@@ -1,57 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faCalendarPlus,
-  faCheckCircle,
-  faSpinner,
-} from "@fortawesome/free-solid-svg-icons";
+import { faCheckCircle, faSpinner } from "@fortawesome/free-solid-svg-icons";
 
-const TimesheetForm = ({
-  Initiated,
-  region,
-  currentTimesheet,
-  entries,
-  onInitiate,
-  onAddEntry,
-}) => {
-  const today = new Date().toISOString().split("T")[0];
-  const [loadingAddEntry, setLoadingAddEntry] = useState(false);
-  const [date, setDate] = useState(today);
-  const [hours, setHours] = useState("");
-  const [error, setError] = useState("");
+const TimesheetForm = ({ Initiated, onInitiate }) => {
   const [loading, setLoading] = useState(false);
-  const [maxHours, setMaxHours] = useState({
-    HoursWorkedMonThur: 8.5,
-    HoursWorkedFri: 8,
-  });
-  const [selectedEntry, setSelectedEntry] = useState(null);
   const [isInitiatedLoading, setIsInitiatedLoading] = useState(true);
-  const [initiationDate, setInitiationDate] = useState(today); // State for initiation date
+  const [initiationDate, setInitiationDate] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
   const csrfToken = document
     .querySelector('meta[name="csrf-token"]')
     ?.getAttribute("content");
-
-  useEffect(() => {
-    const fetchMaxHours = async () => {
-      try {
-        const response = await fetch(`/selfservice/get-max-timesheet-entries/`);
-        if (!response.ok) {
-          console.error("Failed to fetch max timesheet entries");
-          return;
-        }
-        const data = await response.json();
-        setMaxHours({
-          HoursWorkedMonThur: data.HoursWorkedMonThur,
-          HoursWorkedFri: data.HoursWorkedFri,
-        });
-      } catch (error) {
-        console.error("Error fetching max hours:", error);
-      }
-    };
-
-    fetchMaxHours();
-  }, [region]);
 
   useEffect(() => {
     const checkInitiatedStatus = async () => {
@@ -64,72 +25,19 @@ const TimesheetForm = ({
   }, []);
 
   useEffect(() => {
-    const entry = entries.find((entry) => entry.Date === date);
-    setSelectedEntry(entry || null);
-  }, [date, entries]);
+    if (selectedMonth && selectedYear) {
+      // Create the date object
+      const date = new Date(selectedYear, selectedMonth - 1, 1);
 
-  const isWeekend = (selectedDate) => {
-    const day = new Date(selectedDate).getDay();
-    return day === 6 || day === 0;
-  };
+      // Format it manually as YYYY-MM-DD
+      const firstDateOfMonth = `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+      ).padStart(2, "0")}-01`;
 
-  const getMaxHoursForDay = () => {
-    const day = new Date(date).getDay();
-    return day === 5 ? maxHours.HoursWorkedFri : maxHours.HoursWorkedMonThur;
-  };
-
-  const validateHours = () => {
-    const max = getMaxHoursForDay();
-    if (!hours || hours <= 0 || hours > max) {
-      toast.error(`Please enter a valid number of hours (0 - ${max}).`);
-      return false;
+      console.log("Computed firstDateOfMonth:", firstDateOfMonth);
+      setInitiationDate(firstDateOfMonth);
     }
-    return true;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!date || isWeekend(date) || !validateHours()) return;
-
-    const matchingEntry = entries.find((entry) => entry.Date === date);
-    if (!matchingEntry) {
-      toast.error("No matching entry found for the selected date.");
-      return;
-    }
-
-    const payload = {
-      DocumentNo: matchingEntry.DocumentNo,
-      EntryNo: matchingEntry.EntryNo,
-      Date: date,
-      HoursWorked: parseFloat(hours),
-    };
-
-    try {
-      setLoadingAddEntry(true);
-      const response = await fetch("/selfservice/timesheet-entry/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        toast.success(result.message);
-        onAddEntry(matchingEntry.DocumentNo);
-        setHours("");
-      } else {
-        toast.error(result.error);
-      }
-    } catch (error) {
-      console.error("Error submitting timesheet:", error);
-      toast.error("Error submitting timesheet. Please try again.");
-    } finally {
-      setLoadingAddEntry(false);
-    }
-  };
+  }, [selectedMonth, selectedYear]);
 
   const handleInitiateTimesheet = async () => {
     try {
@@ -141,7 +49,7 @@ const TimesheetForm = ({
           "X-CSRFToken": csrfToken,
         },
         body: JSON.stringify({
-          initiationDate: initiationDate, // Pass the initiation date
+          initiationDate: initiationDate,
         }),
       });
 
@@ -159,20 +67,6 @@ const TimesheetForm = ({
     }
   };
 
-  const handleHoursChange = (e) => {
-    const value = parseFloat(e.target.value);
-    const max = getMaxHoursForDay();
-
-    if (isNaN(value) || value <= 0 || value > max) {
-      setError(`Please enter a valid number of hours (0 - ${max}).`);
-    } else {
-      setError("");
-    }
-
-    setHours(e.target.value);
-  };
-
-  const currentMonth = new Date().toLocaleString("default", { month: "long" });
   const currentYear = new Date().getFullYear();
 
   return (
@@ -184,81 +78,47 @@ const TimesheetForm = ({
         </div>
       ) : (
         <>
-          {Initiated ? (
-            <div>
-              <h5 className="mb-2">Timesheet Entry</h5>
-              <form onSubmit={handleSubmit} className="mb-4">
-                <div className="mb-3">
-                  <label htmlFor="date" className="form-label">
-                    Select Date
-                  </label>
-                  <input
-                    type="date"
-                    id="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="form-control"
-                    max={today}
-                  />
-                  {isWeekend(date) && (
-                    <small className="text-danger">
-                      Weekends are not valid for timesheet entries.
-                    </small>
-                  )}
-                </div>
-
-                <div className="mb-3">
-                  <label htmlFor="hours" className="form-label">
-                    Hours Worked (Max {getMaxHoursForDay()})
-                  </label>
-                  <input
-                    type="number"
-                    id="hours"
-                    value={hours}
-                    onChange={handleHoursChange}
-                    className="form-control"
-                    step="0.1"
-                    min="0"
-                    max={getMaxHoursForDay()}
-                    placeholder="Enter hours"
-                    disabled={isWeekend(date)}
-                  />
-                  {error && <small className="text-danger">{error}</small>}
-                </div>
-
-                <button
-                  type="submit"
-                  className="btn btn-primary w-100"
-                  disabled={isWeekend(date) || loadingAddEntry}
-                >
-                  {loadingAddEntry ? (
-                    <>
-                      <FontAwesomeIcon icon={faSpinner} spin className="me-2" />
-                      Adding...
-                    </>
-                  ) : (
-                    <>
-                      <FontAwesomeIcon icon={faCalendarPlus} className="me-2" />
-                      Add Entry
-                    </>
-                  )}
-                </button>
-              </form>
-            </div>
-          ) : (
-            <div className="text-center">
+          {!Initiated && (
+            <div className="">
               <div className="mb-3">
-                <label htmlFor="initiationDate" className="form-label">
-                  Timesheet Initiation Date
+                <label htmlFor="month" className="form-label">
+                  Month
                 </label>
-                <input
-                  type="date"
-                  id="initiationDate"
-                  value={initiationDate}
-                  onChange={(e) => setInitiationDate(e.target.value)}
-                  className="form-control"
-                  max={today}
-                />
+                <select
+                  id="month"
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                  className="form-select"
+                >
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                    <option key={month} value={month}>
+                      {new Date(selectedYear, month - 1).toLocaleString(
+                        "default",
+                        { month: "long" }
+                      )}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="mb-3">
+                <label htmlFor="year" className="form-label">
+                  Year
+                </label>
+                <select
+                  id="year"
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                  className="form-select"
+                >
+                  {Array.from(
+                    { length: 10 },
+                    (_, i) => currentYear - 5 + i
+                  ).map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
               </div>
               <button
                 onClick={handleInitiateTimesheet}
@@ -272,7 +132,12 @@ const TimesheetForm = ({
                   </>
                 ) : (
                   <>
-                    Initiate Timesheet for {currentMonth} {currentYear}{" "}
+                    Initiate Timesheet for{" "}
+                    {new Date(selectedYear, selectedMonth - 1).toLocaleString(
+                      "default",
+                      { month: "long" }
+                    )}{" "}
+                    {selectedYear}{" "}
                     <FontAwesomeIcon icon={faCheckCircle} className="me-2" />
                   </>
                 )}
