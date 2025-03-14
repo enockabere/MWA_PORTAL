@@ -1,0 +1,336 @@
+/* Bentparent-slider-div.css */
+
+/* Root variables for dark/light themes */
+:root {
+    --background-color: rgba(255, 255, 255, 0.1); 
+    --parent-slider-div-background-color:  "linear-gradient(to right bottom, #0c6cb4, #1e7e34, #1e7e34, #01709d, #187094)";
+    --parent-slider-div-shine-opacity: 0.2;
+    --parent-slider-div-shine-gradient: conic-gradient(
+      from 205deg at 50% 50%,
+      rgba(12, 108, 180, 1) 0deg,
+      #0c6cb4 25deg,
+      rgba(52, 211, 153, 0.18) 295deg,
+      rgba(2, 15, 11, 0) 360deg
+    );
+    --parent-slider-div-line-color: #2a2b2c;
+    --parent-slider-div-tile-color: rgba(16, 185, 129, 0.05);
+  
+  
+    --blur-opacity: 0.01;
+  }
+  
+  /* Light theme variables */
+  body.light {
+    --background-color: #fafafa;
+    --text-color: #52525b;
+  
+    --parent-slider-div-background-color: transparent;
+    --parent-slider-div-shine-opacity: 0.3;
+    --parent-slider-div-shine-gradient: conic-gradient(
+      from 225deg at 50% 50%,
+      rgba(16, 185, 129, 0) 0deg,
+      #10b981 25deg,
+      #edfaf6 285deg,
+      #ffffff 345deg,
+      rgba(16, 185, 129, 0) 360deg
+    );
+    --parent-slider-div-line-color: #e9e9e7;
+    --parent-slider-div-tile-color: rgba(16, 185, 129, 0.08);
+  
+  
+    --blur-opacity: 0.1;
+  }
+  
+  /* parent-slider-div styles */
+  .parent-slider-div {
+    background-color: var(--background-color);
+    cursor: pointer;
+    position: relative;
+    transition: box-shadow 0.25s;
+  }
+  
+  .parent-slider-div::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--parent-slider-div-background-color);
+  }
+  /* Add these styles to Bentparent-slider-div.css */
+
+  /* Add these styles to Bentparent-slider-div.css */
+.parent-slider-div {
+    position: relative;
+  }
+  
+  .parent-slider-div.parent-slider-div {
+    background-color: var(--background-color);
+    cursor: pointer;
+    transition: box-shadow 0.25s;
+  }
+  
+  .parent-slider-div.parent-slider-div::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--parent-slider-div-background-color);
+  }
+    
+  .parent-slider-div.parent-slider-div:hover .shine {
+    opacity: 1;
+    transition-duration: 0.5s;
+    transition-delay: 0s;
+  }
+  
+  .parent-slider-div.parent-slider-div:hover .tiles {
+    opacity: 1;
+    transition-delay: 0.25s;
+  }
+  
+  .parent-slider-div.parent-slider-div:hover .tile {
+    animation-name: tile;
+  }
+  
+  .parent-slider-div.parent-slider-div:hover .line {
+    opacity: 1;
+    transition-duration: 0.15s;
+  }
+  
+  .parent-slider-div.parent-slider-div:hover .line::before {
+    transform: scaleX(1);
+  }
+  
+  .parent-slider-div.parent-slider-div:hover .line::after {
+    transform: scaleY(1);
+  }
+.parent-slider-div {
+    position: relative;
+  }
+  
+  .shine,
+  .background,
+  .tiles,
+  .line {
+    position: absolute;
+    inset: 0;
+  }
+  
+  /* Add the rest of the hover effect styles from the previous example */
+  /* Shine effect */
+  .shine {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  
+  .shine::before {
+    content: "";
+    width: 150%;
+    padding-bottom: 150%;
+    position: absolute;
+    left: 50%;
+    bottom: 55%;
+    filter: blur(35px);
+    opacity: var(--parent-slider-div-shine-opacity);
+    transform: translateX(-50%);
+    background-image: var(--parent-slider-div-shine-gradient);
+  }
+  
+  /* Background tiles and lines */
+  .background {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    -webkit-mask-image: radial-gradient(
+      circle at 60% 5%,
+      black 0%,
+      black 15%,
+      transparent 60%
+    );
+    mask-image: radial-gradient(
+      circle at 60% 5%,
+      black 0%,
+      black 15%,
+      transparent 60%
+    );
+  }
+  
+  .tiles {
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+  
+  .tile {
+    position: absolute;
+    background-color: var(--parent-slider-div-tile-color);
+    animation-duration: 8s;
+    animation-iteration-count: infinite;
+    opacity: 0;
+  }
+  
+  .tile-1 {
+    top: 0;
+    left: 0;
+    height: 10%;
+    width: 22.5%;
+  }
+  
+  .tile-2 {
+    top: 0;
+    left: 22.5%;
+    height: 10%;
+    width: 27.5%;
+  }
+  
+  .tile-3 {
+    top: 0;
+    left: 50%;
+    height: 10%;
+    width: 27.5%;
+  }
+  
+  .tile-4 {
+    top: 0;
+    left: 77.5%;
+    height: 10%;
+    width: 22.5%;
+  }
+  
+  .tile-5 {
+    top: 10%;
+    left: 0;
+    height: 22.5%;
+    width: 22.5%;
+  }
+  
+  .tile-6 {
+    top: 10%;
+    left: 22.5%;
+    height: 22.5%;
+    width: 27.5%;
+  }
+  
+  .tile-7 {
+    top: 10%;
+    left: 50%;
+    height: 22.5%;
+    width: 27.5%;
+  }
+  
+  .tile-8 {
+    top: 10%;
+    left: 77.5%;
+    height: 22.5%;
+    width: 22.5%;
+  }
+  
+  .tile-9 {
+    top: 32.5%;
+    left: 50%;
+    height: 22.5%;
+    width: 27.5%;
+  }
+  
+  .tile-10 {
+    top: 32.5%;
+    left: 77.5%;
+    height: 22.5%;
+    width: 22.5%;
+  }
+  
+  @keyframes tile {
+    0%,
+    12.5%,
+    100% {
+      opacity: 1;
+    }
+    25%,
+    82.5% {
+      opacity: 0;
+    }
+  }
+  
+  .line {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.35s;
+  }
+  
+  .line::before,
+  .line::after {
+    content: "";
+    position: absolute;
+    background-color: var(--parent-slider-div-line-color);
+    transition: transform 0.35s;
+  }
+  
+  .line::before {
+    left: 0;
+    right: 0;
+    height: 1px;
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+  }
+  
+  .line::after {
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    transform-origin: 50% 0;
+    transform: scaleY(0);
+  }
+  
+  .line-1::before {
+    top: 10%;
+  }
+  
+  .line-1::after {
+    left: 22.5%;
+  }
+  
+  .line-2::before {
+    top: 32.5%;
+  }
+  
+  .line-2::after {
+    left: 50%;
+  }
+  
+  .line-3::before {
+    top: 55%;
+  }
+  
+  .line-3::after {
+    right: 22.5%;
+  }
+  
+  .parent-slider-div:hover .shine {
+    opacity: 1;
+    transition-duration: 0.5s;
+    transition-delay: 0s;
+  }
+  
+  .parent-slider-div:hover .tiles {
+    opacity: 1;
+    transition-delay: 0.25s;
+  }
+  
+  .parent-slider-div:hover .tile {
+    animation-name: tile;
+  }
+  
+  .parent-slider-div:hover .line {
+    opacity: 1;
+    transition-duration: 0.15s;
+  }
+  
+  .parent-slider-div:hover .line::before {
+    transform: scaleX(1);
+  }
+  
+  .parent-slider-div:hover .line::after {
+    transform: scaleY(1);
+  }

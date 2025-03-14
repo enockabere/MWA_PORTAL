@@ -1,23 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useDashboard } from "./context/DashboardContext"; // Import context
+import { useDashboard } from "./context/DashboardContext";
 import mwaLogo from "../../static/img/logo/logo.png";
-import slider1 from "../../static/img/slider/1.png";
-import slider2 from "../../static/img/slider/2.png";
-import slider3 from "../../static/img/slider/3.png";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useLocation } from "react-router-dom";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import BentCard from "./BentCard";
+import "./BentCard.css"; // Import the CSS file
 
 function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState(""); // State for validation error
-  const { setLoggedIn } = useDashboard(); // Use setLoggedIn to update login state
+  const [error, setError] = useState("");
+  const { setLoggedIn } = useDashboard();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -30,7 +29,6 @@ function LoginForm() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    // Check if email is entered
     if (!email) {
       setError("Email is required.");
       return;
@@ -55,7 +53,7 @@ function LoginForm() {
 
       if (response.ok) {
         const data = await response.json();
-        setLoggedIn(true); // Update context login state
+        setLoggedIn(true);
         toast(data.message);
         navigate(data.redirect_url, { state: { showWelcomeToast: true } });
       } else {
@@ -65,11 +63,10 @@ function LoginForm() {
     } catch (error) {
       toast.error("An error occurred. Please try again.");
     } finally {
-      setIsSubmitting(false); // Reset submitting state
+      setIsSubmitting(false);
     }
   };
 
-  // Slider settings
   const sliderSettings = {
     dots: true,
     infinite: true,
@@ -78,28 +75,65 @@ function LoginForm() {
     slidesToScroll: 1,
     autoplay: true,
     autoplaySpeed: 3000,
-    arrows: false, // Remove slider arrows
+    arrows: false,
+    appendDots: (dots) => (
+      <div
+        style={{
+          position: "absolute",
+          bottom: "-20px",
+          width: "100%",
+          textAlign: "center",
+        }}
+      >
+        <ul style={{ margin: "0", padding: "0", color: "white" }}>{dots}</ul>
+      </div>
+    ),
+    customPaging: () => (
+      <div
+        style={{
+          width: "10px",
+          height: "10px",
+          borderRadius: "50%",
+          backgroundColor: "white",
+          margin: "0 5px",
+          cursor: "pointer",
+        }}
+      ></div>
+    ),
   };
 
   return (
-    <div className="container-fluid p-0">
+    <div className="container-fluid p-0" style={{ background: "#0c6cb4" }}>
       <div className="row m-0 vh-100">
         {/* Left Column - Login Form */}
-        <div className="login-card col-md-6 d-flex align-items-center justify-content-center">
-          <div className="login-dark">
+        <div
+          className="login-card col-md-5 d-flex align-items-center justify-content-center"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right bottom, #0c6cb4, #0C6BAA, #0C8BAA, #0CAAA7, #187094)",
+            height: "100vh",
+            overflow: "hidden",
+            position: "relative",
+            borderRadius: "2px",
+          }}
+        >
+          <div
+            className="login-dark"
+            style={{ width: "100%", padding: "20px" }}
+          >
             <div>
-              <div>
-                <a className="logo" href="#">
-                  <img
-                    className="img-fluid for-light"
-                    src={mwaLogo}
-                    height="120"
-                    width="150"
-                    alt="login page"
-                  />
-                </a>
-              </div>
               <div className="login-main">
+                <div style={{ textAlign: "left" }}>
+                  <a className="logo" href="#">
+                    <img
+                      className="img-fluid for-light"
+                      src={mwaLogo}
+                      height="200"
+                      width="200"
+                      alt="login page"
+                    />
+                  </a>
+                </div>
                 <form className="theme-form" onSubmit={handleSubmit}>
                   <h3>Sign in to account</h3>
                   <p>Enter your email &amp; password to login</p>
@@ -147,7 +181,7 @@ function LoginForm() {
                       <button
                         className="btn btn-primary btn-block w-100"
                         type="submit"
-                        disabled={isSubmitting} // Disable button while submitting
+                        disabled={isSubmitting}
                       >
                         {isSubmitting ? (
                           <>
@@ -172,69 +206,40 @@ function LoginForm() {
           </div>
         </div>
 
-        {/* Right Column - Slider */}
+        {/* Right Column - Slider with Hover Effect */}
         <div
-          className="col-md-6 p-0 d-flex align-items-center justify-content-center"
+          className="col-md-7 p-0 d-flex align-items-center justify-content-center parent-slider-div"
           style={{
             backgroundImage:
-              "linear-gradient(to right bottom, #1e7e34, #1e7e34, #1e7e34, #01709d, #187094)", // Gradient background
-            height: "100vh", // Ensure the slider takes full height
-            overflow: "hidden", // Prevent overflow
+              "linear-gradient(to right bottom, #0c6cb4, #0C6BAA, #0C8BAA, #0CAAA7, #187094)",
+            height: "100vh",
+            overflow: "hidden",
+            position: "relative",
+            borderRadius: "2px",
           }}
         >
-          <div style={{ maxWidth: "80%", textAlign: "center" }}>
-            <Slider {...sliderSettings}>
-              <div>
-                <img
-                  src={slider1}
-                  alt="Slide 1"
-                  style={{ width: "60%", margin: "0 auto 20px" }} // Smaller image with margin below
-                />
-                <div
-                  className="slider-caption"
-                  style={{ color: "white", marginTop: "20px" }} // White text and space above
-                >
-                  <h3 className="text-white">
-                    Welcome to The Employee Self-Service Portal
-                  </h3>
-                  <p>
-                    Access leave management, timesheets, HR reports, approvals,
-                    and more—all in one place.
-                  </p>
-                </div>
-              </div>
-              <div>
-                <img
-                  src={slider2}
-                  alt="Slide 2"
-                  style={{ width: "60%", margin: "0 auto 20px" }} // Smaller image with margin below
-                />
-                <div
-                  className="slider-caption"
-                  style={{ color: "white", marginTop: "20px" }} // White text and space above
-                >
-                  <h3 className="text-white">Easy to Use</h3>
-                  <p>
-                    Our portal is designed to be user-friendly and intuitive.
-                  </p>
-                </div>
-              </div>
-              <div>
-                <img
-                  src={slider3}
-                  alt="Slide 3"
-                  style={{ width: "60%", margin: "0 auto 20px" }} // Smaller image with margin below
-                />
-                <div
-                  className="slider-caption"
-                  style={{ color: "white", marginTop: "20px" }} // White text and space above
-                >
-                  <h3 className="text-white">Secure and Reliable</h3>
-                  <p>Your data is safe with us. We prioritize security.</p>
-                </div>
-              </div>
-            </Slider>
+          {/* Add the hover effect structure */}
+          <div className="shine"></div>
+          <div className="background">
+            <div className="tiles">
+              <div className="tile tile-1"></div>
+              <div className="tile tile-2"></div>
+              <div className="tile tile-3"></div>
+              <div className="tile tile-4"></div>
+              <div className="tile tile-5"></div>
+              <div className="tile tile-6"></div>
+              <div className="tile tile-7"></div>
+              <div className="tile tile-8"></div>
+              <div className="tile tile-9"></div>
+              <div className="tile tile-10"></div>
+            </div>
+            <div className="line line-1"></div>
+            <div className="line line-2"></div>
+            <div className="line line-3"></div>
           </div>
+
+          {/* Render the BentCard component */}
+          <BentCard />
         </div>
       </div>
       <ToastContainer position="top-right" autoClose={3000} />
