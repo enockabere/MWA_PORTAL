@@ -156,7 +156,6 @@ const TimesheetCalendar = ({
   };
 
   // Handle form submission
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     const max = getMaxHoursForDay(popupDate);
@@ -171,34 +170,33 @@ const TimesheetCalendar = ({
       return;
     }
 
-    const matchingEntry = entries.find(
-      (entry) => entry.Date === moment(popupDate).format("YYYY-MM-DD")
-    );
+    const formattedDate = moment(popupDate).format("YYYY-MM-DD");
+    const matchingEntry = entries.find((entry) => entry.Date === formattedDate);
 
-    if (!matchingEntry) {
-      setError("No matching entry found for the selected date.");
-      return;
+    // Debug: Log the region value
+    console.log("Region value:", region);
+
+    // Determine if we need to add the additional payloads
+    const shouldAddAdditionalPayloads =
+      !matchingEntry || (matchingEntry && matchingEntry.HoursWorked === 0);
+
+    // Prepare the base payload
+    const payload = {
+      DocumentNo: matchingEntry ? matchingEntry.DocumentNo : null, // Include DocumentNo if available
+      EntryNo: matchingEntry ? matchingEntry.EntryNo : null, // Include EntryNo if available
+      Date: formattedDate,
+      HoursWorked: parseFloat(hoursWorked),
+      Project: region === "USA" ? selectedProject : "", // Submit the selected project EntryNo for USA
+      Region: region, // Include the region in the payload
+    };
+
+    // Add additional payloads if necessary
+    if (shouldAddAdditionalPayloads) {
+      payload.LineNo = 0; // LineNo should be zero as an integer
+      payload.myAction = "insert"; // myAction should be 'insert'
     }
 
-    // Prepare payload based on region
-    const payload =
-      region === "USA"
-        ? {
-            DocumentNo: matchingEntry.DocumentNo, // Include DocumentNo
-            EntryNo: matchingEntry.EntryNo, // Include EntryNo
-            Date: moment(popupDate).format("YYYY-MM-DD"),
-            HoursWorked: parseFloat(hoursWorked),
-            Project: selectedProject, // Submit the selected project EntryNo
-          }
-        : {
-            DocumentNo: matchingEntry.DocumentNo,
-            EntryNo: matchingEntry.EntryNo,
-            Date: moment(popupDate).format("YYYY-MM-DD"),
-            HoursWorked: parseFloat(hoursWorked),
-            Project: "", // Submit an empty string for non-USA users
-          };
-
-    // Log the payload for debugging
+    // Debug: Log the final payload
     console.log("Payload being sent:", payload);
 
     try {
@@ -218,7 +216,7 @@ const TimesheetCalendar = ({
 
       if (result.success) {
         if (onAddEntry) {
-          onAddEntry(matchingEntry.DocumentNo);
+          onAddEntry(matchingEntry ? matchingEntry.DocumentNo : null);
         }
         setShowModal(false);
         setHoursWorked("");
@@ -232,7 +230,6 @@ const TimesheetCalendar = ({
       setLoadingAddEntry(false);
     }
   };
-
   // Close modal
   const handleClose = () => {
     setShowModal(false);
@@ -350,7 +347,7 @@ const TimesheetCalendar = ({
                 >
                   <option value="">Select a project</option>
                   {projects.map((project, index) => (
-                    <option key={index} value={project.EntryNo}>
+                    <option key={index} value={project.ProjectTask}>
                       {project.ProjectTask}
                     </option>
                   ))}

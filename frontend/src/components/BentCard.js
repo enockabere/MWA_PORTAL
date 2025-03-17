@@ -51,7 +51,7 @@ const BentCard = () => {
         textAlign: "center",
         padding: "20px",
         borderRadius: "20px",
-        backgroundColor: "rgba(255, 255, 255, 0.1)",
+        backgroundColor: "rgba(255, 255, 255, 0.03)",
         margin: "20px",
       }}
     >

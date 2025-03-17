@@ -114,7 +114,7 @@
 
  */
 :root {
-  --theme-default: #2b5f60;
+  --theme-default: #0c6cb4;
   --theme-secondary: #c06240;
   --light-background: rgba(242, 243, 247, 0.7);
   --body-font-color: #86909c;
@@ -1256,8 +1256,8 @@ svg.f-light {
 .btn-primary,
 .btn-primary.disabled,
 .btn-primary:disabled {
-  background-color: #2b5e5e !important;
-  border-color: #2b5e5e !important;
+  background-color: #0c6cb4 !important;
+  border-color: #0c6cb4 !important;
 }
 .btn-secondary {
   -webkit-tap-highlight-color: transparent;
@@ -1612,16 +1612,16 @@ svg.f-light {
   color: #fff;
 }
 .btn-primary:not([disabled]):not(.disabled).active {
-  background-color: #1b3b3b;
-  border-color: #1b3b3b;
+  background-color: #0c6cb4;
+  border-color: #0c6cb4;
   box-shadow: none !important;
 }
 .btn-primary:not([disabled]):not(.disabled).active.active,
 .btn-primary:not([disabled]):not(.disabled).active:active,
 .btn-primary:not([disabled]):not(.disabled).active:focus,
 .btn-primary:not([disabled]):not(.disabled).active:hover {
-  background-color: #1b3b3b;
-  border-color: #1b3b3b;
+  background-color: #0c6cb4;
+  border-color: #0c6cb4;
   color: #fff;
 }
 .btn-secondary:not([disabled]):not(.disabled).active {
@@ -5254,7 +5254,7 @@ body.modal-open .select2-container--open .select2-dropdown {
   background: linear-gradient(
     90deg,
     var(--theme-default) -18.33%,
-    #2b5f60 62.78%
+    #0c6cb4 62.78%
   );
   border: none;
   min-width: 200px;
@@ -5264,7 +5264,7 @@ body.modal-open .select2-container--open .select2-dropdown {
 .purchase-btn:hover {
   background: linear-gradient(
     90deg,
-    #2b5f60 -18.33%,
+    #0c6cb4 -18.33%,
     var(--theme-default) 62.78%
   );
   transition: 0.5s;
@@ -5291,7 +5291,7 @@ body.modal-open .select2-container--open .select2-dropdown {
   color: #1f2f3e;
 }
 .btn-primary-gradien {
-  background-image: linear-gradient(90deg, #387a7a 0, #1e4242 51%, #387a7a);
+  background-image: linear-gradient(90deg, #0c6cb4 0, #0C8BAA 51%, #187094);
   background-size: auto 200%;
   border: none;
   color: #fff;
@@ -24783,24 +24783,16 @@ footer {
   }
 }
 .login-card {
-  align-items: center;
   background: url(../../../img/bg/hero-bg.png);
   background-attachment: fixed;
   background-position: 50%;
   background-repeat: no-repeat;
   background-size: 100% 100%;
-  display: flex;
-  justify-content: center;
-  margin: 0 auto;
-  min-height: 100vh;
-  padding: 30px 12px;
 }
-.login-card.login-bg {
-  background: rgba(43, 94, 94, 0.1) !important;
-}
+
 .login-card .logo {
   display: block;
-  margin-bottom: 30px;
+  margin-bottom: 80px;
   text-align: center;
 }
 .login-card .btn-showcase .btn {
@@ -24816,12 +24808,9 @@ footer {
   vertical-align: bottom;
 }
 .login-card .login-main {
-  background-color: #fff;
-  border-radius: 10px;
-  box-shadow: 0 0 37px rgba(8, 21, 66, 0.05);
   margin: 0 auto;
   padding: 40px;
-  width: 450px;
+  width: 500px;
 }
 .login-card .login-main .theme-form h4 {
   margin-bottom: 5px;
@@ -24832,7 +24821,7 @@ footer {
 }
 .login-card .login-main .theme-form .checkbox label:before {
   background-color: #f9f9fa;
-  border: 1px solid #dfdfdf;
+  border: 1px solid #0c6cb4;
 }
 .login-card .login-main .theme-form .or {
   position: relative;
@@ -24856,7 +24845,7 @@ footer {
 }
 .login-card .login-main .theme-form input:focus,
 .login-card .login-main .theme-form input:hover {
-  border: 1px solid #b9c1cc;
+  border: 1px solid #0c6cb4;
   box-shadow: none !important;
   transition: all 0.3s ease;
 }
@@ -37886,7 +37875,7 @@ body[class*="dark-"] .for-light {
   width: 35px;
 }
 .customizer-contain .customizer-body .color-layout > div {
-  background-color: #2b5f60;
+  background-color: #0c6cb4;
   border-radius: 5px;
   height: 100%;
   width: 100%;

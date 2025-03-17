@@ -16,7 +16,7 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const { setLoggedIn } = useDashboard();
+  const { setLoggedIn, setDashboardData } = useDashboard();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -52,6 +52,7 @@ function LoginForm() {
       });
 
       if (response.ok) {
+        fetchDashboardData();
         const data = await response.json();
         setLoggedIn(true);
         toast(data.message);
@@ -64,6 +65,21 @@ function LoginForm() {
       toast.error("An error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const fetchDashboardData = async () => {
+    try {
+      const dashboardResponse = await fetch("/selfservice/dashboard_data/");
+      if (dashboardResponse.ok) {
+        const dashboardData = await dashboardResponse.json();
+        console.log("Dashboard Data:", dashboardData);
+        setDashboardData(dashboardData); // Update context with fresh data
+      } else {
+        console.error("Failed to fetch dashboard data");
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
     }
   };
 
@@ -103,20 +119,10 @@ function LoginForm() {
   };
 
   return (
-    <div className="container-fluid p-0" style={{ background: "#0c6cb4" }}>
-      <div className="row m-0 vh-100">
+    <div className="container-fluid p-0">
+      <div className="row login-card">
         {/* Left Column - Login Form */}
-        <div
-          className="login-card col-md-5 d-flex align-items-center justify-content-center"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right bottom, #0c6cb4, #0C6BAA, #0C8BAA, #0CAAA7, #187094)",
-            height: "100vh",
-            overflow: "hidden",
-            position: "relative",
-            borderRadius: "2px",
-          }}
-        >
+        <div className="col-md-6 d-flex align-items-center justify-content-center">
           <div
             className="login-dark"
             style={{ width: "100%", padding: "20px" }}
@@ -128,8 +134,8 @@ function LoginForm() {
                     <img
                       className="img-fluid for-light"
                       src={mwaLogo}
-                      height="200"
-                      width="200"
+                      height="170"
+                      width="170"
                       alt="login page"
                     />
                   </a>
@@ -208,7 +214,7 @@ function LoginForm() {
 
         {/* Right Column - Slider with Hover Effect */}
         <div
-          className="col-md-7 p-0 d-flex align-items-center justify-content-center parent-slider-div"
+          className="col-md-6 p-0 d-flex align-items-center justify-content-center parent-slider-div"
           style={{
             backgroundImage:
               "linear-gradient(to right bottom, #0c6cb4, #0C6BAA, #0C8BAA, #0CAAA7, #187094)",
@@ -222,22 +228,16 @@ function LoginForm() {
           <div className="shine"></div>
           <div className="background">
             <div className="tiles">
-              <div className="tile tile-1"></div>
-              <div className="tile tile-2"></div>
-              <div className="tile tile-3"></div>
-              <div className="tile tile-4"></div>
-              <div className="tile tile-5"></div>
-              <div className="tile tile-6"></div>
-              <div className="tile tile-7"></div>
-              <div className="tile tile-8"></div>
-              <div className="tile tile-9"></div>
-              <div className="tile tile-10"></div>
+              {[...Array(25)].map((_, i) => (
+                <div key={i} className={`tile tile-${i + 1}`}></div>
+              ))}
             </div>
-            <div className="line line-1"></div>
-            <div className="line line-2"></div>
-            <div className="line line-3"></div>
+            <div className="lines">
+              {[...Array(10)].map((_, i) => (
+                <div key={i} className={`line line-${i + 1}`}></div>
+              ))}
+            </div>
           </div>
-
           {/* Render the BentCard component */}
           <BentCard />
         </div>

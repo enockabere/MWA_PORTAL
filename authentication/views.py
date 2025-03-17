@@ -1953,23 +1953,36 @@ class InitiateTimesheet(UserObjectMixins, View):
             return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 
+
 class TimesheetEntry(UserObjectMixins, View):
     def post(self, request):
         try:
             soap_headers = request.session.get("soap_headers", {})
 
+            # Parse the JSON data from the request body
             data = json.loads(request.body)
 
+            # Extract fields from the payload
             document_no = data.get("DocumentNo")
             entry_no = data.get("EntryNo")
             date_str = data.get("Date")
             hours_worked_str = data.get("HoursWorked")
-            project = data.get("Project", "")  
+            project = data.get("Project", "")
+            region = data.get("Region")  # Retrieve the region from the payload
+            line_no = data.get("LineNo")  # Extract LineNo from the payload
+            my_action = data.get("myAction")  # Extract myAction from the payload
 
-            print(document_no,entry_no,date_str,hours_worked_str,project)
+            payload = {"document_no": document_no,
+                       "tSEntryNo" :entry_no,
+                       "entry_no" : line_no,
+                       "project":project,
+                       "hours_worked_str":hours_worked_str,
+                       "my_action":my_action}
+
+            print("payload", payload)
 
             # Validate required fields
-            if not all([document_no, entry_no, date_str, hours_worked_str]):
+            if not all([document_no, entry_no, date_str, hours_worked_str, region]):  # Ensure region is required
                 return JsonResponse(
                     {"success": False, "error": "Missing required fields"}, status=400
                 )
@@ -1984,22 +1997,38 @@ class TimesheetEntry(UserObjectMixins, View):
                     {"success": False, "error": f"Invalid data format: {str(e)}"}, status=400
                 )
 
-            # Make SOAP request with the Project field
-            response = self.make_soap_request(
-                soap_headers,
-                "fnModifyTimesheetLines",
-                document_no,
-                entry_no,
-                date,
-                hours_worked,
-                project,  
-            )
+            if region == "USA":
+                response = self.make_soap_request(
+                    soap_headers,
+                    "fnHoursWorkedPerProject",
+                    document_no,
+                    entry_no,
+                    line_no,
+                    project,
+                    hours_worked,
+                    my_action,  
+                )
+            
+            else:
+                # Make SOAP request with the Project field and region
+                response = self.make_soap_request(
+                    soap_headers,
+                    "fnModifyTimesheetLines",
+                    document_no,
+                    entry_no,
+                    date,
+                    hours_worked,
+                    project,
+                )
+
+            print("response:", response)
 
             if response is True:
                 return JsonResponse(
                     {"success": True, "message": "Timesheet entry added successfully!"}
                 )
             else:
+                print(response)
                 return JsonResponse(
                     {"success": False, "error": "Failed to add timesheet entry"}, status=400
                 )

@@ -14,6 +14,7 @@
     );
     --parent-slider-div-line-color: #2a2b2c;
     --parent-slider-div-tile-color: rgba(16, 185, 129, 0.05);
+    
   
   
     --blur-opacity: 0.01;
@@ -157,19 +158,32 @@
     );
   }
   
+  /* Tile grid */
   .tiles {
-    opacity: 0;
-    transition: opacity 0.25s;
-  }
-  
-  .tile {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 columns by default */
+    grid-template-rows: repeat(5, 1fr);
+    gap: 5px;
     position: absolute;
-    background-color: var(--parent-slider-div-tile-color);
-    animation-duration: 8s;
-    animation-iteration-count: infinite;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     opacity: 0;
-  }
-  
+    transition: opacity 0.25s, grid-template-columns 0.5s ease-in-out; /* Add transition for grid-template-columns */
+}
+
+/* Hover effect - increase columns to 6 */
+.parent-slider-div:hover .tiles {
+    grid-template-columns: repeat(6, 1fr); /* Change to 6 columns on hover */
+}
+
+.tile {
+    background-color: rgba(255, 255, 255, 0.08);
+    width: 100%;
+    height: 100%;
+    transition: 0.3s ease-in-out;
+}
   .tile-1 {
     top: 0;
     left: 0;

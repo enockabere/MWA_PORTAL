@@ -22,8 +22,6 @@ function UserDashboard() {
     };
     const scripts = [
       "../static/assets/js/config.js",
-      "../static/assets/js/sidebar-menu.js",
-      "../static/assets/js/sidebar-pin.js",
       "../static/assets/js/slick/slick.min.js",
       "../static/assets/js/slick/slick.js",
       "../static/assets/js/header-slick.js",
