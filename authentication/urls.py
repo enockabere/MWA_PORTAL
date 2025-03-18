@@ -123,6 +123,7 @@ urlpatterns = [
     path("profile_picture/", views.ProfilePicture.as_view(), name="GetProfilePicture"),
     path("change-password/", views.Change_Password.as_view(), name="Change_Password"),
     path("Save_Unknown_Query/", views.Save_Unknown_Query.as_view(), name="Save_Unknown_Query"),
+    path('get-project-hours/', views.GetHoursPerProject.as_view(), name='get-project-hours'),
     
         
     re_path(r"^(?!api/).*$", TemplateView.as_view(template_name="index.html")),

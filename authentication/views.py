@@ -2172,3 +2172,27 @@ class Save_Unknown_Query(View):
             UnrecognizedQuery.objects.create(text=query_text )
             return JsonResponse({"message": "Query saved."}, status=201)
         return JsonResponse({"error": "Invalid request."}, status=400)
+    
+class GetHoursPerProject(UserObjectMixins,View):
+    async def get(self, request):
+        try:
+            date = request.GET.get('date') 
+            document_no = request.GET.get('documentNo')
+
+            print(date, document_no)
+
+            if not date or not document_no:
+                return JsonResponse({"error": "Both date and documentNo are required."}, status=400)
+
+            projects = []
+            async with aiohttp.ClientSession() as session:
+                section = await self.simple_one_filtered_data(
+                    session, "/QyTimesheetHoursPerProject", "Document_No", "eq", document_no
+                )
+                projects = [x for x in section if x["Timesheet_Entry_Date"] == date]
+
+                print(projects)
+
+            return JsonResponse(projects, safe=False)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, safe=False, status=500)

@@ -6,6 +6,8 @@ import {
   faCalendarDay,
   faUmbrellaBeach,
   faClock,
+  faTrash,
+  faEdit,
 } from "@fortawesome/free-solid-svg-icons";
 import { Modal, Button, Form, Alert } from "react-bootstrap";
 import "react-calendar/dist/Calendar.css";
@@ -29,6 +31,7 @@ const TimesheetCalendar = ({
   });
   const [error, setError] = useState("");
   const [loadingAddEntry, setLoadingAddEntry] = useState(false);
+  const [projectHours, setProjectHours] = useState([]);
 
   // Fetch max hours for the region
   useEffect(() => {
@@ -97,35 +100,26 @@ const TimesheetCalendar = ({
   };
 
   // Handle date click event
-  const handleDateClick = (date) => {
-    // Log the selected date for debugging
-    console.log("Selected Date:", moment(date).format("YYYY-MM-DD"));
-
-    // Check if the date is valid for selection
+  const handleDateClick = async (date) => {
     if (
       !Initiated ||
       moment(date).isAfter(moment(), "day") ||
       isWeekend(date)
     ) {
-      console.log(
-        "Date selection blocked due to initiation status, future date, or weekend."
-      );
       return;
     }
 
-    // Get entries for the selected date
     const entriesForDate = getTimesheetEntries(date);
-    console.log("Entries for selected date:", entriesForDate);
+    const matchingEntry = entriesForDate.length > 0 ? entriesForDate[0] : null;
 
-    // Check if there are entries for the selected date
-    if (entriesForDate.length > 0) {
-      const matchingEntry = entriesForDate[0]; // Assuming one entry per date
-      console.log("Matching entry found:", matchingEntry);
-    } else {
-      console.log("No entries found for the selected date.");
+    if (region === "USA" && matchingEntry) {
+      const projectHours = await fetchProjectHours(
+        date,
+        matchingEntry.DocumentNo
+      );
+      setProjectHours(projectHours); // Store project hours in state
     }
 
-    // Open the modal
     setPopupDate(date);
     setShowModal(true);
   };
@@ -173,31 +167,21 @@ const TimesheetCalendar = ({
     const formattedDate = moment(popupDate).format("YYYY-MM-DD");
     const matchingEntry = entries.find((entry) => entry.Date === formattedDate);
 
-    // Debug: Log the region value
-    console.log("Region value:", region);
-
-    // Determine if we need to add the additional payloads
-    const shouldAddAdditionalPayloads =
-      !matchingEntry || (matchingEntry && matchingEntry.HoursWorked === 0);
-
     // Prepare the base payload
     const payload = {
-      DocumentNo: matchingEntry ? matchingEntry.DocumentNo : null, // Include DocumentNo if available
-      EntryNo: matchingEntry ? matchingEntry.EntryNo : null, // Include EntryNo if available
+      DocumentNo: matchingEntry ? matchingEntry.DocumentNo : null,
+      EntryNo: matchingEntry ? matchingEntry.EntryNo : null,
       Date: formattedDate,
       HoursWorked: parseFloat(hoursWorked),
-      Project: region === "USA" ? selectedProject : "", // Submit the selected project EntryNo for USA
-      Region: region, // Include the region in the payload
+      Project: region === "USA" ? selectedProject : "",
+      Region: region,
     };
 
     // Add additional payloads if necessary
-    if (shouldAddAdditionalPayloads) {
-      payload.LineNo = 0; // LineNo should be zero as an integer
-      payload.myAction = "insert"; // myAction should be 'insert'
+    if (!matchingEntry || (matchingEntry && matchingEntry.HoursWorked === 0)) {
+      payload.LineNo = 0;
+      payload.myAction = "insert";
     }
-
-    // Debug: Log the final payload
-    console.log("Payload being sent:", payload);
 
     try {
       setLoadingAddEntry(true);
@@ -218,6 +202,16 @@ const TimesheetCalendar = ({
         if (onAddEntry) {
           onAddEntry(matchingEntry ? matchingEntry.DocumentNo : null);
         }
+
+        // Fetch project hours after successful submission (for USA users)
+        if (region === "USA" && matchingEntry) {
+          const projectHours = await fetchProjectHours(
+            popupDate,
+            matchingEntry.DocumentNo
+          );
+          setProjectHours(projectHours); // Update project hours in state
+        }
+
         setShowModal(false);
         setHoursWorked("");
         setSelectedProject("");
@@ -230,12 +224,29 @@ const TimesheetCalendar = ({
       setLoadingAddEntry(false);
     }
   };
+
   // Close modal
   const handleClose = () => {
     setShowModal(false);
     setHoursWorked("");
     setSelectedProject("");
     setError("");
+  };
+
+  // Fetch project hours for a specific date and document number
+  const fetchProjectHours = async (date, documentNo) => {
+    try {
+      const formattedDate = moment(date).format("YYYY-MM-DD");
+      const response = await fetch(
+        `/selfservice/get-project-hours/?date=${formattedDate}&documentNo=${documentNo}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch project hours");
+      const data = await response.json();
+      return data; // Assuming the response is an array of project hours
+    } catch (error) {
+      console.error("Error fetching project hours:", error);
+      return [];
+    }
   };
 
   // Calculate total hours worked to date
@@ -245,6 +256,18 @@ const TimesheetCalendar = ({
     }
     return total;
   }, 0);
+
+  // Handle delete action for a project hour entry
+  const handleDelete = (entryNo) => {
+    console.log("Delete entry with EntryNo:", entryNo);
+    // Implement delete logic here
+  };
+
+  // Handle edit action for a project hour entry
+  const handleEdit = (entryNo) => {
+    console.log("Edit entry with EntryNo:", entryNo);
+    // Implement edit logic here
+  };
 
   return (
     <div>
@@ -315,6 +338,37 @@ const TimesheetCalendar = ({
           Total Hours Worked: {totalHoursWorked} hours
         </div>
       </div>
+
+      {/* Display Project Hours for USA Users */}
+      {region === "USA" && projectHours.length > 0 && (
+        <div className="project-hours mt-3">
+          <h6>Hours Per Project</h6>
+          <ul className="list-unstyled">
+            {projectHours.map((project, index) => (
+              <li
+                key={index}
+                className="d-flex justify-content-between align-items-center"
+              >
+                <span>
+                  {project.Project}: {project.Hours_Worked} hours
+                </span>
+                <div>
+                  <FontAwesomeIcon
+                    icon={faEdit}
+                    className="me-2 text-primary cursor-pointer"
+                    onClick={() => handleEdit(project.Entry_No)}
+                  />
+                  <FontAwesomeIcon
+                    icon={faTrash}
+                    className="text-danger cursor-pointer"
+                    onClick={() => handleDelete(project.Entry_No)}
+                  />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* React-Bootstrap Modal for entering hours worked */}
       <Modal show={showModal} onHide={handleClose}>
