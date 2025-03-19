@@ -15,7 +15,7 @@ import reject from "../../../static/img/bg/reject.png";
 import tick_mark from "../../../static/img/bg/tick-mark.png";
 import FileSidebar from "./FileSidebar";
 import NavigationButtons from "./NavigationButtons";
-import LeaveBalances from "./LeaveBalances";
+import UserCard from "./UserCard";
 import { useDashboard } from "../context/DashboardContext";
 import { toast, ToastContainer } from "react-toastify";
 import { Link } from "react-router-dom";
@@ -202,17 +202,17 @@ const DashboardComponent = () => {
           </motion.div>
           {/* Leave Balances */}
           <motion.div
-            className="col-xl-7 mb-3 col-md-12 box-col-12 proorder-md-4"
+            className="col-xl-4 mb-3 col-md-12 box-col-12 proorder-md-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1 }}
           >
-            <LeaveBalances />
+            <UserCard />
           </motion.div>
           {/* Leave Balances Overview */}
           <motion.div
-            className="col-xl-5 mb-3 col-md-12 proorder-md-5 box-col-12"
+            className="col-xl-8 mb-3 col-md-12 proorder-md-5 box-col-12"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
