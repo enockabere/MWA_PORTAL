@@ -22,6 +22,7 @@ import { Link } from "react-router-dom";
 import LeaveBalanceChart from "./LeaveBalanceChart";
 import { motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
+import CarbonCreditsCard from "./CarbonCreditsCard";
 
 const DashboardComponent = () => {
   const { dashboardData, setLoggedIn } = useDashboard();
@@ -72,10 +73,10 @@ const DashboardComponent = () => {
       <Breadcrumb pageTitle="Dashboard" breadcrumb="Dashboard" />
       <ToastContainer position="top-right" autoClose={3000} />
       <div className="container-fluid default-dashboard">
-        <div className="row">
+        <div className="row gx-1">
           {/* Premium Card */}
           <motion.div
-            className="col-xl-6 box-col-7 mb-3 proorder-md-1"
+            className="col-xl-5 box-col-7 mb-3 proorder-md-1"
             initial={{ opacity: 0, y: 20 }} // Initial state (invisible and slightly down)
             animate={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -102,6 +103,7 @@ const DashboardComponent = () => {
                     </span>
                     <Link
                       to="/selfservice/dashboard/my-applications"
+                      style={{ borderRadius: "5px" }}
                       className="btn btn-square btn-primary mt-5 f-w-700"
                     >
                       View All <FontAwesomeIcon icon={faEye} className="me-2" />
@@ -183,20 +185,20 @@ const DashboardComponent = () => {
           </motion.div>
           {/* Reports */}
           <motion.div
-            className="col-xl-3 col-md-6 mb-3 proorder-md-3 box-col-6"
+            className="col-xl-4 col-md-6 mb-3 proorder-md-3 box-col-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.9 }}
           >
             <div className="card h-100">
-              <div className="card-header custom-border-bottom">
+              <div className="card-header">
                 <div className="header-top">
-                  <h4>Reports</h4>
+                  <h4>Leave Balances Overview</h4>
                 </div>
               </div>
               <div>
-                <FileSidebar />
+                <LeaveBalanceChart />
               </div>
             </div>
           </motion.div>
@@ -208,24 +210,36 @@ const DashboardComponent = () => {
             viewport={{ once: true }}
             transition={{ duration: 1 }}
           >
+            {" "}
             <UserCard />
           </motion.div>
           {/* Leave Balances Overview */}
           <motion.div
-            className="col-xl-8 mb-3 col-md-12 proorder-md-5 box-col-12"
+            className="col-xl-4 mb-3 col-md-12 box-col-12 proorder-md-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1.2 }}
           >
+            {" "}
+            <CarbonCreditsCard />
+          </motion.div>
+          {/* Leave Balances Overview */}
+          <motion.div
+            className="col-xl-4 mb-3 col-md-12 proorder-md-5 box-col-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1.4 }}
+          >
             <div className="card h-100">
-              <div className="card-header">
+              <div className="card-header custom-border-bottom">
                 <div className="header-top">
-                  <h4>Leave Balances Overview</h4>
+                  <h4>Reports</h4>
                 </div>
               </div>
               <div>
-                <LeaveBalanceChart />
+                <FileSidebar />
               </div>
             </div>
           </motion.div>

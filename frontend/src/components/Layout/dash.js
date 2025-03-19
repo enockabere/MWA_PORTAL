@@ -15,7 +15,7 @@ import reject from "../../../static/img/bg/reject.png";
 import tick_mark from "../../../static/img/bg/tick-mark.png";
 import FileSidebar from "./FileSidebar";
 import NavigationButtons from "./NavigationButtons";
-import LeaveBalances from "./LeaveBalances";
+import LeaveBalances from "./CarbonCreditsCard";
 import { useDashboard } from "../context/DashboardContext";
 import { toast, ToastContainer } from "react-toastify";
 import { Link } from "react-router-dom";
