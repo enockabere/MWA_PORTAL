@@ -1,12 +1,12 @@
 import React from "react";
 import mwaLogo from "../../../static/img/logo/logo.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBell } from "@fortawesome/free-solid-svg-icons";
+import { faBell, faBars, faTimes } from "@fortawesome/free-solid-svg-icons"; // Add faBars and faTimes
 import dashboard from "../../../static/img/logo/dashboard.png";
 import { useDashboard } from "../context/DashboardContext";
 import { Link } from "react-router-dom";
 
-const Header = ({ notificationCount }) => {
+const Header = ({ notificationCount, toggleSidebar, isSidebarOpen }) => {
   const { dashboardData, profileImage } = useDashboard();
   const imageSrc =
     profileImage &&
@@ -34,13 +34,12 @@ const Header = ({ notificationCount }) => {
               />
             </a>
           </div>
-          <div className="toggle-sidebar">
-            <img
-              className="img-fluid for-light"
-              height="20"
-              width="20"
-              src={dashboard}
-              alt="Logo"
+          <div className="toggle-sidebar" onClick={toggleSidebar}>
+            {/* Replace the image with an icon */}
+            <FontAwesomeIcon
+              icon={isSidebarOpen ? faTimes : faBars} // Use "X" icon when open, hamburger icon when closed
+              size="lg"
+              style={{ cursor: "pointer", color: "#2b5f60" }}
             />
           </div>
         </div>

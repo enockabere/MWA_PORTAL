@@ -1,52 +1,98 @@
-.file-sidebar .pricing-plan {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-  }
-  
-  .file-sidebar h6,
-  .file-sidebar p {
-    text-align: center;
-  }
-  
-  .file-sidebar form {
-    display: flex;
-    justify-content: center;
-  }
-  
-  .file-sidebar .download-btn {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.3s ease, opacity 0.3s ease;
-    padding: 10px 20px;
-  }
-  
-  .file-sidebar .download-btn:hover {
-    transform: scale(1.1); /* Scale up on hover */
-  }
-  
-  .file-sidebar .download-btn:focus {
-    outline: none;
-  }
-  
-  .file-sidebar .download-btn i {
-    transition: transform 0.3s ease;
-  }
-  
-  .file-sidebar .download-btn:hover i {
-    transform: rotate(360deg); /* Rotate icon on hover */
-  }
-  
-  .custom-scrollbar {
-    max-height: 400px;
-    overflow-y: auto;
-  }
-  
-  .text-center {
-    text-align: center !important;
-  }
-  
+.folder-card {
+  background: #0c6cb4;
+  border-radius: 10px;
+  padding: 20px;
+  color: white;
+  position: relative;
+  font-family: "Arial", sans-serif;
+}
+
+.folder-card::before {
+  content: "";
+  position: absolute;
+  top: -15px;
+  left: 0px;
+  width: 60px;
+  height: 29px;
+  background: #0c6cb4;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.folder-title {
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+}
+
+.task {
+  display: flex;
+  align-items: center;
+  background: #222;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.task input {
+  margin-right: 10px;
+}
+
+.task span {
+  flex-grow: 1;
+}
+
+.tag {
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  margin-left: 5px;
+}
+
+.product {
+  background: #e91e63;
+  color: white;
+}
+
+.today {
+  background: #4caf50;
+  color: white;
+}
+
+.design {
+  background: #ff9800;
+  color: white;
+}
+
+.time {
+  background: #2196f3;
+  color: white;
+}
+
+.avatars {
+  display: flex;
+  margin-left: auto;
+}
+
+.avatars img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  margin-left: -8px;
+  border: 2px solid #111;
+}
+
+.download-btn {
+  width: 100%;
+  background: #00bfff;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 15px;
+}
+
+.download-btn:disabled {
+  background: #555;
+  cursor: not-allowed;
+}

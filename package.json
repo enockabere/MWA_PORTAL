@@ -61,7 +61,8 @@
     "recharts": "^2.13.0",
     "simplebar": "^6.3.0",
     "simplebar-react": "^3.2.6",
-    "slick-carousel": "^1.8.1"
+    "slick-carousel": "^1.8.1",
+    "swiper": "^11.2.5"
   },
   "devDependencies": {
     "@babel/core": "^7.25.8",

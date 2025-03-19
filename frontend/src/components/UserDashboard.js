@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"; // Add useEffect import
+import React, { useState, useEffect } from "react"; // Add useState
 import mwaLogo from "../../static/img/logo/logo.png";
 import "react-toastify/dist/ReactToastify.css";
 import Header from "./Layout/Header";
@@ -8,6 +8,13 @@ import Footer from "./Layout/Footer";
 import "./dash.css";
 
 function UserDashboard() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // State for sidebar visibility
+
+  // Toggle sidebar function
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
   useEffect(() => {
     const loadScript = (src) => {
       return new Promise((resolve, reject) => {
@@ -70,18 +77,15 @@ function UserDashboard() {
 
   return (
     <div>
-      {/* <div className="loader-wrapper">
-        <div className="theme-loader">
-          <div className="loader-p"></div>
-        </div>
-      </div> */}
       <div className="tap-top">
         <i data-feather="chevrons-up"></i>
       </div>
       <div className="page-wrapper compact-wrapper" id="pageWrapper">
-        <Header />
+        {/* Pass toggleSidebar and isSidebarOpen to Header */}
+        <Header toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
         <div className="page-body-wrapper">
-          <Sidebar />
+          {/* Pass isSidebarOpen to Sidebar */}
+          <Sidebar isSidebarOpen={isSidebarOpen} />
           <div className="page-body">
             <Outlet />
           </div>

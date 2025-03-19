@@ -1,0 +1,74 @@
+/* Sidebar Base Styles */
+.sidebar-wrapper {
+    width: 250px; /* Default width */
+    transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out; /* Add background-color transition */
+    background-color: #f8f9fa; /* Add a background color for clarity */
+    height: 100vh; /* Full height */
+    position: fixed; /* Fixed position */
+    left: 0;
+    top: 0;
+    z-index: 1000; /* Ensure it's above other content */
+  }
+  
+  /* Collapsed State (Icons Only) */
+  .sidebar-wrapper.close_icon {
+    width: 60px; /* Narrow width when collapsed */
+    
+  }
+  
+  /* Background color when closed */
+  .sidebar-wrapper.closed {
+    width: 100px !important;
+    overflow: hidden !important;
+  }
+
+  body {
+    margin-left: 10px !important; /* Match the default sidebar width */
+    transition: margin-left 0.3s ease-in-out; /* Smooth transition */
+  }
+  
+  
+  /* Hide text and submenus when collapsed */
+  .sidebar-wrapper.close_icon .sidebar-main-title,
+  .sidebar-wrapper.close_icon .sidebar-link span,
+  .sidebar-wrapper.close_icon .sidebar-submenu {
+    display: none;
+  }
+  
+  /* Center icons when collapsed */
+  .sidebar-wrapper.close_icon .sidebar-link {
+    justify-content: center;
+  }
+  
+  /* Hover Effect to Expand Sidebar */
+  .sidebar-wrapper.close_icon:hover {
+    width: 250px; /* Expand to full width on hover */
+  }
+  
+  .sidebar-wrapper.close_icon:hover .sidebar-main-title,
+  .sidebar-wrapper.close_icon:hover .sidebar-link span,
+  .sidebar-wrapper.close_icon:hover .sidebar-submenu {
+    display: block; /* Show text and submenus on hover */
+  }
+  
+  /* Mobile Styles */
+  @media (max-width: 544px) {
+    .sidebar-wrapper {
+      width: 60px; /* Collapse by default on mobile */
+    }
+  
+    .sidebar-wrapper.open {
+      width: 250px; /* Expand when toggled open */
+    }
+  
+    .sidebar-wrapper.open .sidebar-main-title,
+    .sidebar-wrapper.open .sidebar-link span,
+    .sidebar-wrapper.open .sidebar-submenu {
+      display: block; /* Show text and submenus when open */
+    }
+  
+    /* Ensure toggle icons are visible on mobile */
+    .toggle-sidebar {
+      display: block !important; /* Force display */
+    }
+  }

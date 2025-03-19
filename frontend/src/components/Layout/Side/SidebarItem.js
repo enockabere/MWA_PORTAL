@@ -11,55 +11,16 @@ const SidebarItem = ({
   submenus = [],
 }) => {
   const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
-  const [isPinned, setIsPinned] = useState(false);
   const location = useLocation();
   const isActive = activeMenu === label || location.pathname === path;
-
-  // Load pinned state from localStorage
-  useEffect(() => {
-    try {
-      const pinnedItems = JSON.parse(localStorage.getItem("pins") || "[]");
-      if (pinnedItems.includes(label)) {
-        setIsPinned(true);
-      }
-    } catch (error) {
-      console.error("Error parsing pins from localStorage:", error);
-      localStorage.setItem("pins", JSON.stringify([])); // Reset to empty array if invalid
-    }
-  }, [label]);
 
   // Toggle submenu
   const toggleSubmenu = () => {
     setIsSubmenuOpen(!isSubmenuOpen);
   };
 
-  // Toggle pinned state
-  const togglePinned = (event) => {
-    event.stopPropagation(); // Prevent submenu toggle when pinning
-    try {
-      const pinnedItems = JSON.parse(localStorage.getItem("pins") || "[]");
-      let updatedPins;
-
-      if (isPinned) {
-        updatedPins = pinnedItems.filter((item) => item !== label);
-      } else {
-        updatedPins = [...pinnedItems, label];
-      }
-
-      localStorage.setItem("pins", JSON.stringify(updatedPins));
-      setIsPinned(!isPinned);
-    } catch (error) {
-      console.error("Error updating pins in localStorage:", error);
-    }
-  };
-
   return (
-    <li className={`sidebar-list ${isPinned ? "pined" : ""}`}>
-      <i
-        className="fa fa-thumb-tack"
-        onClick={togglePinned}
-        style={{ cursor: "pointer" }}
-      />
+    <li className="sidebar-list">
       <Link
         to={path}
         className={`sidebar-link sidebar-title ${isActive ? "active" : ""}`}
@@ -79,8 +40,8 @@ const SidebarItem = ({
         <FontAwesomeIcon
           icon={icon}
           style={{
-            color: "#2b5f60",
-            stroke: "#2b5f60",
+            color: "#0c6cb4",
+            stroke: "#0c6cb4",
             strokeWidth: 4,
             fill: "none",
           }}
