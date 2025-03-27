@@ -15,7 +15,7 @@ const formatDate = (dateString) => {
     });
 };
 
-const TimesheetDetailsModal = ({ timesheet, onClose, onShowToast }) => {
+const TimesheetDetailsModal = ({ timesheet, onClose, onShowToast, region }) => {
   const [entries, setEntries] = useState([]);
 
   // Function to fetch entries
@@ -57,7 +57,7 @@ const TimesheetDetailsModal = ({ timesheet, onClose, onShowToast }) => {
             ? "bg-success"
             : timesheet?.Status === "Rejected"
             ? "bg-danger"
-            : "bg-primary" 
+            : "bg-primary"
         }
       >
         <Modal.Title>
@@ -170,7 +170,9 @@ const TimesheetDetailsModal = ({ timesheet, onClose, onShowToast }) => {
                   </div>
                   <TimesheetEntriesTable
                     data={entries}
-                    onAddEntry={fetchEntries} // Optionally pass fetchEntries here if needed in the table
+                    onAddEntry={fetchEntries}
+                    region={region}
+                    timesheetStatus={timesheet?.Status}
                   />
                 </div>
               </div>
@@ -245,15 +247,16 @@ const TimesheetDetailsModal = ({ timesheet, onClose, onShowToast }) => {
               <div className="card">
                 <div className="card-body custom-scrollbar">
                   <ul>
-                    {timesheet?.Submitted === false && (
-                      <li>
-                        <SubmitTimesheet
-                          timesheetId={timesheet?.Code}
-                          onHide={onClose}
-                          onShowToast={onShowToast}
-                        />
-                      </li>
-                    )}
+                    {timesheet?.Submitted === false &&
+                      timesheet?.Status === "Open" && (
+                        <li>
+                          <SubmitTimesheet
+                            timesheetId={timesheet?.Code}
+                            onHide={onClose}
+                            onShowToast={onShowToast}
+                          />
+                        </li>
+                      )}
                   </ul>
                 </div>
               </div>

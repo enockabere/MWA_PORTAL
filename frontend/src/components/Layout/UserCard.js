@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useDashboard } from "../context/DashboardContext";
-import { FaEnvelope, FaUser, FaPhone, FaBuilding, FaCalendarAlt } from "react-icons/fa";
+import {
+  FaEnvelope,
+  FaUser,
+  FaPhone,
+  FaBuilding,
+  FaCalendarAlt,
+} from "react-icons/fa";
 import "./UserCard.css"; // Import the CSS file for styling
 
 const UserCard = () => {
@@ -59,7 +65,7 @@ const UserCard = () => {
   const isDashboardDataAvailable = dashboardData && dashboardData.user_data;
 
   return (
-    <div className="user-card">
+    <div className="user-card card h-100">
       <div className="gradient-background"></div>
       <div className="avatar-container">
         <img className="avatar-image" alt="User Avatar" src={imageSrc} />
@@ -68,7 +74,7 @@ const UserCard = () => {
         {isDashboardDataAvailable ? (
           <>
             <h1>{fullName}</h1>
-            <h2>{dashboardData.user_data.Job_Position || "UX Designer"}</h2>
+            <h2>{dashboardData.user_data.Job_Position}</h2>
           </>
         ) : (
           <div className="skeleton-loading">
@@ -80,44 +86,6 @@ const UserCard = () => {
             </div>
           </div>
         )}
-
-        <div className="info-section">
-          <h3>Basic Information</h3>
-          {isDashboardDataAvailable ? (
-            <>
-              <p>
-                <FaEnvelope className="icon" /> <strong>Email:</strong>{" "}
-                <span className="ellipses">......................</span>{" "}
-                {dashboardData.user_data.E_Mail || "N/A"}
-              </p>
-              <p>
-                <FaUser className="icon" /> <strong>Staff No.:</strong>{" "}
-                <span className="ellipses">...........................</span>{" "}
-                {dashboardData.user_data.Employee_No_ || "N/A"}
-              </p>
-              <p>
-                <FaPhone className="icon" /> <strong>Phone No.:</strong>{" "}
-                <span className="ellipses">...........................</span>{" "}
-                {dashboardData.user_data.PhoneNo || "N/A"}
-              </p>
-              <p>
-                <FaBuilding className="icon" /> <strong>Department:</strong>{" "}
-                <span className="ellipses">................................</span>{" "}
-                {dashboardData.user_data.Department || "N/A"}
-              </p>
-            </>
-          ) : (
-            <div className="skeleton-loading">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="skeleton-line">
-                  <div className="skeleton-icon"></div>
-                  <div className="skeleton-text"></div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
         <div className="leave-balances-section">
           <h3>Leave Balances</h3>
           {loading || !isDashboardDataAvailable ? (
@@ -133,7 +101,8 @@ const UserCard = () => {
           ) : (
             leaveBalances.map((leave, index) => (
               <p key={index}>
-                <FaCalendarAlt className="icon" /> <strong>{leave.type}:</strong>{" "}
+                <FaCalendarAlt className="icon" />{" "}
+                <strong>{leave.type}:</strong>{" "}
                 <span className="ellipses">......................</span>{" "}
                 {leave.balance} days
               </p>

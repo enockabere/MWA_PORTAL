@@ -124,7 +124,8 @@ urlpatterns = [
     path("change-password/", views.Change_Password.as_view(), name="Change_Password"),
     path("Save_Unknown_Query/", views.Save_Unknown_Query.as_view(), name="Save_Unknown_Query"),
     path('get-project-hours/', views.GetHoursPerProject.as_view(), name='get-project-hours'),
-    
+    path('hours-worked/', views.HoursWorkedThisWeek.as_view(), name='hours-worked'),
+    path('project-hours/', views.HoursPerProject.as_view(), name='project-hours'),
         
     re_path(r"^(?!api/).*$", TemplateView.as_view(template_name="index.html")),
     re_path(r'^selfservice/.*$', TemplateView.as_view(template_name='index.html')),

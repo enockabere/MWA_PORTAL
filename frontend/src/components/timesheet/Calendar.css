@@ -1,0 +1,12 @@
+.hover-scale:hover {
+    transform: scale(1.15);
+  }
+  
+  .calendar-legend {
+    padding-left: 0;
+
+  }
+  
+  .action-icons {
+    min-width: 60px; /* Ensures consistent spacing for icons */
+  }

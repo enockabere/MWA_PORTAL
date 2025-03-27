@@ -23,6 +23,8 @@ const TimesheetEntriesTable = ({
   data,
   onAddEntry,
   title = "Timesheet Entries",
+  region,
+  timesheetStatus,
 }) => {
   const [openModal, setOpenModal] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState(null);
@@ -33,6 +35,7 @@ const TimesheetEntriesTable = ({
   });
   const [loadingRows, setLoadingRows] = useState({});
   const [loading, setLoading] = useState(true);
+  const [projectHours, setProjectHours] = useState([]);
 
   const csrfToken = document
     .querySelector('meta[name="csrf-token"]')
@@ -57,6 +60,40 @@ const TimesheetEntriesTable = ({
     };
     fetchMaxHours();
   }, []);
+
+  useEffect(() => {
+    if (region === "USA" && data.length > 0) {
+      const fetchProjectHours = async () => {
+        try {
+          const documentNo = data[0].DocumentNo;
+          const response = await fetch(
+            `/selfservice/project-hours/?documentNo=${documentNo}`
+          );
+          if (response.ok) {
+            const result = await response.json();
+            setProjectHours(result);
+          }
+        } catch (error) {
+          console.error("Error fetching project hours:", error);
+        }
+      };
+      fetchProjectHours();
+    }
+  }, [region, data]);
+
+  const getProjectHoursForEntry = (entryNo) => {
+    if (!projectHours || projectHours.length === 0) return null;
+
+    const entryProjects = projectHours.filter(
+      (ph) => ph.Document_Entry_No === entryNo && ph.Project
+    );
+
+    if (entryProjects.length === 0) return null;
+
+    return entryProjects
+      .map((project) => `${project.Project} (${project.Hours_Worked}hrs)`)
+      .join(", ");
+  };
 
   const handleEditClick = (entry) => {
     setSelectedEntry(entry);
@@ -100,7 +137,7 @@ const TimesheetEntriesTable = ({
   };
 
   const handleSubmitEntry = async (entry) => {
-    setLoadingRows((prev) => ({ ...prev, [entry.EntryNo]: true })); // Start loading
+    setLoadingRows((prev) => ({ ...prev, [entry.EntryNo]: true }));
 
     const payload = { DocumentNo: entry.DocumentNo, EntryNo: entry.EntryNo };
 
@@ -121,7 +158,7 @@ const TimesheetEntriesTable = ({
     } catch (error) {
       console.error("Error submitting entry:", error);
     } finally {
-      setLoadingRows((prev) => ({ ...prev, [entry.EntryNo]: false })); // Stop loading
+      setLoadingRows((prev) => ({ ...prev, [entry.EntryNo]: false }));
     }
   };
 
@@ -166,11 +203,13 @@ const TimesheetEntriesTable = ({
         Cell: ({ row }) => (
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span>{row.original.HoursWorked}</span>
-            {!row.original.Holiday &&
+            {timesheetStatus === "Open" &&
+              !row.original.Holiday &&
               !row.original.Weekend &&
               !row.original.LeaveDay &&
               (row.original.TimeSheetStatus === "Open" ||
-                row.original.TimeSheetStatus === "Rejected") && (
+                row.original.TimeSheetStatus === "Rejected") &&
+              region !== "USA" && (
                 <FontAwesomeIcon
                   icon={faEdit}
                   style={{
@@ -184,6 +223,20 @@ const TimesheetEntriesTable = ({
           </div>
         ),
       },
+      ...(region === "USA"
+        ? [
+            {
+              Header: "Hrs Per Project",
+              accessor: "projectHours",
+              Cell: ({ row }) => {
+                const projectsText = getProjectHoursForEntry(
+                  row.original.EntryNo
+                );
+                return projectsText || "-";
+              },
+            },
+          ]
+        : []),
       {
         Header: "Status",
         accessor: "TimeSheetStatus",
@@ -191,37 +244,38 @@ const TimesheetEntriesTable = ({
       {
         Header: "Action",
         accessor: "action",
-        Cell: ({ row }) => (
-          <Button
-            variant="success"
-            size="sm"
-            onClick={() => handleSubmitEntry(row.original)}
-            disabled={
-              loadingRows[row.original.EntryNo] ||
-              !(
-                row.original.TimeSheetStatus === "Open" ||
-                row.original.TimeSheetStatus === "Rejected"
-              )
-            }
-          >
-            {loadingRows[row.original.EntryNo] ? (
-              <span>
-                <i className="fa fa-spinner fa-spin" /> Submitting...
-              </span>
-            ) : (
-              <span>
-                Submit{" "}
-                <i
-                  className="fa fa-arrow-right "
-                  style={{ marginLeft: "3px" }}
-                />
-              </span>
-            )}
-          </Button>
-        ),
+        Cell: ({ row }) =>
+          timesheetStatus === "Open" ? (
+            <Button
+              variant="success"
+              size="sm"
+              onClick={() => handleSubmitEntry(row.original)}
+              disabled={
+                loadingRows[row.original.EntryNo] ||
+                !(
+                  row.original.TimeSheetStatus === "Open" ||
+                  row.original.TimeSheetStatus === "Rejected"
+                )
+              }
+            >
+              {loadingRows[row.original.EntryNo] ? (
+                <span>
+                  <i className="fa fa-spinner fa-spin" /> Submitting...
+                </span>
+              ) : (
+                <span>
+                  Submit{" "}
+                  <i
+                    className="fa fa-arrow-right "
+                    style={{ marginLeft: "3px" }}
+                  />
+                </span>
+              )}
+            </Button>
+          ) : null,
       },
     ],
-    [data]
+    [data, region, projectHours, timesheetStatus, loadingRows]
   );
 
   const {

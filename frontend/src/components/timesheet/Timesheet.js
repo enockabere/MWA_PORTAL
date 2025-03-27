@@ -19,6 +19,7 @@ const Timesheet = () => {
   const [timesheetEntries, setTimesheetEntries] = useState([]);
   const [projects, setProjects] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [activeMonth, setActiveMonth] = useState(null);
 
   const fetchTimesheet = async () => {
     try {
@@ -31,6 +32,16 @@ const Timesheet = () => {
       if (Object.keys(data).length > 0) {
         setCurrentTimesheet(data);
         setInitiated(true);
+
+        // Set active month based on PeriodStartDate
+        if (data.PeriodStartDate) {
+          const startDate = new Date(data.PeriodStartDate);
+          setActiveMonth({
+            year: startDate.getFullYear(),
+            month: startDate.getMonth(),
+          });
+        }
+
         fetchTimesheetByPk(data.Code);
       } else {
         setInitiated(false);
@@ -92,6 +103,7 @@ const Timesheet = () => {
                   entries={timesheetEntries}
                   onAddEntry={fetchTimesheetByPk}
                   projects={projects}
+                  activeMonth={activeMonth}
                   style={{
                     width: "100%",
                     maxWidth: "1200px",
@@ -114,7 +126,7 @@ const Timesheet = () => {
                   Initiated={Initiated}
                   onInitiate={refreshTimesheets}
                 />
-                {Initiated && <TimesheetProgress />}
+                {Initiated && <TimesheetProgress activeMonth={activeMonth} />}
               </div>
             </div>
           </div>

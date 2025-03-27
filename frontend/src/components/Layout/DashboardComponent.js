@@ -19,15 +19,16 @@ import UserCard from "./UserCard";
 import { useDashboard } from "../context/DashboardContext";
 import { toast, ToastContainer } from "react-toastify";
 import { Link } from "react-router-dom";
-import LeaveBalanceChart from "./LeaveBalanceChart";
 import { motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
-import CarbonCreditsCard from "./CarbonCreditsCard";
+import LeaveCalendarCard from "./LeaveCalendar/LeaveCalendarCard";
+import WeeklyHoursCard from "./HoursProject/WeeklyHoursCard";
 
 const DashboardComponent = () => {
   const { dashboardData, setLoggedIn } = useDashboard();
   const [showModal, setShowModal] = useState(false);
   const location = useLocation();
+  const currentDate = new Date();
 
   useEffect(() => {
     // Simulate logging in after 2 seconds
@@ -73,10 +74,10 @@ const DashboardComponent = () => {
       <Breadcrumb pageTitle="Dashboard" breadcrumb="Dashboard" />
       <ToastContainer position="top-right" autoClose={3000} />
       <div className="container-fluid default-dashboard">
-        <div className="row gx-1">
+        <div className="row gx-2">
           {/* Premium Card */}
           <motion.div
-            className="col-xl-5 box-col-7 mb-3 proorder-md-1"
+            className="col-xl-6 box-col-7 mb-3 proorder-md-1"
             initial={{ opacity: 0, y: 20 }} // Initial state (invisible and slightly down)
             animate={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -185,13 +186,14 @@ const DashboardComponent = () => {
           </motion.div>
           {/* Reports */}
           <motion.div
-            className="col-xl-4 col-md-6 mb-3 proorder-md-3 box-col-6"
+            className="col-xl-3 col-md-6 mb-3 proorder-md-3 box-col-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.9 }}
           >
-            <div className="card h-100">
+            <NavigationButtons />
+            {/* <div className="card h-100">
               <div className="card-header">
                 <div className="header-top">
                   <h4>Leave Balances Overview</h4>
@@ -200,29 +202,46 @@ const DashboardComponent = () => {
               <div>
                 <LeaveBalanceChart />
               </div>
-            </div>
+            </div> */}
           </motion.div>
           {/* Leave Balances */}
           <motion.div
-            className="col-xl-4 mb-3 col-md-12 box-col-12 proorder-md-4"
+            className="col-xl-5 mb-3 col-md-12 box-col-12 proorder-md-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1 }}
           >
             {" "}
-            <UserCard />
+            <LeaveCalendarCard
+              month={currentDate.getMonth()} // Current month (0-indexed)
+              year={currentDate.getFullYear()} // Current year
+            />
           </motion.div>
           {/* Leave Balances Overview */}
           <motion.div
-            className="col-xl-4 mb-3 col-md-12 box-col-12 proorder-md-4"
+            className="col-xl-3 mb-3 col-md-12 box-col-12 proorder-md-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1.2 }}
           >
             {" "}
-            <CarbonCreditsCard />
+            <WeeklyHoursCard />
+            {/* <div className="card h-100">
+              <div>
+                <div className="row">
+                  <div className="col-md-12">
+                    
+                  </div>
+                </div>
+                <div className="row">
+                  <div className="col-md-12">
+                    <FileSidebar />
+                  </div>
+                </div>
+              </div>
+            </div> */}
           </motion.div>
           {/* Leave Balances Overview */}
           <motion.div
@@ -232,21 +251,10 @@ const DashboardComponent = () => {
             viewport={{ once: true }}
             transition={{ duration: 1.4 }}
           >
-            <div className="card h-100">
-              <div className="card-header custom-border-bottom">
-                <div className="header-top">
-                  <h4>Reports</h4>
-                </div>
-              </div>
-              <div>
-                <FileSidebar />
-              </div>
-            </div>
+            <UserCard />
           </motion.div>
         </div>
-        <div className="row">
-          <NavigationButtons />
-        </div>
+        <div className="row"></div>
       </div>
     </div>
   );

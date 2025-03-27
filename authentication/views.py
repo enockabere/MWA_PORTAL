@@ -21,6 +21,7 @@ from django.http import HttpResponse
 import datetime
 from decimal import Decimal
 from .models import UnrecognizedQuery
+from datetime import timedelta
 
 
 class Login_View(UserObjectMixins,View):
@@ -1979,14 +1980,6 @@ class TimesheetEntry(UserObjectMixins, View):
                        "hours_worked_str":hours_worked_str,
                        "my_action":my_action}
 
-            print("payload", payload)
-
-            # Validate required fields
-            if not all([document_no, entry_no, date_str, hours_worked_str, region]):  # Ensure region is required
-                return JsonResponse(
-                    {"success": False, "error": "Missing required fields"}, status=400
-                )
-
             try:
                 # Convert data to appropriate types
                 entry_no = int(entry_no)  # Convert EntryNo to integer
@@ -2008,6 +2001,8 @@ class TimesheetEntry(UserObjectMixins, View):
                     hours_worked,
                     my_action,  
                 )
+
+                print(response)
             
             else:
                 # Make SOAP request with the Project field and region
@@ -2179,8 +2174,6 @@ class GetHoursPerProject(UserObjectMixins,View):
             date = request.GET.get('date') 
             document_no = request.GET.get('documentNo')
 
-            print(date, document_no)
-
             if not date or not document_no:
                 return JsonResponse({"error": "Both date and documentNo are required."}, status=400)
 
@@ -2191,7 +2184,65 @@ class GetHoursPerProject(UserObjectMixins,View):
                 )
                 projects = [x for x in section if x["Timesheet_Entry_Date"] == date]
 
-                print(projects)
+            return JsonResponse(projects, safe=False)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, safe=False, status=500)
+
+
+class HoursWorkedThisWeek(UserObjectMixins,View):
+    async def get(self, request):
+        try:
+            # Get user ID from session
+            UserId = await sync_to_async(request.session.__getitem__)("User_ID")
+            
+            # Get date range for current week
+            today = dates.now().date()
+            start_of_week = today - timedelta(days=today.weekday())  # Monday
+            end_of_week = start_of_week + timedelta(days=6)         # Sunday
+            
+            # Format dates as strings
+            start_date = start_of_week.strftime("%Y-%m-%d")
+            end_date = end_of_week.strftime("%Y-%m-%d")
+            
+            # Fetch time sheet entries
+            entries = []
+            async with aiohttp.ClientSession() as session:
+                task = asyncio.ensure_future(
+                    self.simple_one_filtered_data(
+                        session,
+                        "/QyTimeSheetEntries",
+                        "SubmittedBy",
+                        "eq",
+                        UserId,
+                    )
+                )
+                response = await asyncio.gather(task)
+                entries = response[0]
+            
+            # Filter entries for current week and sum hours
+            total_hours = 0
+            for entry in entries:
+                entry_date = dates.strptime(entry.get("Date", ""), "%Y-%m-%d").date()
+                if start_of_week <= entry_date <= end_of_week:
+                    total_hours += float(entry.get("HoursWorked", 0))
+            
+            return JsonResponse({"totalHours": total_hours}, safe=False)
+            
+        except Exception as e:
+            print(e)
+            return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+class HoursPerProject(UserObjectMixins,View):
+    async def get(self, request):
+        try:
+            document_no = request.GET.get('documentNo')
+
+            projects = []
+            async with aiohttp.ClientSession() as session:
+                section = await self.simple_one_filtered_data(
+                    session, "/QyTimesheetHoursPerProject", "Document_No", "eq", document_no
+                )
+                projects = [x for x in section]
 
             return JsonResponse(projects, safe=False)
         except Exception as e:

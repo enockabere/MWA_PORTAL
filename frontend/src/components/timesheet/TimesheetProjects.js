@@ -30,7 +30,7 @@ const formatDate = (dateString) => {
 
 const TimesheetProjects = ({ title = "Assigned Projects" }) => {
   const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true); // New loading state
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -45,7 +45,7 @@ const TimesheetProjects = ({ title = "Assigned Projects" }) => {
       } catch (error) {
         console.error("Error fetching projects:", error);
       } finally {
-        setLoading(false); // Set loading to false after fetching
+        setLoading(false);
       }
     };
     fetchProjects();
@@ -97,7 +97,6 @@ const TimesheetProjects = ({ title = "Assigned Projects" }) => {
     <div className="card p-3">
       <h6 className="mb-3">{title}</h6>
 
-      {/* Loading Indicator */}
       {loading ? (
         <div className="text-center p-3">
           <span className="spinner-border text-primary" role="status"></span>
@@ -105,56 +104,53 @@ const TimesheetProjects = ({ title = "Assigned Projects" }) => {
         </div>
       ) : (
         <>
-          <table
-            {...getTableProps()}
-            className="table table-bordered table-hover my-3"
-          >
-            <thead className="thead-light">
-              {headerGroups.map((headerGroup) => (
-                <tr {...headerGroup.getHeaderGroupProps()} key={headerGroup.id}>
-                  {headerGroup.headers.map((column) => (
-                    <th
-                      {...column.getHeaderProps()}
-                      key={column.id}
-                      className="p-2 text-center"
-                    >
-                      {column.render("Header")}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody {...getTableBodyProps()}>
-              {page.length > 0 ? (
-                page.map((row) => {
-                  prepareRow(row);
-                  return (
-                    <tr {...row.getRowProps()} key={row.original.EntryNo}>
-                      {" "}
-                      {/* Use EntryNo as key */}
-                      {row.cells.map((cell) => (
-                        <td
-                          {...cell.getCellProps()}
-                          key={cell.column.id}
-                          className="p-2 text-center"
-                        >
-                          {cell.render("Cell")}
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan={columns.length} className="text-center p-3">
-                    No projects found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          <div className="table-responsive">
+            <table
+              {...getTableProps()}
+              className="table table-bordered table-hover my-3"
+            >
+              <thead className="thead-light">
+                {headerGroups.map((headerGroup) => (
+                  <tr {...headerGroup.getHeaderGroupProps()}>
+                    {headerGroup.headers.map((column) => (
+                      <th
+                        {...column.getHeaderProps()}
+                        className="p-2 text-center"
+                      >
+                        {column.render("Header")}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody {...getTableBodyProps()}>
+                {page.length > 0 ? (
+                  page.map((row) => {
+                    prepareRow(row);
+                    return (
+                      <tr {...row.getRowProps()}>
+                        {row.cells.map((cell) => (
+                          <td
+                            {...cell.getCellProps()}
+                            className="p-2 text-center"
+                          >
+                            {cell.render("Cell")}
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={columns.length} className="text-center p-3">
+                      No projects found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
 
-          {/* Custom Pagination Component */}
           <Pagination
             currentPage={pageIndex + 1}
             totalPages={pageCount}

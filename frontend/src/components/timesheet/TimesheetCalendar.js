@@ -1,17 +1,22 @@
+// TimesheetCalendar.js
 import React, { useState, useEffect } from "react";
 import Calendar from "react-calendar";
 import moment from "moment";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faCalendarDay,
-  faUmbrellaBeach,
-  faClock,
-  faTrash,
-  faEdit,
-} from "@fortawesome/free-solid-svg-icons";
-import { Modal, Button, Form, Alert } from "react-bootstrap";
+import { Alert } from "react-bootstrap";
 import "react-calendar/dist/Calendar.css";
 import "./TimesheetCalendar.css";
+
+// Import components
+import {
+  AddEntryModal,
+  EditEntryModal,
+  DeleteEntryModal,
+} from "./ModalComponents";
+import {
+  DateDetails,
+  CalendarLegend,
+  ProjectHoursList,
+} from "./CalendarInfoComponents";
 
 const TimesheetCalendar = ({
   entries = [],
@@ -19,9 +24,18 @@ const TimesheetCalendar = ({
   region,
   onAddEntry,
   projects = [],
+  activeMonth,
 }) => {
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  // State management
+  const [selectedDate, setSelectedDate] = useState(() => {
+    if (activeMonth) {
+      return new Date(activeMonth.year, activeMonth.month, 1);
+    }
+    return new Date();
+  });
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [hoursWorked, setHoursWorked] = useState("");
   const [selectedProject, setSelectedProject] = useState("");
   const [popupDate, setPopupDate] = useState(null);
@@ -31,9 +45,107 @@ const TimesheetCalendar = ({
   });
   const [error, setError] = useState("");
   const [loadingAddEntry, setLoadingAddEntry] = useState(false);
+  const [loadingEditEntry, setLoadingEditEntry] = useState(false);
+  const [loadingDeleteEntry, setLoadingDeleteEntry] = useState(false);
   const [projectHours, setProjectHours] = useState([]);
+  const [alertMessage, setAlertMessage] = useState(null);
+  const [editingProject, setEditingProject] = useState(null);
+  const [deletingProject, setDeletingProject] = useState(null);
 
-  // Fetch max hours for the region
+  // Helper functions
+  const getTimesheetEntries = (date) => {
+    if (!Array.isArray(entries)) return [];
+    const formattedDate = moment(date).format("YYYY-MM-DD");
+    return entries.filter((entry) => entry.Date === formattedDate);
+  };
+
+  const isWeekend = (date) => {
+    const day = new Date(date).getDay();
+    return day === 6 || day === 0;
+  };
+
+  const hasEntryWithHours = (date) => {
+    return getTimesheetEntries(date).some((entry) => entry.HoursWorked > 0);
+  };
+
+  const getMaxHoursForDay = (date) => {
+    const day = new Date(date).getDay();
+    return day === 5 ? maxHours.HoursWorkedFri : maxHours.HoursWorkedMonThur;
+  };
+
+  // Event handlers
+  const handleDateClick = async (date) => {
+    setAlertMessage(null);
+
+    if (!Initiated) return;
+    if (moment(date).isAfter(moment(), "day")) return;
+
+    if (isWeekend(date)) {
+      setAlertMessage({
+        variant: "warning",
+        text: "Entries are not allowed on weekends.",
+      });
+      return;
+    }
+
+    const entriesForDate = getTimesheetEntries(date);
+    const matchingEntry = entriesForDate.length > 0 ? entriesForDate[0] : null;
+
+    if (hasEntryWithHours(date)) {
+      if (region === "USA" && matchingEntry) {
+        const projectHours = await fetchProjectHours(
+          date,
+          matchingEntry.DocumentNo
+        );
+        setProjectHours(projectHours);
+      }
+      return;
+    }
+
+    if (region === "USA" && matchingEntry) {
+      const projectHours = await fetchProjectHours(
+        date,
+        matchingEntry.DocumentNo
+      );
+      setProjectHours(projectHours);
+    }
+
+    setPopupDate(date);
+    setShowModal(true);
+  };
+
+  const handleHoursWorkedChange = (e) => {
+    const value = parseFloat(e.target.value);
+    const max = getMaxHoursForDay(popupDate);
+
+    if (isNaN(value) || value <= 0 || value > max) {
+      setError(`Please enter a valid number of hours (0 - ${max}).`);
+    } else {
+      setError("");
+    }
+
+    setHoursWorked(e.target.value);
+  };
+
+  const handleProjectChange = (e) => {
+    setSelectedProject(e.target.value);
+  };
+
+  // API functions
+  const fetchProjectHours = async (date, documentNo) => {
+    try {
+      const formattedDate = moment(date).format("YYYY-MM-DD");
+      const response = await fetch(
+        `/selfservice/get-project-hours/?date=${formattedDate}&documentNo=${documentNo}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch project hours");
+      return await response.json();
+    } catch (error) {
+      console.error("Error fetching project hours:", error);
+      return [];
+    }
+  };
+
   useEffect(() => {
     const fetchMaxHours = async () => {
       try {
@@ -52,21 +164,13 @@ const TimesheetCalendar = ({
     fetchMaxHours();
   }, [region]);
 
-  // Get timesheet entries for the selected date
-  const getTimesheetEntries = (date) => {
-    if (!Array.isArray(entries)) {
-      return [];
+  useEffect(() => {
+    if (activeMonth) {
+      setSelectedDate(new Date(activeMonth.year, activeMonth.month, 1));
     }
+  }, [activeMonth]);
 
-    const formattedDate = moment(date).format("YYYY-MM-DD");
-    const filteredEntries = entries.filter(
-      (entry) => entry.Date === formattedDate
-    );
-
-    return filteredEntries;
-  };
-
-  // Define tile content (hours worked) - Hide 0-hour entries
+  // Calendar customization
   const tileContent = ({ date, view }) => {
     if (view === "month") {
       const entriesForDate = getTimesheetEntries(date);
@@ -80,7 +184,6 @@ const TimesheetCalendar = ({
     return null;
   };
 
-  // Define tile class for styling weekends, holidays, leave days
   const tileClassName = ({ date, view }) => {
     if (view === "month") {
       const entriesForDate = getTimesheetEntries(date);
@@ -93,63 +196,7 @@ const TimesheetCalendar = ({
     return "";
   };
 
-  // Check if a date is a weekend
-  const isWeekend = (date) => {
-    const day = new Date(date).getDay();
-    return day === 6 || day === 0; // Saturday (6) or Sunday (0)
-  };
-
-  // Handle date click event
-  const handleDateClick = async (date) => {
-    if (
-      !Initiated ||
-      moment(date).isAfter(moment(), "day") ||
-      isWeekend(date)
-    ) {
-      return;
-    }
-
-    const entriesForDate = getTimesheetEntries(date);
-    const matchingEntry = entriesForDate.length > 0 ? entriesForDate[0] : null;
-
-    if (region === "USA" && matchingEntry) {
-      const projectHours = await fetchProjectHours(
-        date,
-        matchingEntry.DocumentNo
-      );
-      setProjectHours(projectHours); // Store project hours in state
-    }
-
-    setPopupDate(date);
-    setShowModal(true);
-  };
-
-  // Handle hours worked input change
-  const handleHoursWorkedChange = (e) => {
-    const value = parseFloat(e.target.value);
-    const max = getMaxHoursForDay(popupDate);
-
-    if (isNaN(value) || value <= 0 || value > max) {
-      setError(`Please enter a valid number of hours (0 - ${max}).`);
-    } else {
-      setError("");
-    }
-
-    setHoursWorked(e.target.value);
-  };
-
-  // Handle project selection change
-  const handleProjectChange = (e) => {
-    setSelectedProject(e.target.value); // Set the selected project EntryNo
-  };
-
-  // Get max hours for the selected day
-  const getMaxHoursForDay = (date) => {
-    const day = new Date(date).getDay();
-    return day === 5 ? maxHours.HoursWorkedFri : maxHours.HoursWorkedMonThur;
-  };
-
-  // Handle form submission
+  // Form submissions
   const handleSubmit = async (e) => {
     e.preventDefault();
     const max = getMaxHoursForDay(popupDate);
@@ -167,7 +214,6 @@ const TimesheetCalendar = ({
     const formattedDate = moment(popupDate).format("YYYY-MM-DD");
     const matchingEntry = entries.find((entry) => entry.Date === formattedDate);
 
-    // Prepare the base payload
     const payload = {
       DocumentNo: matchingEntry ? matchingEntry.DocumentNo : null,
       EntryNo: matchingEntry ? matchingEntry.EntryNo : null,
@@ -177,7 +223,6 @@ const TimesheetCalendar = ({
       Region: region,
     };
 
-    // Add additional payloads if necessary
     if (!matchingEntry || (matchingEntry && matchingEntry.HoursWorked === 0)) {
       payload.LineNo = 0;
       payload.myAction = "insert";
@@ -203,13 +248,12 @@ const TimesheetCalendar = ({
           onAddEntry(matchingEntry ? matchingEntry.DocumentNo : null);
         }
 
-        // Fetch project hours after successful submission (for USA users)
         if (region === "USA" && matchingEntry) {
           const projectHours = await fetchProjectHours(
             popupDate,
             matchingEntry.DocumentNo
           );
-          setProjectHours(projectHours); // Update project hours in state
+          setProjectHours(projectHours);
         }
 
         setShowModal(false);
@@ -225,7 +269,137 @@ const TimesheetCalendar = ({
     }
   };
 
-  // Close modal
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    const max = getMaxHoursForDay(
+      new Date(editingProject.Timesheet_Entry_Date)
+    );
+
+    if (!hoursWorked || hoursWorked <= 0 || hoursWorked > max) {
+      setError(`Please enter a valid number of hours (0 - ${max}).`);
+      return;
+    }
+
+    if (region === "USA" && !selectedProject) {
+      setError("Please select a project.");
+      return;
+    }
+
+    const payload = {
+      DocumentNo: editingProject.Document_No,
+      EntryNo: editingProject.Document_Entry_No,
+      Date: editingProject.Timesheet_Entry_Date,
+      HoursWorked: parseFloat(hoursWorked),
+      Project: region === "USA" ? selectedProject : "",
+      Region: region,
+      LineNo: editingProject.Entry_No,
+      myAction: "modify",
+    };
+
+    try {
+      setLoadingEditEntry(true);
+      const response = await fetch("/selfservice/timesheet-entry/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": document
+            .querySelector('meta[name="csrf-token"]')
+            ?.getAttribute("content"),
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        if (onAddEntry) {
+          onAddEntry(editingProject.Document_No);
+        }
+
+        const projectHours = await fetchProjectHours(
+          new Date(editingProject.Timesheet_Entry_Date),
+          editingProject.Document_No
+        );
+        setProjectHours(projectHours);
+
+        setShowEditModal(false);
+        setHoursWorked("");
+        setSelectedProject("");
+        setEditingProject(null);
+      } else {
+        setError(result.error || "Failed to update entry. Please try again.");
+      }
+    } catch (error) {
+      setError("Error updating timesheet entry. Please try again.");
+    } finally {
+      setLoadingEditEntry(false);
+    }
+  };
+
+  const handleDeleteSubmit = async () => {
+    const payload = {
+      DocumentNo: deletingProject.Document_No,
+      EntryNo: deletingProject.Document_Entry_No,
+      Date: deletingProject.Timesheet_Entry_Date,
+      HoursWorked: 0,
+      Project: deletingProject.Project,
+      Region: region,
+      LineNo: deletingProject.Entry_No,
+      myAction: "delete",
+    };
+
+    try {
+      setLoadingDeleteEntry(true);
+      const response = await fetch("/selfservice/timesheet-entry/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": document
+            .querySelector('meta[name="csrf-token"]')
+            ?.getAttribute("content"),
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        if (onAddEntry) {
+          onAddEntry(deletingProject.Document_No);
+        }
+
+        const projectHours = await fetchProjectHours(
+          new Date(deletingProject.Timesheet_Entry_Date),
+          deletingProject.Document_No
+        );
+        setProjectHours(projectHours);
+
+        setShowDeleteModal(false);
+        setDeletingProject(null);
+      } else {
+        setError(result.error || "Failed to delete entry. Please try again.");
+      }
+    } catch (error) {
+      setError("Error deleting timesheet entry. Please try again.");
+    } finally {
+      setLoadingDeleteEntry(false);
+    }
+  };
+
+  // Action handlers
+  const handleEdit = (project) => {
+    setEditingProject(project);
+    setHoursWorked(project.Hours_Worked);
+    setSelectedProject(project.Project);
+    setShowEditModal(true);
+  };
+
+  const handleDelete = (project) => {
+    setDeletingProject(project);
+    setShowDeleteModal(true);
+  };
+
+  // Modal close handlers
   const handleClose = () => {
     setShowModal(false);
     setHoursWorked("");
@@ -233,45 +407,55 @@ const TimesheetCalendar = ({
     setError("");
   };
 
-  // Fetch project hours for a specific date and document number
-  const fetchProjectHours = async (date, documentNo) => {
-    try {
-      const formattedDate = moment(date).format("YYYY-MM-DD");
-      const response = await fetch(
-        `/selfservice/get-project-hours/?date=${formattedDate}&documentNo=${documentNo}`
-      );
-      if (!response.ok) throw new Error("Failed to fetch project hours");
-      const data = await response.json();
-      return data; // Assuming the response is an array of project hours
-    } catch (error) {
-      console.error("Error fetching project hours:", error);
-      return [];
-    }
+  const handleEditClose = () => {
+    setShowEditModal(false);
+    setHoursWorked("");
+    setSelectedProject("");
+    setError("");
+    setEditingProject(null);
   };
 
-  // Calculate total hours worked to date
+  const handleDeleteClose = () => {
+    setShowDeleteModal(false);
+    setDeletingProject(null);
+    setError("");
+  };
+
+  // Calculate total hours
+  // Calculate total hours for active month only
   const totalHoursWorked = entries.reduce((total, entry) => {
-    if (moment(entry.Date).isSameOrBefore(moment(), "day")) {
+    if (!activeMonth) return total;
+
+    const entryDate = moment(entry.Date);
+    const entryYear = entryDate.year();
+    const entryMonth = entryDate.month();
+
+    // Only include entries from the active month that are on or before today
+    if (
+      entryYear === activeMonth.year &&
+      entryMonth === activeMonth.month &&
+      entryDate.isSameOrBefore(moment(), "day")
+    ) {
       return total + (entry.HoursWorked || 0);
     }
     return total;
   }, 0);
 
-  // Handle delete action for a project hour entry
-  const handleDelete = (entryNo) => {
-    console.log("Delete entry with EntryNo:", entryNo);
-    // Implement delete logic here
-  };
-
-  // Handle edit action for a project hour entry
-  const handleEdit = (entryNo) => {
-    console.log("Edit entry with EntryNo:", entryNo);
-    // Implement edit logic here
-  };
-
   return (
     <div>
       <h3 className="mb-2">Timesheet Calendar</h3>
+
+      {alertMessage && (
+        <Alert
+          variant={alertMessage.variant}
+          className="mt-2"
+          onClose={() => setAlertMessage(null)}
+          dismissible
+        >
+          {alertMessage.text}
+        </Alert>
+      )}
+
       <Calendar
         onChange={setSelectedDate}
         onClickDay={handleDateClick}
@@ -280,144 +464,60 @@ const TimesheetCalendar = ({
         tileContent={tileContent}
       />
 
-      {/* Selected Date Details */}
-      <div className="selected-date-details mt-3">
-        <h6>Details for {moment(selectedDate).format("MMMM Do, YYYY")}</h6>
-        <ul className="list-unstyled">
-          {getTimesheetEntries(selectedDate).length > 0 ? (
-            getTimesheetEntries(selectedDate).map((entry, index) => (
-              <React.Fragment key={index}>
-                {entry.Holiday && (
-                  <li style={{ color: "red", fontWeight: "bold" }}>
-                    <FontAwesomeIcon icon={faCalendarDay} className="me-2" />{" "}
-                    Holiday
-                  </li>
-                )}
-                {entry.LeaveDay && (
-                  <li style={{ color: "goldenrod", fontWeight: "bold" }}>
-                    <FontAwesomeIcon icon={faUmbrellaBeach} className="me-2" />{" "}
-                    Leave Day
-                  </li>
-                )}
-                {entry.HoursWorked > 0 && (
-                  <li>
-                    <FontAwesomeIcon icon={faClock} className="me-2" /> Hours
-                    Worked: {entry.HoursWorked} hours
-                  </li>
-                )}
-              </React.Fragment>
-            ))
-          ) : (
-            <li>No entries for this day</li>
-          )}
-        </ul>
-      </div>
+      <DateDetails selectedDate={selectedDate} entries={entries} />
+      <CalendarLegend
+        totalHoursWorked={totalHoursWorked}
+        activeMonth={activeMonth}
+      />
+      <ProjectHoursList
+        projectHours={projectHours}
+        handleEdit={handleEdit}
+        handleDelete={handleDelete}
+        region={region}
+      />
 
-      {/* Legend for Holidays & Leave Days */}
-      <div className="calendar-legend border-2 border-t-primary p-2 b-r-2">
-        <h6>Legend</h6>
-        <div className="legend-item legend-holiday">
-          <span
-            className="legend-color"
-            style={{ backgroundColor: "red" }}
-          ></span>{" "}
-          Holiday
-        </div>
-        <div className="legend-item legend-leave">
-          <span
-            className="legend-color"
-            style={{ backgroundColor: "goldenrod" }}
-          ></span>{" "}
-          Leave Day
-        </div>
-        <div className="legend-item legend-total-hours">
-          <span
-            className="legend-color"
-            style={{ backgroundColor: "blue" }}
-          ></span>{" "}
-          Total Hours Worked: {totalHoursWorked} hours
-        </div>
-      </div>
+      {/* Modals */}
+      <AddEntryModal
+        show={showModal}
+        onHide={handleClose}
+        popupDate={moment(popupDate)}
+        hoursWorked={hoursWorked}
+        handleHoursWorkedChange={handleHoursWorkedChange}
+        region={region}
+        selectedProject={selectedProject}
+        handleProjectChange={handleProjectChange}
+        projects={projects}
+        error={error}
+        loadingAddEntry={loadingAddEntry}
+        handleSubmit={handleSubmit}
+        getMaxHoursForDay={getMaxHoursForDay}
+      />
 
-      {/* Display Project Hours for USA Users */}
-      {region === "USA" && projectHours.length > 0 && (
-        <div className="project-hours mt-3">
-          <h6>Hours Per Project</h6>
-          <ul className="list-unstyled">
-            {projectHours.map((project, index) => (
-              <li
-                key={index}
-                className="d-flex justify-content-between align-items-center"
-              >
-                <span>
-                  {project.Project}: {project.Hours_Worked} hours
-                </span>
-                <div>
-                  <FontAwesomeIcon
-                    icon={faEdit}
-                    className="me-2 text-primary cursor-pointer"
-                    onClick={() => handleEdit(project.Entry_No)}
-                  />
-                  <FontAwesomeIcon
-                    icon={faTrash}
-                    className="text-danger cursor-pointer"
-                    onClick={() => handleDelete(project.Entry_No)}
-                  />
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <EditEntryModal
+        show={showEditModal}
+        onHide={handleEditClose}
+        editingProject={editingProject}
+        hoursWorked={hoursWorked}
+        handleHoursWorkedChange={handleHoursWorkedChange}
+        region={region}
+        selectedProject={selectedProject}
+        handleProjectChange={handleProjectChange}
+        projects={projects}
+        error={error}
+        loadingEditEntry={loadingEditEntry}
+        handleEditSubmit={handleEditSubmit}
+        getMaxHoursForDay={getMaxHoursForDay}
+      />
 
-      {/* React-Bootstrap Modal for entering hours worked */}
-      <Modal show={showModal} onHide={handleClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            Enter Hours Worked for {moment(popupDate).format("MMMM Do, YYYY")}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form onSubmit={handleSubmit}>
-            <Form.Group className="mb-3">
-              <Form.Label>
-                Hours Worked (Max: {getMaxHoursForDay(popupDate)} hours)
-              </Form.Label>
-              <Form.Control
-                type="number"
-                value={hoursWorked}
-                onChange={handleHoursWorkedChange}
-                placeholder="Enter hours worked"
-                required
-              />
-            </Form.Group>
-            {region === "USA" && (
-              <Form.Group className="mb-3">
-                <Form.Label>Project</Form.Label>
-                <Form.Select
-                  value={selectedProject}
-                  onChange={handleProjectChange}
-                  required
-                >
-                  <option value="">Select a project</option>
-                  {projects.map((project, index) => (
-                    <option key={index} value={project.ProjectTask}>
-                      {project.ProjectTask}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            )}
-            {error && <Alert variant="danger">{error}</Alert>}
-            <Button type="submit" variant="primary" disabled={loadingAddEntry}>
-              {loadingAddEntry ? "Submitting..." : "Submit"}
-            </Button>
-            <Button variant="secondary" onClick={handleClose} className="ms-2">
-              Cancel
-            </Button>
-          </Form>
-        </Modal.Body>
-      </Modal>
+      <DeleteEntryModal
+        show={showDeleteModal}
+        onHide={handleDeleteClose}
+        deletingProject={deletingProject}
+        error={error}
+        loadingDeleteEntry={loadingDeleteEntry}
+        handleDeleteSubmit={handleDeleteSubmit}
+        region={region}
+      />
     </div>
   );
 };

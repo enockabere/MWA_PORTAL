@@ -11,6 +11,7 @@ import Pagination from "../Layout/Pagination";
 import Preloader from "../Layout/Preloader";
 import { toast, ToastContainer } from "react-toastify";
 import TimesheetDetailsModal from "./TimesheetDetailsModal";
+import { useDashboard } from "../context/DashboardContext";
 
 const MyTimesheets = () => {
   const itemsPerPage = 3;
@@ -27,6 +28,8 @@ const MyTimesheets = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [uniqueYears, setUniqueYears] = useState([]);
   const [uniqueMonths, setUniqueMonths] = useState([]);
+  const { dashboardData } = useDashboard();
+  const [region, setRegion] = useState(dashboardData.user_data.sectionCode);
   const [selectedTimesheet, setSelectedTimesheet] = useState(null);
 
   const handleToast = (message, type) => {
@@ -283,6 +286,7 @@ const MyTimesheets = () => {
           timesheet={selectedTimesheet}
           onClose={() => setSelectedTimesheet(null)}
           onShowToast={handleToast}
+          region={region}
         />
       )}
     </div>
