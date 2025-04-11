@@ -46,7 +46,7 @@ class Login_View(UserObjectMixins,View):
                             "soap_headers", soap_headers
                         )
         url = f"/QyUserSetup?$filter=EMail%20eq%20%27{email}%27"
-        employee_email = email
+        
         async with aiohttp.ClientSession() as session:
                 task_get_user_setup = asyncio.ensure_future(
                     self.fetch_data(
@@ -54,6 +54,7 @@ class Login_View(UserObjectMixins,View):
                     )
                 )
                 user_response = await asyncio.gather(task_get_user_setup)
+                print(user_response)
                 if user_response[0]["status_code"] == 200:
                     for data in user_response[0]["data"]:
                         missing_keys = [
@@ -252,9 +253,10 @@ class Login_View(UserObjectMixins,View):
                                     
                             default_password = 'Z0FBQUFBQm5Fa1RnYzhPbS1fM1hIVzNlUzVrcVBaRUFsVC1LS2lzLVNUUFV3MmdBalFweHJqMmp3X2pZdnlETm14ZUp2UGlZdFJvdUNHMUkwMHpJNnZMTzN3ck9WclcyYUE9PQ=='
                             decrypted = self.pass_decrypt(default_password)
+                            print(decrypted)
                             user_password = self.pass_decrypt(data['Password'])
                             if password == user_password and password == decrypted:
-                                 return JsonResponse({'redirect_url': '/selfservice/dashboard/'})  
+                                return JsonResponse({'redirect_url': '/selfservice/dashboard/'})  
                                 # generate_otp = self.generate_otp(4)
                                 # request.session['reset_password_otp'] = generate_otp
                                 # email_message = f"Hi {full_name}, We have sent you an email with an OTP to reset your password for the MWA Employee Self-Service Portal. Please check your email and follow the instructions to complete the reset process."
@@ -644,6 +646,8 @@ class FnLeaveReliever(UserObjectMixins,View):
             response = self.make_soap_request(
                     soap_headers, "FnLeaveReliever", pk, reliever, my_action
                 )
+            
+            print("response:", response)
             if response != "0" and response != None and response != "":
                 return JsonResponse({"message": "Reliever added successfully!"})
         except Exception as e:
@@ -1959,32 +1963,20 @@ class TimesheetEntry(UserObjectMixins, View):
     def post(self, request):
         try:
             soap_headers = request.session.get("soap_headers", {})
-
-            # Parse the JSON data from the request body
             data = json.loads(request.body)
-
-            # Extract fields from the payload
             document_no = data.get("DocumentNo")
             entry_no = data.get("EntryNo")
             date_str = data.get("Date")
             hours_worked_str = data.get("HoursWorked")
             project = data.get("Project", "")
-            region = data.get("Region")  # Retrieve the region from the payload
-            line_no = data.get("LineNo")  # Extract LineNo from the payload
-            my_action = data.get("myAction")  # Extract myAction from the payload
-
-            payload = {"document_no": document_no,
-                       "tSEntryNo" :entry_no,
-                       "entry_no" : line_no,
-                       "project":project,
-                       "hours_worked_str":hours_worked_str,
-                       "my_action":my_action}
+            region = data.get("Region") 
+            line_no = data.get("LineNo") 
+            my_action = data.get("myAction") 
 
             try:
-                # Convert data to appropriate types
-                entry_no = int(entry_no)  # Convert EntryNo to integer
-                date = dates.strptime(date_str, "%Y-%m-%d").date()  # Convert Date to date object
-                hours_worked = Decimal(hours_worked_str)  # Convert HoursWorked to decimal
+                entry_no = int(entry_no) 
+                date = dates.strptime(date_str, "%Y-%m-%d").date() 
+                hours_worked = Decimal(hours_worked_str) 
             except (ValueError, TypeError) as e:
                 return JsonResponse(
                     {"success": False, "error": f"Invalid data format: {str(e)}"}, status=400
@@ -2001,11 +1993,8 @@ class TimesheetEntry(UserObjectMixins, View):
                     hours_worked,
                     my_action,  
                 )
-
-                print(response)
             
             else:
-                # Make SOAP request with the Project field and region
                 response = self.make_soap_request(
                     soap_headers,
                     "fnModifyTimesheetLines",
@@ -2013,10 +2002,7 @@ class TimesheetEntry(UserObjectMixins, View):
                     entry_no,
                     date,
                     hours_worked,
-                    project,
                 )
-
-            print("response:", response)
 
             if response is True:
                 return JsonResponse(

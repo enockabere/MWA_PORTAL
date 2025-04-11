@@ -34,13 +34,12 @@ class UserObjectMixins(object):
 
     async def fetch_data(self, session, username, password, endpoint):
         auth = aiohttp.BasicAuth(login=username, password=password)
-        async with session.get(
-            config.O_DATA.format(
-               endpoint
-            ),
-            auth=auth,
-        ) as res:
+        
+        url = config.O_DATA.format(endpoint)
+    
+        async with session.get(url, auth=auth,) as res:
             data = await res.json()
+            
             response = {"status_code": res.status, "data": data["value"]}
             return response
 
@@ -256,7 +255,6 @@ class UserObjectMixins(object):
                 return response.json()
         except Exception as e:
             return None
-
 
 class HTTPResponseHXRedirect(HttpResponseRedirect):
     def __init__(self, *args, **kwargs):
