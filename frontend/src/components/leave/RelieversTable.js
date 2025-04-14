@@ -108,7 +108,7 @@ const RelieversTable = ({ data, selectedApplication, onRelieverAdded }) => {
             onClick={() => handleShowModal()}
             className="btn btn-primary btn-sm ms-auto"
           >
-            <FontAwesomeIcon icon={faPlus} />
+            <FontAwesomeIcon icon={faPlus} /> Add Reliever
           </button>
         )}
       </div>
@@ -135,7 +135,7 @@ const RelieversTable = ({ data, selectedApplication, onRelieverAdded }) => {
                     className="btn btn-sm btn-outline-primary"
                     title="Edit Reliever"
                   >
-                    <FontAwesomeIcon icon={faEdit} />
+                    Edit <FontAwesomeIcon icon={faEdit} />
                   </button>
                 </td>
               )}

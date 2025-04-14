@@ -1,9 +1,110 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const ApplicationHeader = ({ selectedApplication }) => {
+  const [formData, setFormData] = useState({
+    applicationNo: "",
+    myAction: "modify",
+    leaveType: "",
+    leaveBalance: "",
+    basedOnPlanner: "False",
+    leaveStartDate: "",
+    returnSameDay: "False",
+    plannerStartDate: "",
+    daysApplied: "",
+    halfOfDay: "0",
+  });
+
+  const [isLoading, setIsLoading] = useState(false);
+  const isEditable = selectedApplication?.Status === "Open";
+
+  // Update form data when selectedApplication changes
+  useEffect(() => {
+    if (selectedApplication) {
+      const plannerDate = selectedApplication.Planner_Start_Date || "";
+
+      setFormData({
+        applicationNo: selectedApplication.Application_No || "",
+        myAction: "modify",
+        leaveType: selectedApplication.Leave_Code || "",
+        leaveBalance: selectedApplication.Leave_balance || "",
+        basedOnPlanner: selectedApplication.Use_Planner ? "True" : "False",
+        plannerStartDate: plannerDate,
+        leaveStartDate: plannerDate, // ✅ Also assign same planner date
+        returnSameDay: selectedApplication.Return_same_day ? "True" : "False",
+        daysApplied: selectedApplication.Days_Applied || "",
+        halfOfDay: selectedApplication.Half_Of_Day || "0",
+      });
+    }
+  }, [selectedApplication]);
+
+  const csrfToken = document
+    .querySelector('meta[name="csrf-token"]')
+    ?.getAttribute("content");
+
+  const handleChange = (e) => {
+    const { id, value } = e.target;
+
+    setFormData((prev) => {
+      if (id === "plannerStartDate") {
+        return {
+          ...prev,
+          plannerStartDate: value,
+          leaveStartDate: value, // ✅ Keep in sync
+        };
+      }
+
+      return {
+        ...prev,
+        [id]: value,
+      };
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      toast.info("Updating leave application...", {
+        autoClose: false,
+        closeButton: false,
+      });
+
+      const response = await axios.post("/selfservice/Leave/", formData, {
+        headers: {
+          "X-CSRFToken": csrfToken,
+          "Content-Type": "application/json",
+        },
+      });
+
+      // ✅ Display Django response messages
+      const resData = response.data;
+
+      if (response.status === 200 && resData.status === "success") {
+        toast.dismiss();
+        toast.success(resData.message || "Application updated successfully!");
+      } else if (resData.status === "error") {
+        toast.dismiss();
+        toast.error(resData.message || "Update failed.");
+      } else {
+        toast.dismiss();
+        toast.error("Unexpected response from server.");
+      }
+    } catch (error) {
+      toast.dismiss();
+      toast.error("An unexpected error occurred. Please try again.");
+      console.error("Submission error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="card">
-      <div className="card-header">
+      <div className="card-header d-flex justify-content-between align-items-center">
         <h5 className="mb-0">
           <button
             className="btn btn-link collapsed ps-0"
@@ -42,202 +143,156 @@ const ApplicationHeader = ({ selectedApplication }) => {
             <div className="col-md-12 p-2">
               <div className="row my-2">
                 <div className="col-xl-4 col-sm-6">
-                  <label className="form-label" htmlFor="leaveBalance">
-                    Application No.
-                  </label>
+                  <label className="form-label">Application No.</label>
                   <input
                     className="form-control"
-                    id="leaveBalance"
                     type="text"
-                    placeholder={
-                      selectedApplication
-                        ? selectedApplication.Application_No
-                        : "N/A"
-                    }
+                    value={formData.applicationNo}
                     disabled
                   />
                 </div>
                 <div className="col-xl-4 col-sm-6">
-                  <label className="form-label" htmlFor="leaveBalance">
-                    Application Date
-                  </label>
+                  <label className="form-label">Application Date</label>
                   <input
                     className="form-control"
-                    id="leaveBalance"
                     type="text"
-                    placeholder={
-                      selectedApplication
-                        ? selectedApplication.Application_Date
-                        : "N/A"
-                    }
+                    value={selectedApplication?.Application_Date || "N/A"}
                     disabled
                   />
                 </div>
                 <div className="col-xl-4 col-sm-6">
-                  <label className="form-label" htmlFor="leaveBalance">
-                    Employee Name
-                  </label>
+                  <label className="form-label">Employee Name</label>
                   <input
                     className="form-control"
-                    id="leaveBalance"
                     type="text"
-                    value={
-                      selectedApplication
-                        ? selectedApplication.Employee_Name
-                        : "N/A"
-                    }
+                    value={selectedApplication?.Employee_Name || "N/A"}
                     disabled
                   />
                 </div>
               </div>
+
               <div className="row my-2">
                 <div className="col-xl-4 col-sm-6">
-                  <label className="form-label" htmlFor="leaveBalance">
-                    Leave Period
-                  </label>
+                  <label className="form-label">Leave Period</label>
                   <input
                     className="form-control"
-                    id="leaveBalance"
                     type="text"
-                    value={
-                      selectedApplication
-                        ? selectedApplication.Leave_Period
-                        : "N/A"
-                    }
+                    value={selectedApplication?.Leave_Period || "N/A"}
                     disabled
                   />
                 </div>
                 <div className="col-xl-4 col-sm-6">
-                  <label className="form-label" htmlFor="leaveBalance">
-                    Leave Code
-                  </label>
+                  <label className="form-label">Leave Code</label>
                   <input
                     className="form-control"
-                    id="leaveBalance"
                     type="text"
-                    value={
-                      selectedApplication
-                        ? selectedApplication.Leave_Code
-                        : "N/A"
-                    }
+                    value={formData.leaveType}
                     disabled
                   />
                 </div>
                 <div className="col-xl-4 col-sm-6">
-                  <label className="form-label" htmlFor="leaveBalance">
-                    Status
-                  </label>
+                  <label className="form-label">Status</label>
                   <input
                     className="form-control"
-                    id="leaveBalance"
                     type="text"
-                    value={
-                      selectedApplication ? selectedApplication.Status : "N/A"
-                    }
+                    value={selectedApplication?.Status || "N/A"}
                     disabled
                   />
                 </div>
               </div>
+
               <div className="row my-2">
                 <div className="col-xl-4 col-sm-6">
-                  <label className="form-label" htmlFor="leaveBalance">
+                  <label className="form-label" htmlFor="plannerStartDate">
                     Leave Start Date
                   </label>
                   <input
-                    className="form-control"
-                    id="leaveBalance"
-                    type="text"
-                    value={
-                      selectedApplication
-                        ? selectedApplication.Planner_Start_Date
-                        : "N/A"
-                    }
-                    disabled
+                    className={`form-control ${isEditable ? "" : "disabled"}`}
+                    id="plannerStartDate"
+                    type={isEditable ? "date" : "text"}
+                    value={formData.plannerStartDate}
+                    onChange={handleChange}
+                    disabled={!isEditable}
                   />
                 </div>
                 <div className="col-xl-4 col-sm-6">
-                  <label className="form-label" htmlFor="leaveBalance">
+                  <label className="form-label" htmlFor="daysApplied">
                     Days Applied
                   </label>
                   <input
-                    className="form-control"
-                    id="leaveBalance"
-                    type="text"
-                    value={
-                      selectedApplication
-                        ? selectedApplication.Days_Applied
-                        : "N/A"
-                    }
-                    disabled
+                    className={`form-control ${isEditable ? "" : "disabled"}`}
+                    id="daysApplied"
+                    type="number"
+                    value={formData.daysApplied}
+                    onChange={handleChange}
+                    disabled={!isEditable}
                   />
                 </div>
                 <div className="col-xl-4 col-sm-6">
-                  <label className="form-label" htmlFor="leaveBalance">
-                    Resumption Date
-                  </label>
+                  <label className="form-label">Resumption Date</label>
                   <input
                     className="form-control"
-                    id="leaveBalance"
                     type="text"
-                    value={
-                      selectedApplication
-                        ? selectedApplication.Resumption_Date
-                        : "N/A"
-                    }
+                    value={selectedApplication?.Resumption_Date || "N/A"}
                     disabled
                   />
                 </div>
               </div>
+
               <div className="row">
                 <div className="col-xl-4 col-sm-6">
-                  <label className="form-label" htmlFor="leaveBalance">
-                    Leave balance
-                  </label>
+                  <label className="form-label">Leave balance</label>
                   <input
                     className="form-control"
-                    id="leaveBalance"
                     type="text"
-                    value={
-                      selectedApplication
-                        ? selectedApplication.Leave_balance
-                        : "N/A"
-                    }
+                    value={formData.leaveBalance}
                     disabled
                   />
                 </div>
                 <div className="col-xl-4 col-sm-6">
-                  <label className="form-label" htmlFor="leaveBalance">
-                    Staff Name Relievers
-                  </label>
+                  <label className="form-label">Staff Name Relievers</label>
                   <input
                     className="form-control"
-                    id="leaveBalance"
                     type="text"
-                    value={
-                      selectedApplication
-                        ? selectedApplication.Staff_Name_Relievers
-                        : "N/A"
-                    }
+                    value={selectedApplication?.Staff_Name_Relievers || "N/A"}
                     disabled
                   />
                 </div>
                 <div className="col-xl-4 col-sm-6">
-                  <label className="form-label" htmlFor="leaveBalance">
-                    Staff No Relievers
-                  </label>
+                  <label className="form-label">Staff No Relievers</label>
                   <input
                     className="form-control"
-                    id="leaveBalance"
                     type="text"
-                    value={
-                      selectedApplication
-                        ? selectedApplication.Staff_No_Relievers
-                        : "N/A"
-                    }
+                    value={selectedApplication?.Staff_No_Relievers || "N/A"}
                     disabled
                   />
                 </div>
               </div>
+
+              {isEditable && (
+                <div className="row mt-4  text-center">
+                  <div className="col-md-12 text-center">
+                    <button
+                      className="btn btn-primary  text-center"
+                      onClick={handleSubmit}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <span
+                            className="spinner-border spinner-border-sm me-2"
+                            role="status"
+                            aria-hidden="true"
+                          />
+                          Updating...
+                        </>
+                      ) : (
+                        "Update Leave Application"
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

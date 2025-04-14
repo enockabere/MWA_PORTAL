@@ -537,38 +537,35 @@ class NewLeave(UserObjectMixins,View):
             return JsonResponse({"success": False, "error": str(e)}, status=500)
     async def post(self, request):
         try:
-            
-            soap_headers = await sync_to_async(request.session.__getitem__)(
-                "soap_headers"
-            )
-            employeeNo = await sync_to_async(request.session.__getitem__)(
-                "Employee_No_"
-            )
+            soap_headers = await sync_to_async(request.session.__getitem__)("soap_headers")
+            employeeNo = await sync_to_async(request.session.__getitem__)("Employee_No_")
             usersId = await sync_to_async(request.session.__getitem__)("User_ID")
+
             data = json.loads(request.body)
+
             application_no = data.get("applicationNo", "")
             my_action = data.get("myAction", "")
             leave_type = data.get("leaveType", "")
             leave_balance = data.get("leaveBalance", "")
-            based_on_planner = eval(data.get("basedOnPlanner", ""))
+            based_on_planner = eval(data.get("basedOnPlanner", "False"))
             return_same_day = data.get("returnSameDay", "")
             planner_start_date = data.get("plannerStartDate", "")
             days_applied = data.get("daysApplied", "")
             half_of_day = data.get("halfOfDay", "")
             leaveStartDate = data.get("leaveStartDate", "")
-            if based_on_planner == True:
+
+            if based_on_planner:
                 planner_start_date = dates.strptime(planner_start_date, "%Y-%m-%d").date()
             else:
                 planner_start_date = dates.strptime(leaveStartDate, "%Y-%m-%d").date()
 
             if not days_applied:
                 days_applied = 0
-
             if not half_of_day:
                 half_of_day = 0
-
             if not return_same_day:
                 return_same_day = "False"
+
             response = self.make_soap_request(
                 soap_headers,
                 "FnLeaveApplication",
@@ -583,14 +580,27 @@ class NewLeave(UserObjectMixins,View):
                 int(half_of_day),
                 my_action,
             )
-            if response != "0" and response != None and response != "":
-                return JsonResponse({"applicationNo": response}, safe=False)
+
+            if response and response != "0":
+                return JsonResponse({
+                    "status": "success",
+                    "message": "Leave application updated successfully.",
+                    "applicationNo": response
+                })
             else:
-                return JsonResponse({"error": str(response)}, safe=False)
+                return JsonResponse({
+                    "status": "error",
+                    "message": "Update failed. No response or invalid data from backend.",
+                    "error": str(response)
+                })
 
         except Exception as e:
-            print(str(e))
-            return JsonResponse({"error": str(e)}, safe=False)
+            return JsonResponse({
+                "status": "error",
+                "message": "An unexpected error occurred during processing.",
+                "error": str(e)
+            })
+
 
 class LeaveBalance(UserObjectMixins, View):
     async def get(self, request):
@@ -1993,7 +2003,6 @@ class TimesheetEntry(UserObjectMixins, View):
                     hours_worked,
                     my_action,  
                 )
-            
             else:
                 response = self.make_soap_request(
                     soap_headers,
