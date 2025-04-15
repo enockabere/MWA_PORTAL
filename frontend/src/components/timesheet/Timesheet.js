@@ -32,8 +32,6 @@ const Timesheet = () => {
       if (Object.keys(data).length > 0) {
         setCurrentTimesheet(data);
         setInitiated(true);
-
-        // Set active month based on PeriodStartDate
         if (data.PeriodStartDate) {
           const startDate = new Date(data.PeriodStartDate);
           setActiveMonth({
@@ -126,7 +124,12 @@ const Timesheet = () => {
                   Initiated={Initiated}
                   onInitiate={refreshTimesheets}
                 />
-                {Initiated && <TimesheetProgress activeMonth={activeMonth} />}
+                {Initiated && (
+                  <TimesheetProgress
+                    activeMonth={activeMonth}
+                    pk={currentTimesheet.Code}
+                  />
+                )}
               </div>
             </div>
           </div>

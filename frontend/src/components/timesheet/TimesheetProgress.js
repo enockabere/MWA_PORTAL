@@ -1,12 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRight, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import moment from "moment";
+import axios from "axios";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-const TimesheetProgress = ({ activeMonth }) => {
+const TimesheetProgress = ({ activeMonth, pk }) => {
   const [remainingDays, setRemainingDays] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isCurrentMonth, setIsCurrentMonth] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const csrfToken = document
+    .querySelector('meta[name="csrf-token"]')
+    ?.getAttribute("content");
 
   useEffect(() => {
     if (activeMonth) {
@@ -15,7 +23,6 @@ const TimesheetProgress = ({ activeMonth }) => {
         .month(activeMonth.month)
         .year(activeMonth.year);
 
-      // Check if active month is current month
       const currentMonthCheck = today.isSame(activeMonthDate, "month");
       setIsCurrentMonth(currentMonthCheck);
 
@@ -30,6 +37,35 @@ const TimesheetProgress = ({ activeMonth }) => {
       }
     }
   }, [activeMonth]);
+
+  const handleSubmit = async () => {
+    console.log("Submitting timesheet with pk:", pk); // Log pk
+    setIsSubmitting(true);
+    try {
+      const response = await axios.post(
+        `/selfservice/submit-timesheet/${pk}/`,
+        null,
+        {
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        toast.success(
+          response.data.message || "Timesheet submitted successfully!"
+        );
+      } else {
+        toast.error(response.data.error || "Failed to submit timesheet.");
+      }
+    } catch (err) {
+      toast.error("An error occurred while submitting the timesheet.");
+      console.error("Submit error:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div>
@@ -65,9 +101,22 @@ const TimesheetProgress = ({ activeMonth }) => {
       )}
 
       <div className="mt-3">
-        <button className="btn btn-warning w-100">
-          <FontAwesomeIcon icon={faArrowRight} className="me-2" /> Submit
-          Timesheet
+        <button
+          className="btn btn-warning w-100"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <>
+              <FontAwesomeIcon icon={faSpinner} spin className="me-2" />
+              Submitting...
+            </>
+          ) : (
+            <>
+              <FontAwesomeIcon icon={faArrowRight} className="me-2" />
+              Submit Timesheet
+            </>
+          )}
         </button>
       </div>
     </div>

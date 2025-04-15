@@ -2052,7 +2052,6 @@ class SubmitTimesheetHeader(UserObjectMixins,View):
     def post(self, request, pk):
         try:
             soap_headers = request.session.get("soap_headers", {})
-
             response = self.make_soap_request(
                 soap_headers, "submitTimesheetHeader", pk
             )
