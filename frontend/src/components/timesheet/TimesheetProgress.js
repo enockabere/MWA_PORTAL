@@ -6,7 +6,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const TimesheetProgress = ({ activeMonth, pk }) => {
+const TimesheetProgress = ({ activeMonth, pk, onInitiate }) => {
   const [remainingDays, setRemainingDays] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isCurrentMonth, setIsCurrentMonth] = useState(false);
@@ -56,6 +56,7 @@ const TimesheetProgress = ({ activeMonth, pk }) => {
         toast.success(
           response.data.message || "Timesheet submitted successfully!"
         );
+        onInitiate();
       } else {
         toast.error(response.data.error || "Failed to submit timesheet.");
       }

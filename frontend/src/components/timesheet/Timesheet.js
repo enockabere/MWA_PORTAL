@@ -128,6 +128,7 @@ const Timesheet = () => {
                   <TimesheetProgress
                     activeMonth={activeMonth}
                     pk={currentTimesheet.Code}
+                    onInitiate={refreshTimesheets}
                   />
                 )}
               </div>
