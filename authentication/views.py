@@ -27,7 +27,7 @@ from datetime import timedelta
 class Login_View(UserObjectMixins,View):
     async def post(self, request):
         data = json.loads(request.body)
-        email = data.get('email')
+        email = data.get('email', '').lower()
         password = data.get('password')
 
         if not email or not password:
