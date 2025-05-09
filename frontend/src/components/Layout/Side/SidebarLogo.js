@@ -17,7 +17,6 @@ const SidebarLogo = ({ toggleSidebar, isSidebarOpen }) => {
           />
         </a>
         <div className="toggle-sidebar" onClick={toggleSidebar}>
-          {/* Use different icons for open/close states */}
           <FontAwesomeIcon
             icon={isSidebarOpen ? faTimes : faBars} // Close (X) icon when open, Hamburger icon when closed
             style={{ fontSize: "20px", color: "#2b5f60", cursor: "pointer" }}

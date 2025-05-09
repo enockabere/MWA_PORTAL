@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
@@ -9,50 +9,53 @@ const SidebarItem = ({
   activeMenu,
   setActiveMenu,
   submenus = [],
+  openSubmenu,
+  setOpenSubmenu,
 }) => {
-  const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
   const location = useLocation();
-  const isActive = activeMenu === label || location.pathname === path;
 
-  // Toggle submenu
-  const toggleSubmenu = () => {
-    setIsSubmenuOpen(!isSubmenuOpen);
+  const isSubmenuOpen = openSubmenu === label;
+  const submenuPaths = submenus.map((s) => s.path);
+  const isSubmenuPathActive = submenuPaths.includes(location.pathname);
+  const isActive =
+    activeMenu === label || location.pathname === path || isSubmenuPathActive;
+
+  const handleClick = (e) => {
+    if (submenus.length > 0) {
+      e.preventDefault(); // Only prevent default if toggling submenu
+      setActiveMenu(label);
+      setOpenSubmenu(isSubmenuOpen ? null : label);
+    } else {
+      setActiveMenu(label);
+      setOpenSubmenu(null);
+    }
   };
 
   return (
     <li className="sidebar-list">
-      <Link
-        to={path}
-        className={`sidebar-link sidebar-title ${isActive ? "active" : ""}`}
-        role="button"
-        tabIndex={0}
-        onClick={() => {
-          setActiveMenu(label);
-          if (submenus.length > 0) toggleSubmenu();
-        }}
-        onKeyUp={(e) => {
-          if (e.key === "Enter") {
-            setActiveMenu(label);
-            if (submenus.length > 0) toggleSubmenu();
-          }
-        }}
-      >
-        <FontAwesomeIcon
-          icon={icon}
-          style={{
-            color: "#0c6cb4",
-            stroke: "#0c6cb4",
-            strokeWidth: 4,
-            fill: "none",
-          }}
-        />
-        <span>{label}</span>
-        {submenus.length > 0 && (
+      {submenus.length > 0 ? (
+        <a
+          href="#"
+          className={`sidebar-link sidebar-title ${isActive ? "active" : ""}`}
+          onClick={handleClick}
+        >
+          <FontAwesomeIcon icon={icon} style={{ color: "#0c6cb4" }} />
+          <span>{label}</span>
           <div className="according-menu">
             <i className={`fa fa-angle-${isSubmenuOpen ? "down" : "right"}`} />
           </div>
-        )}
-      </Link>
+        </a>
+      ) : (
+        <Link
+          to={path}
+          className={`sidebar-link sidebar-title ${isActive ? "active" : ""}`}
+          onClick={handleClick}
+        >
+          <FontAwesomeIcon icon={icon} style={{ color: "#0c6cb4" }} />
+          <span>{label}</span>
+        </Link>
+      )}
+
       {submenus.length > 0 && (
         <ul
           className="sidebar-submenu"
@@ -62,11 +65,19 @@ const SidebarItem = ({
             transition: "max-height 0.3s ease-in-out",
           }}
         >
-          {submenus.map((submenu, index) => (
-            <li key={index}>
-              <Link to={submenu.path}>{submenu.label}</Link>
-            </li>
-          ))}
+          {submenus.map((submenu, index) => {
+            const isSubmenuActive = location.pathname === submenu.path;
+            return (
+              <li key={index}>
+                <Link
+                  to={submenu.path}
+                  className={isSubmenuActive ? "active" : ""}
+                >
+                  {submenu.label}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
     </li>

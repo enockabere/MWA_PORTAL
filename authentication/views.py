@@ -17,7 +17,6 @@ from django.http import JsonResponse
 from datetime import datetime as dates
 import io as BytesIO
 import base64
-from django.http import HttpResponse
 import datetime
 from decimal import Decimal
 from .models import UnrecognizedQuery
@@ -257,31 +256,6 @@ class Login_View(UserObjectMixins,View):
                             user_password = self.pass_decrypt(data['Password'])
                             if password == user_password and password == decrypted:
                                 return JsonResponse({'redirect_url': '/selfservice/dashboard/'})  
-                                # generate_otp = self.generate_otp(4)
-                                # request.session['reset_password_otp'] = generate_otp
-                                # email_message = f"Hi {full_name}, We have sent you an email with an OTP to reset your password for the MWA Employee Self-Service Portal. Please check your email and follow the instructions to complete the reset process."
-                                # email_body = f"</br>Here is your One-Time Password (OTP): <b> {generate_otp}</b></br> Please enter this OTP on the portal to complete the password reset process. This OTP is valid for 15 minutes.</br></br> If you did not make this request, please ignore this email or contact us immediately for assistance.</br></br>"
-                                # try:
-                                #     payload = {"full_name": full_name,
-                                #                "employee_email":employee_email,
-                                #                "subject": "OTP for Password Reset",
-                                #                "email_body": email_body}
-                                #     print ("payload :", payload)
-                                #     send_otp = self.make_soap_request(
-                                #         soap_headers,
-                                #         "FnSendMail",
-                                #         full_name,
-                                #         employee_email,
-                                #         "OTP for Password Reset",
-                                #         email_body
-                                #     )
-                                #     if send_otp == True:
-                                #         return JsonResponse({'redirect_url': '/selfservice/otp/', 'message':email_message})
-                                #     else:
-                                #         return JsonResponse({'redirect_url': '/selfservice/'})
-                                # except Exception as e:
-                                #     print("send-otp-response:", str(e))
-                                
                             elif password == user_password and password != decrypted :
                                 return JsonResponse({'redirect_url': '/selfservice/dashboard/'})
                             else:
@@ -378,28 +352,34 @@ class LeavePlanner(UserObjectMixins,View):
         
     async def post(self, request):
         try:
-            soap_headers = await sync_to_async(request.session.__getitem__)(
-                "soap_headers"
-            )
-            employeeNo = await sync_to_async(request.session.__getitem__)(
-                "Employee_No_"
-            )
+            soap_headers = await sync_to_async(request.session.__getitem__)("soap_headers")
+            employeeNo = await sync_to_async(request.session.__getitem__)("Employee_No_")
+
             plannerNo = request.POST.get("plannerNo")
             myAction = request.POST.get("myAction")
+            plannerType = request.POST.get("plannerType")
+            try:
+                plannerType = int(plannerType)
+            except (ValueError, TypeError):
+                return JsonResponse({"error": "Invalid plannerType"}, status=400)
 
             response = self.make_soap_request(
                 soap_headers,
                 "FnLeavePlannerHeader",
                 plannerNo,
                 employeeNo,
+                plannerType,
                 myAction,
             )
-            if response != "0" and response != None and response != "":
+
+            if response not in ["0", None, ""]:
                 return JsonResponse({"code": response}, safe=False)
             return JsonResponse({"error": "Invalid response"}, safe=False)
+
         except Exception as e:
             logging.exception(e)
             return JsonResponse({"error": str(e)}, safe=False)
+
 
 
 class FnLeavePlannerLine(UserObjectMixins, View):
@@ -537,11 +517,14 @@ class NewLeave(UserObjectMixins,View):
             return JsonResponse({"success": False, "error": str(e)}, status=500)
     async def post(self, request):
         try:
+            print("request came")
             soap_headers = await sync_to_async(request.session.__getitem__)("soap_headers")
             employeeNo = await sync_to_async(request.session.__getitem__)("Employee_No_")
             usersId = await sync_to_async(request.session.__getitem__)("User_ID")
 
             data = json.loads(request.body)
+
+            print(data)
 
             application_no = data.get("applicationNo", "")
             my_action = data.get("myAction", "")
@@ -581,6 +564,8 @@ class NewLeave(UserObjectMixins,View):
                 my_action,
             )
 
+            print("response:", response)
+
             if response and response != "0":
                 return JsonResponse({
                     "status": "success",
@@ -595,9 +580,10 @@ class NewLeave(UserObjectMixins,View):
                 })
 
         except Exception as e:
+            print(e)
             return JsonResponse({
                 "status": "error",
-                "message": "An unexpected error occurred during processing.",
+                "message": str(e),
                 "error": str(e)
             })
 
@@ -717,6 +703,10 @@ class LeaveApproval(UserObjectMixins, View):
 
             if not soap_headers or not employeeNo:
                 raise ValueError("Missing required session data.")
+            
+            payload = {"employeeNo": employeeNo,
+                       "document_no": pk,}
+            print(payload)
 
             response = self.make_soap_request(
                 soap_headers, "FnRequestLeaveApproval", employeeNo, pk
@@ -1684,6 +1674,14 @@ class FnActionApprovals(UserObjectMixins, View):
                 return JsonResponse({"success": False, "error": "Invalid TableID or Entry_No_"}, status=400)
 
             # Call SOAP service
+
+            payload = {"TableID": TableID,
+                       "document_no": pk,
+                       "Entry_No_":Entry_No_,
+                       "statusApproveRejectDelegate":statusApproveRejectDelegate,
+                       "approvalComment":approvalComment,
+                       "User_ID":User_ID}
+            print(payload)
             response = self.make_soap_request(
                 soap_headers,
                 "FnActionApprovals",

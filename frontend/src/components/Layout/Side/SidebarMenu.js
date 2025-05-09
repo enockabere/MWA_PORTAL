@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import SidebarItem from "./SidebarItem";
 import {
   faHouse,
@@ -11,9 +11,11 @@ import {
   faBook,
   faSignOutAlt,
 } from "@fortawesome/free-solid-svg-icons";
-import dashboard from "../../../../static/img/logo/dashboard.png"; // Import the dashboard image
+import dashboard from "../../../../static/img/logo/dashboard.png";
 
 const SidebarMenu = ({ activeMenu, setActiveMenu, dashboardData }) => {
+  const [openSubmenu, setOpenSubmenu] = useState(null); // Manage open submenu
+
   return (
     <nav className="sidebar-main">
       <div className="left-arrow" id="left-arrow">
@@ -21,14 +23,13 @@ const SidebarMenu = ({ activeMenu, setActiveMenu, dashboardData }) => {
       </div>
       <div id="sidebar-menu">
         <ul className="sidebar-links" id="simple-bar">
-          {/* Back Button */}
           <li className="back-btn">
             <a href="#">
               <img
                 className="img-fluid"
                 height="20"
                 width="20"
-                src={dashboard} // Use the imported dashboard image
+                src={dashboard}
                 alt="Logo"
               />
             </a>
@@ -38,36 +39,36 @@ const SidebarMenu = ({ activeMenu, setActiveMenu, dashboardData }) => {
             </div>
           </li>
 
-          {/* Pinned Section */}
           <li className="pin-title sidebar-main-title">
             <div>
               <h6>Pinned</h6>
             </div>
           </li>
 
-          {/* General Section */}
           <li className="sidebar-main-title">
             <div>
               <h6>General</h6>
             </div>
           </li>
 
-          {/* Dashboard Menu Item */}
           <SidebarItem
             icon={faHouse}
             label="Dashboard"
             path="/selfservice/dashboard"
             activeMenu={activeMenu}
             setActiveMenu={setActiveMenu}
+            openSubmenu={openSubmenu}
+            setOpenSubmenu={setOpenSubmenu}
           />
 
-          {/* Leave Planner Menu Item */}
           <SidebarItem
             icon={faCalendar}
             label="Leave Planner"
             path="/selfservice/dashboard/leave-planner"
             activeMenu={activeMenu}
             setActiveMenu={setActiveMenu}
+            openSubmenu={openSubmenu}
+            setOpenSubmenu={setOpenSubmenu}
             submenus={[
               {
                 label: "New Planner",
@@ -77,13 +78,14 @@ const SidebarMenu = ({ activeMenu, setActiveMenu, dashboardData }) => {
             ]}
           />
 
-          {/* Leave Request Menu Item */}
           <SidebarItem
             icon={faEnvelope}
             label="Leave Request"
             path="/selfservice/dashboard/leave-dashboard"
             activeMenu={activeMenu}
             setActiveMenu={setActiveMenu}
+            openSubmenu={openSubmenu}
+            setOpenSubmenu={setOpenSubmenu}
             submenus={[
               {
                 label: "Leave Dashboard",
@@ -109,13 +111,14 @@ const SidebarMenu = ({ activeMenu, setActiveMenu, dashboardData }) => {
             ]}
           />
 
-          {/* Adjustments Menu Item */}
           <SidebarItem
             icon={faEdit}
             label="Adjustments"
             path="/selfservice/dashboard/new-adjustment"
             activeMenu={activeMenu}
             setActiveMenu={setActiveMenu}
+            openSubmenu={openSubmenu}
+            setOpenSubmenu={setOpenSubmenu}
             submenus={[
               {
                 label: "New Adjustment",
@@ -128,13 +131,14 @@ const SidebarMenu = ({ activeMenu, setActiveMenu, dashboardData }) => {
             ]}
           />
 
-          {/* Reports Menu Item */}
           <SidebarItem
             icon={faFileAlt}
             label="Reports"
             path="/selfservice/dashboard/leave-reports"
             activeMenu={activeMenu}
             setActiveMenu={setActiveMenu}
+            openSubmenu={openSubmenu}
+            setOpenSubmenu={setOpenSubmenu}
             submenus={[
               {
                 label: "My Reports",
@@ -143,22 +147,24 @@ const SidebarMenu = ({ activeMenu, setActiveMenu, dashboardData }) => {
             ]}
           />
 
-          {/* Approvals Menu Item */}
           <SidebarItem
             icon={faCheckCircle}
             label="Approvals"
             path="/selfservice/dashboard/approvals"
             activeMenu={activeMenu}
             setActiveMenu={setActiveMenu}
+            openSubmenu={openSubmenu}
+            setOpenSubmenu={setOpenSubmenu}
           />
 
-          {/* Timesheets Menu Item */}
           <SidebarItem
             icon={faBook}
             label="Timesheets"
             path="/selfservice/dashboard/timesheet-entries"
             activeMenu={activeMenu}
             setActiveMenu={setActiveMenu}
+            openSubmenu={openSubmenu}
+            setOpenSubmenu={setOpenSubmenu}
             submenus={[
               {
                 label: "Entries",
@@ -171,31 +177,34 @@ const SidebarMenu = ({ activeMenu, setActiveMenu, dashboardData }) => {
             ]}
           />
 
-          {/* Documentation Menu Item */}
           <SidebarItem
             icon={faBook}
             label="Documentation"
             path="/selfservice/dashboard/documentation"
             activeMenu={activeMenu}
             setActiveMenu={setActiveMenu}
+            openSubmenu={openSubmenu}
+            setOpenSubmenu={setOpenSubmenu}
           />
 
-          {/* Profile Menu Item */}
           <SidebarItem
             icon={faUser}
             label="Profile"
             path="/selfservice/dashboard/profile"
             activeMenu={activeMenu}
             setActiveMenu={setActiveMenu}
+            openSubmenu={openSubmenu}
+            setOpenSubmenu={setOpenSubmenu}
           />
 
-          {/* Logout Menu Item */}
           <SidebarItem
             icon={faSignOutAlt}
             label="Logout"
             path="/selfservice/logout"
             activeMenu={activeMenu}
             setActiveMenu={setActiveMenu}
+            openSubmenu={openSubmenu}
+            setOpenSubmenu={setOpenSubmenu}
           />
         </ul>
       </div>

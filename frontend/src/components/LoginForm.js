@@ -5,7 +5,6 @@ import mwaLogo from "../../static/img/logo/logo.png";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useLocation } from "react-router-dom";
-import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import BentCard from "./BentCard";
@@ -174,16 +173,7 @@ function LoginForm() {
                     </div>
                   </div>
                   <div className="form-group mb-0">
-                    <div className="checkbox p-0">
-                      <input id="checkbox1" type="checkbox" />
-                      <label className="text-muted" htmlFor="checkbox1">
-                        Remember password
-                      </label>
-                    </div>
-                    <a className="link" href="forget-password.html">
-                      Forgot password?
-                    </a>
-                    <div className="text-end mt-3">
+                    <div className="text-end mt-4">
                       <button
                         className="btn btn-primary btn-block w-100"
                         type="submit"

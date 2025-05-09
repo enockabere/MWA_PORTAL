@@ -10,35 +10,44 @@ const CreateLeavePlanForm = ({ onCodeRetrieved, retrievedCode, myAction }) => {
   const [formData, setFormData] = useState({
     myAction: myAction || "insert",
     plannerNo: retrievedCode || "",
+    plannerType: "", // Start with no selection
   });
+
   const [loading, setLoading] = useState(false);
 
-  // Update formData when props change
   useEffect(() => {
     setFormData({
       myAction: myAction || "insert",
       plannerNo: retrievedCode || "",
+      plannerType: "",
     });
   }, [retrievedCode, myAction]);
 
-  // Log data whenever formData or its related props change
-  useEffect(() => {}, [formData, retrievedCode, myAction]);
-
-  // CSRF token from the meta tag
   const csrfToken = document
     .querySelector('meta[name="csrf-token"]')
     ?.getAttribute("content");
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formData.plannerType) {
+      toast.error("Please select a planner type before submitting.");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const data = new FormData();
       data.append("plannerNo", formData.plannerNo);
       data.append("myAction", formData.myAction);
+      data.append("plannerType", formData.plannerType);
 
-      // POST request to add the reliever
       const response = await axios.post("/selfservice/LeavePlanner/", data, {
         headers: {
           "X-CSRFToken": csrfToken,
@@ -48,8 +57,8 @@ const CreateLeavePlanForm = ({ onCodeRetrieved, retrievedCode, myAction }) => {
 
       if (response.status === 200 && response.data.code) {
         toast.success("Plan added successfully!");
-        setFormData({ myAction: "insert", plannerNo: "" }); // Clear form after successful submission
-        onCodeRetrieved(response.data.code); // Pass the retrieved code to parent component
+        setFormData({ myAction: "insert", plannerNo: "", plannerType: "" });
+        onCodeRetrieved(response.data.code);
       } else {
         toast.error("Failed to retrieve code. Please try again.");
       }
@@ -69,24 +78,21 @@ const CreateLeavePlanForm = ({ onCodeRetrieved, retrievedCode, myAction }) => {
     >
       <input type="hidden" name="myAction" value={formData.myAction} />
       <input type="hidden" name="plannerNo" value={formData.plannerNo} />
+
+      {/* Premium Image */}
       <div
         className="col-md-6 wow bounceInLeft mt-0"
-        style={{
-          visibility: "visible",
-          animationName: "bounceInLeft",
-        }}
+        style={{ visibility: "visible", animationName: "bounceInLeft" }}
       >
         <div className="premium-img">
           <img className="img-fluid" src={premium} alt="premium" />
         </div>
       </div>
 
+      {/* Text Section */}
       <div
         className="col-md-6 wow bounceInRight mt-0"
-        style={{
-          visibility: "visible",
-          animationName: "bounceInRight",
-        }}
+        style={{ visibility: "visible", animationName: "bounceInRight" }}
       >
         <div className="premium-wrapper mt-5">
           <h2>Plan Your Leave with Ease</h2>
@@ -97,7 +103,9 @@ const CreateLeavePlanForm = ({ onCodeRetrieved, retrievedCode, myAction }) => {
           </span>
         </div>
       </div>
-      <div className="col-xl-12 text-end mt-4">
+
+      {/* Submit Button */}
+      <div className="col-xl-12 text-end">
         {loading && (
           <div className="loader-container card-loading d-flex justify-content-center align-items-center">
             <Bars color="#00BFFF" height={30} width={30} />
@@ -105,16 +113,11 @@ const CreateLeavePlanForm = ({ onCodeRetrieved, retrievedCode, myAction }) => {
         )}
         <button type="submit" className="btn btn-primary" disabled={loading}>
           {loading ? (
-            <span
-              className="spinner-border spinner-border-sm me-2" // me-2 adds margin-end (right) to the spinner
-            ></span>
+            <span className="spinner-border spinner-border-sm me-2" />
           ) : (
             <>
               Start Your Leave Planner
-              <FontAwesomeIcon
-                icon={faArrowRight}
-                className="ms-2" // ms-2 adds margin-start (left) to the icon
-              />
+              <FontAwesomeIcon icon={faArrowRight} className="ms-2" />
             </>
           )}
         </button>
