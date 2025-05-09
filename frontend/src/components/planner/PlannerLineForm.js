@@ -3,24 +3,25 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faArrowRight } from "@fortawesome/free-solid-svg-icons";
-import { toast } from "react-toastify";
 import axios from "axios";
 import { Bars } from "react-loader-spinner";
+import Swal from "sweetalert2";
 import "./button.css";
 
 const PlannerLineForm = ({ pk, onFetchSamples }) => {
   const [formData, setFormData] = useState({
     startDate: new Date(),
     endDate: null,
-    lineNo: 0, // Default lineNo to 0
+    lineNo: 0,
     MyAction: "insert",
   });
   const [loading, setLoading] = useState(false);
+  const modalRef = useRef();
+  const [animate, setAnimate] = useState(false);
+
   const csrfToken = document
     .querySelector('meta[name="csrf-token"]')
-    .getAttribute("content");
-
-  const modalRef = useRef();
+    ?.getAttribute("content");
 
   const handleOpen = () => {
     const modalElement = modalRef.current;
@@ -30,13 +31,18 @@ const PlannerLineForm = ({ pk, onFetchSamples }) => {
     }
   };
 
-  const [animate, setAnimate] = useState(false);
+  const handleClose = () => {
+    const modalElement = modalRef.current;
+    if (modalElement) {
+      const modal = window.bootstrap.Modal.getInstance(modalElement);
+      modal?.hide();
+    }
+  };
 
   useEffect(() => {
-    // Trigger animation on mount
     setAnimate(true);
-    const timer = setTimeout(() => setAnimate(false), 1500); // End animation after 1.5 seconds
-    return () => clearTimeout(timer); // Cleanup on unmount
+    const timer = setTimeout(() => setAnimate(false), 1500);
+    return () => clearTimeout(timer);
   }, []);
 
   const handleStartDateChange = (date) => {
@@ -59,7 +65,11 @@ const PlannerLineForm = ({ pk, onFetchSamples }) => {
       setLoading(true);
       try {
         if (!pk) {
-          toast.error("Plan code is missing.");
+          await Swal.fire({
+            icon: "error",
+            title: "Missing Plan ID",
+            text: "Plan code is missing.",
+          });
           return;
         }
 
@@ -78,8 +88,13 @@ const PlannerLineForm = ({ pk, onFetchSamples }) => {
             },
           }
         );
-        toast.success("Plan added successfully!");
-        // Reset form data after success
+
+        await Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: "Planner line added successfully.",
+        });
+
         setFormData({
           startDate: new Date(),
           endDate: null,
@@ -87,14 +102,16 @@ const PlannerLineForm = ({ pk, onFetchSamples }) => {
           MyAction: "insert",
         });
 
-        // Call the parent fetch function to update the list of plans
-        onFetchSamples(pk); // This will trigger the parent's function to fetch and update the plans
+        onFetchSamples(pk);
+        handleClose();
       } catch (error) {
-        if (error.response && error.response.data.error) {
-          toast.error(error.response.data.error);
-        } else {
-          toast.error("Error sending data. Please try again.");
-        }
+        await Swal.fire({
+          icon: "error",
+          title: "Error",
+          text:
+            error.response?.data?.error ||
+            "Error sending data. Please try again.",
+        });
       } finally {
         setLoading(false);
       }
@@ -138,75 +155,69 @@ const PlannerLineForm = ({ pk, onFetchSamples }) => {
               />
             </div>
             <div className="modal-body">
-              <div className="modal-toggle-wrapper">
-                <p>
-                  Enter your expected leave start and end dates to begin
-                  scheduling your leave plan. This will help you organize and
-                  manage your upcoming time off effectively.
-                </p>
-                {loading && (
-                  <div className="d-flex justify-content-center mt-5">
-                    <Bars color="#00BFFF" height={30} width={30} />
-                  </div>
-                )}
-                <form
-                  className="row g-3 mt-4 needs-validation"
-                  onSubmit={handleSubmit}
-                  noValidate
+              <p>
+                Enter your expected leave start and end dates to begin planning
+                your time off.
+              </p>
+
+              {loading && (
+                <div className="d-flex justify-content-center mt-4">
+                  <Bars color="#00BFFF" height={30} width={30} />
+                </div>
+              )}
+
+              <form
+                className="row g-3 mt-3 needs-validation"
+                onSubmit={handleSubmit}
+                noValidate
+              >
+                <input type="hidden" name="lineNo" value="0" />
+                <input type="hidden" name="MyAction" value="insert" />
+
+                <div className="col-md-6">
+                  <label className="form-label">
+                    Start Date <span className="text-danger">*</span>
+                  </label>
+                  <DatePicker
+                    selected={formData.startDate}
+                    onChange={handleStartDateChange}
+                    minDate={new Date()}
+                    className="form-control"
+                    dateFormat="yyyy/MM/dd"
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">
+                    End Date <span className="text-danger">*</span>
+                  </label>
+                  <DatePicker
+                    selected={formData.endDate}
+                    onChange={handleEndDateChange}
+                    minDate={formData.startDate || new Date()}
+                    className="form-control"
+                    dateFormat="yyyy/MM/dd"
+                  />
+                </div>
+
+                <button
+                  className="btn bg-primary d-flex align-items-center w-50 gap-2 text-light ms-auto"
+                  type="submit"
+                  disabled={loading}
                 >
-                  <input type="hidden" name="lineNo" value="0" />
-                  <input type="hidden" name="MyAction" value="insert" />
-                  <div className="col-md-6">
-                    <label className="form-label">
-                      Start Date <span className="text-danger">*</span>
-                    </label>
-                    <DatePicker
-                      selected={formData.startDate}
-                      onChange={handleStartDateChange}
-                      minDate={new Date()}
-                      className="form-control"
-                      dateFormat="yyyy/MM/dd"
-                      placeholderText="Select start date"
-                    />
-                  </div>
-                  <div className="col-md-6">
-                    <label className="form-label">
-                      End Date <span className="text-danger">*</span>
-                    </label>
-                    <DatePicker
-                      selected={formData.endDate}
-                      onChange={handleEndDateChange}
-                      minDate={formData.startDate || new Date()}
-                      className="form-control"
-                      dateFormat="yyyy/MM/dd"
-                      placeholderText="Select end date"
-                    />
-                  </div>
-                  <button
-                    className="btn bg-primary d-flex align-items-center w-50 gap-2 text-light ms-auto"
-                    type="submit"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <span
-                        className="spinner-border spinner-border-sm"
-                        role="status"
-                        aria-hidden="true"
-                      ></span>
-                    ) : (
-                      <>
-                        {" "}
-                        Add Planner Line
-                        <FontAwesomeIcon
-                          icon={faArrowRight}
-                          style={{ marginLeft: "8px" }}
-                        />
-                      </>
-                    )}
-                    <i className="bi bi-arrow-right"></i>
-                  </button>
-                </form>
-              </div>
+                  {loading ? (
+                    <span
+                      className="spinner-border spinner-border-sm"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
+                  ) : (
+                    <>
+                      Add Planner Line
+                      <FontAwesomeIcon icon={faArrowRight} className="ms-2" />
+                    </>
+                  )}
+                </button>
+              </form>
             </div>
           </div>
         </div>

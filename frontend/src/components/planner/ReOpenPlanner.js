@@ -1,10 +1,9 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 
-const ReOpenPlanner = ({ planId, onReOpen, onClose, onShowToast }) => {
+const ReOpenPlanner = ({ planId, onReOpen, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState(null); // For error message
 
   const csrfToken = document
     .querySelector('meta[name="csrf-token"]')
@@ -13,24 +12,33 @@ const ReOpenPlanner = ({ planId, onReOpen, onClose, onShowToast }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setSubmitError(null); // Reset error before submission
 
     try {
-      // Making the post request to submit the plan
       await axios.post(`/selfservice/FnReOpenLeavePlanner/${planId}/`, null, {
         headers: {
           "X-CSRFToken": csrfToken,
         },
       });
-      onShowToast("Planner ReOpened Successfully!", "success");
-      onReOpen(); // Call parent callback to update plan status
+
+      await Swal.fire({
+        icon: "success",
+        title: "Planner Reopened",
+        text: "The leave planner has been successfully reopened.",
+      });
+
+      onReOpen();
       onClose();
     } catch (error) {
-      setSubmitError("Error ReOpened the plan. Please try again.");
-      onShowToast("Error ReOpening the plan. Please try again.", "error");
-      console.error("Error details:", error);
+      console.error("Reopen error:", error);
+      await Swal.fire({
+        icon: "error",
+        title: "Failed to Reopen Planner",
+        text:
+          error?.response?.data?.error ||
+          "Error reopening the planner. Please try again.",
+      });
     } finally {
-      setIsSubmitting(false); // Reset submitting state
+      setIsSubmitting(false);
     }
   };
 
@@ -39,19 +47,13 @@ const ReOpenPlanner = ({ planId, onReOpen, onClose, onShowToast }) => {
       <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
         {isSubmitting ? (
           <span
-            className="spinner-border spinner-border-sm"
-            style={{ marginRight: "8px" }}
-          ></span>
+            className="spinner-border spinner-border-sm me-2"
+            role="status"
+          />
         ) : (
-          "ReOpened Plan"
+          "Reopen Plan"
         )}
       </button>
-
-      {submitError && (
-        <div className="alert alert-danger mt-2" role="alert">
-          {submitError}
-        </div>
-      )}
     </form>
   );
 };

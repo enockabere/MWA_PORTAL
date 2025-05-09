@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Swal from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
@@ -7,18 +8,21 @@ const PlannerStepNavigation = ({
   pk,
   onStartCountdown,
   myAction,
-  setMyAction, // Function to update myAction in the parent component
+  setMyAction,
 }) => {
   const [loading, setLoading] = useState(false);
 
-  // Fetch the CSRF token from the meta tag
   const csrfToken = document
     .querySelector('meta[name="csrf-token"]')
-    ?.getAttribute("content"); // Add optional chaining for safety
+    ?.getAttribute("content");
 
   const handleSubmit = async () => {
     if (!csrfToken) {
-      console.error("CSRF token not found.");
+      await Swal.fire({
+        icon: "error",
+        title: "CSRF Token Missing",
+        text: "Unable to submit because CSRF token was not found.",
+      });
       return;
     }
 
@@ -28,34 +32,49 @@ const PlannerStepNavigation = ({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken, // Include the CSRF token in the headers
+          "X-CSRFToken": csrfToken,
         },
-        body: JSON.stringify({
-          /* Add any additional data needed */
-        }),
+        body: JSON.stringify({}),
       });
 
+      const result = await response.json();
+
       if (response.ok) {
+        await Swal.fire({
+          icon: "success",
+          title: "Planner Submitted",
+          text: "Your leave plan has been submitted successfully.",
+        });
+
         if (onStartCountdown) {
           onStartCountdown(15);
         }
-        handleNextStep("successful-wizard"); // Move to the "successful-wizard" tab on successful submission
+
+        handleNextStep("successful-wizard");
       } else {
-        console.error("Failed to submit plan.");
+        await Swal.fire({
+          icon: "error",
+          title: "Submission Failed",
+          text:
+            result?.error || "An unexpected error occurred. Please try again.",
+        });
       }
     } catch (error) {
-      console.error("An error occurred while submitting the plan:", error);
+      console.error("Submit error:", error);
+      await Swal.fire({
+        icon: "error",
+        title: "Error Submitting Plan",
+        text: error.message || "An unexpected error occurred.",
+      });
     } finally {
-      setLoading(false); // Ensure loading state is reset in both success and error cases
+      setLoading(false);
     }
   };
 
   const handlePrevious = () => {
-    // Update myAction to "modify"
     if (setMyAction) {
       setMyAction("modify");
     }
-    // Navigate to the previous step
     handleNextStep("wizard-info", true);
   };
 
@@ -78,16 +97,14 @@ const PlannerStepNavigation = ({
         >
           {loading ? (
             <span
-              className="spinner-border spinner-border-sm"
-              style={{ marginRight: "8px" }}
+              className="spinner-border spinner-border-sm me-2"
+              role="status"
+              aria-hidden="true"
             ></span>
           ) : (
             <>
               Submit Plan
-              <FontAwesomeIcon
-                icon={faArrowRight}
-                style={{ marginLeft: "5px" }} // Align icon correctly after text
-              />
+              <FontAwesomeIcon icon={faArrowRight} className="ms-2" />
             </>
           )}
         </button>

@@ -45,7 +45,7 @@
     "react-calendar": "^5.1.0",
     "react-circular-progressbar": "^2.2.0",
     "react-csv": "^2.2.2",
-    "react-data-table-component": "^7.6.2",
+    "react-data-table-component": "^7.7.0",
     "react-data-table-component-extensions": "^1.6.0",
     "react-datepicker": "^7.5.0",
     "react-dom": "^18.3.1",
@@ -65,6 +65,7 @@
     "simplebar": "^6.3.0",
     "simplebar-react": "^3.2.6",
     "slick-carousel": "^1.8.1",
+    "sweetalert2": "^11.21.0",
     "swiper": "^11.2.5"
   },
   "devDependencies": {

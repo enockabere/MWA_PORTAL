@@ -1,120 +1,108 @@
 import React, { useState } from "react";
 import axios from "axios";
+import DataTable from "react-data-table-component";
+import Swal from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrashAlt } from "@fortawesome/free-solid-svg-icons";
-import { Modal } from "react-bootstrap";
-import { toast } from "react-toastify";
 
 const PlannerLinesTable = ({ data, onFetchSamples }) => {
   const [loading, setLoading] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState(null);
   const csrfToken = document
     .querySelector('meta[name="csrf-token"]')
-    .getAttribute("content");
+    ?.getAttribute("content");
 
-  const handleDeleteClick = (plan) => {
-    console.log("Data:", data); // Log the entire data object
-    console.log("Document_No:", plan.DocumentNo, "Line_No:", plan.LineNo); // Use the correct property names
-    setSelectedPlan(plan);
-    setShowModal(true);
-  };
+  const handleDelete = async (plan) => {
+    const confirm = await Swal.fire({
+      title: "Are you sure?",
+      text: "You are about to delete this plan line.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "Cancel",
+    });
 
-  const handleDeleteConfirm = async () => {
-    setLoading(true);
-    try {
-      // Use the DocumentNo and LineNo from the selectedPlan object
-      const { DocumentNo, LineNo } = selectedPlan;
-
-      // Pass the correct data in the POST request
-      await axios.post(
-        `/selfservice/FnLeavePlannerLine/${DocumentNo}/`,
-        {
-          lineNo: LineNo,
-          MyAction: "delete",
-          startDate: "2025-01-01T00:00:00.000Z",
-          endDate: "2025-01-01T00:00:00.000Z",
-        },
-        {
-          headers: {
-            "X-CSRFToken": csrfToken,
-            "Content-Type": "application/json",
+    if (confirm.isConfirmed) {
+      setLoading(true);
+      try {
+        await axios.post(
+          `/selfservice/FnLeavePlannerLine/${plan.DocumentNo}/`,
+          {
+            lineNo: plan.LineNo,
+            MyAction: "delete",
+            startDate: "2025-01-01T00:00:00.000Z",
+            endDate: "2025-01-01T00:00:00.000Z",
           },
-        }
-      );
+          {
+            headers: {
+              "X-CSRFToken": csrfToken,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
-      // Close the modal and fetch the updated data
-      setShowModal(false);
-      onFetchSamples(); // Use DocumentNo to fetch samples after deletion
-      toast.success("Plan deleted successfully!");
-    } catch (error) {
-      toast.error(
-        "Error deleting plan: " +
-          (error.response?.data?.error || "Unknown error")
-      );
-    } finally {
-      setLoading(false);
+        await Swal.fire({
+          icon: "success",
+          title: "Deleted!",
+          text: "Planner line has been deleted.",
+        });
+
+        onFetchSamples();
+      } catch (error) {
+        Swal.fire({
+          icon: "error",
+          title: "Error!",
+          text: error.response?.data?.error || "Failed to delete planner line.",
+        });
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
+  const columns = [
+    {
+      name: "Leave Period",
+      selector: (row) => row.Leave_Period,
+      sortable: true,
+    },
+    {
+      name: "Start Date",
+      selector: (row) => row.Start_Date,
+    },
+    {
+      name: "End Date",
+      selector: (row) => row.End_Date,
+    },
+    {
+      name: "Days Planned",
+      selector: (row) => row.Days_Planned,
+    },
+    {
+      name: "Action",
+      cell: (row) => (
+        <FontAwesomeIcon
+          icon={faTrashAlt}
+          className="text-danger"
+          style={{ cursor: "pointer" }}
+          onClick={() => handleDelete(row)}
+        />
+      ),
+      button: true,
+    },
+  ];
+
   return (
     <div className="card p-3">
-      <h4 className="my-3">Leave Planner Lines</h4>
-      <table className="table table-striped table-bordered">
-        <thead className="thead-dark">
-          <tr>
-            <th>Leave Period</th>
-            <th>Start Date</th>
-            <th>End Date</th>
-            <th>Days Planned</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((row, index) => (
-            <tr key={index}>
-              <td>{row.Leave_Period}</td>
-              <td>{row.Start_Date}</td>
-              <td>{row.End_Date}</td>
-              <td>{row.Days_Planned}</td>
-              <td>
-                <FontAwesomeIcon
-                  icon={faTrashAlt}
-                  className="text-danger cursor-pointer"
-                  onClick={() => handleDeleteClick(row)}
-                  style={{ cursor: "pointer" }}
-                />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Confirm Deletion</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>Are you sure you want to delete this plan?</Modal.Body>
-        <Modal.Footer>
-          <button
-            className="btn btn-secondary"
-            onClick={() => setShowModal(false)}
-          >
-            Cancel
-          </button>
-          <button
-            className="btn btn-danger"
-            onClick={handleDeleteConfirm}
-            disabled={loading}
-          >
-            {loading ? (
-              <div className="spinner-border text-light" role="status"></div>
-            ) : (
-              "Delete"
-            )}
-          </button>
-        </Modal.Footer>
-      </Modal>
+      <h6 className="mb-2">Leave Planner Lines</h6>
+      <DataTable
+        columns={columns}
+        data={data}
+        progressPending={loading}
+        pagination
+        striped
+        highlightOnHover
+        responsive
+      />
     </div>
   );
 };

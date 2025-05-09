@@ -357,18 +357,12 @@ class LeavePlanner(UserObjectMixins,View):
 
             plannerNo = request.POST.get("plannerNo")
             myAction = request.POST.get("myAction")
-            plannerType = request.POST.get("plannerType")
-            try:
-                plannerType = int(plannerType)
-            except (ValueError, TypeError):
-                return JsonResponse({"error": "Invalid plannerType"}, status=400)
 
             response = self.make_soap_request(
                 soap_headers,
                 "FnLeavePlannerHeader",
                 plannerNo,
                 employeeNo,
-                plannerType,
                 myAction,
             )
 

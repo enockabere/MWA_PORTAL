@@ -1,17 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "axios";
+import Swal from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
-import { toast } from "react-toastify";
 
 const AddLineForm = ({ planId, onLineAdded }) => {
-  // Get today's date in "YYYY-MM-DD" format
   const today = new Date().toISOString().split("T")[0];
 
   const [formData, setFormData] = useState({
-    startDate: today, // Default to today's date
-    endDate: today, // Default to today's date
-    lineNo: 0, // Default line number
+    startDate: today,
+    endDate: today,
+    lineNo: 0,
     MyAction: "insert",
   });
 
@@ -23,85 +22,106 @@ const AddLineForm = ({ planId, onLineAdded }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-
-    setFormData((prevData) => {
-      // Ensure endDate cannot be earlier than startDate
-      if (name === "startDate") {
-        return {
-          ...prevData,
-          startDate: value,
-          endDate: value > prevData.endDate ? value : prevData.endDate,
-        };
+    setFormData((prev) => {
+      let updated = { ...prev, [name]: value };
+      if (name === "startDate" && value > prev.endDate) {
+        updated.endDate = value;
       }
-
-      return { ...prevData, [name]: value };
+      return updated;
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    axios
-      .post(`/selfservice/FnAddLeavePlannerLine/${planId}/`, formData, {
-        headers: {
-          "X-CSRFToken": csrfToken,
-        },
-      })
-      .then(() => {
-        setIsSubmitting(false);
-        toast.success("Planner line added successfully!");
-        onLineAdded(); // Trigger table refresh in parent
-        setFormData({
-          startDate: today,
-          endDate: today,
-          lineNo: 0,
-          MyAction: "insert",
-        });
-      })
-      .catch((error) => {
-        setIsSubmitting(false);
-        toast.error("Error sending data. Please try again.");
-        console.error("Error details:", error);
+    try {
+      const response = await axios.post(
+        `/selfservice/FnAddLeavePlannerLine/${planId}/`,
+        formData,
+        {
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+        }
+      );
+
+      // Check if server returned an error despite 200 status
+      if (response.data.error) {
+        throw new Error(response.data.error);
+      }
+
+      console.log("Server Response:", response.data);
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Plan added successfully",
       });
+
+      onLineAdded();
+      setFormData({
+        startDate: today,
+        endDate: today,
+        lineNo: 0,
+        MyAction: "insert",
+      });
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.message || "Something went wrong. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="mb-3">
-      <div className="row">
+      <div className="row g-2">
         <div className="col-md-4">
+          <label htmlFor="startDate" className="form-label">
+            Start Date
+          </label>
           <input
             type="date"
+            id="startDate"
             name="startDate"
             value={formData.startDate}
             onChange={handleInputChange}
             className="form-control"
-            min={today} // Prevent dates earlier than today
+            min={today}
             required
           />
         </div>
         <div className="col-md-4">
+          <label htmlFor="endDate" className="form-label">
+            End Date
+          </label>
           <input
             type="date"
+            id="endDate"
             name="endDate"
             value={formData.endDate}
             onChange={handleInputChange}
             className="form-control"
-            min={formData.startDate} // Prevent dates earlier than startDate
+            min={formData.startDate}
             required
           />
         </div>
-        <div className="col-md-4">
+        <div className="col-md-4 d-flex align-items-end">
           <button
             type="submit"
             className="btn btn-primary w-100"
             disabled={isSubmitting}
+            style={{ marginBottom: "13px" }}
           >
             {isSubmitting ? (
               <span className="spinner-border spinner-border-sm"></span>
             ) : (
               <>
-                Add Planner Line
+                Add Planner Line{" "}
                 <FontAwesomeIcon icon={faArrowRight} className="ms-2" />
               </>
             )}

@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import axios from "axios";
+import Swal from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
-const SubmitPlanner = ({ planId, onPlanSubmitted, onClose, onShowToast }) => {
+const SubmitPlanner = ({ planId, onPlanSubmitted, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState(null);
 
   const csrfToken = document
     .querySelector('meta[name="csrf-token"]')
@@ -14,7 +14,6 @@ const SubmitPlanner = ({ planId, onPlanSubmitted, onClose, onShowToast }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setSubmitError(null);
 
     try {
       await axios.post(`/selfservice/FnSubmitLeavePlanner/${planId}/`, null, {
@@ -23,13 +22,25 @@ const SubmitPlanner = ({ planId, onPlanSubmitted, onClose, onShowToast }) => {
         },
       });
 
-      onShowToast("Planner submitted successfully!", "success");
-      onPlanSubmitted();
-      onClose();
+      await Swal.fire({
+        icon: "success",
+        title: "Planner Submitted",
+        text: "The leave planner was submitted successfully.",
+      });
+
+      onPlanSubmitted?.();
+      onClose?.();
     } catch (error) {
-      setSubmitError("Error submitting the plan. Please try again.");
-      onShowToast("Error submitting the plan. Please try again.", "error");
-      console.error("Error details:", error);
+      console.error("Error submitting planner:", error);
+
+      await Swal.fire({
+        icon: "error",
+        title: "Submission Failed",
+        text:
+          error?.response?.data?.error ||
+          error?.message ||
+          "Something went wrong while submitting the planner.",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -40,9 +51,9 @@ const SubmitPlanner = ({ planId, onPlanSubmitted, onClose, onShowToast }) => {
       <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
         {isSubmitting ? (
           <span
-            className="spinner-border spinner-border-sm"
-            style={{ marginRight: "8px" }}
-          ></span>
+            className="spinner-border spinner-border-sm me-2"
+            role="status"
+          />
         ) : (
           <>
             Submit Planner{" "}
@@ -50,12 +61,6 @@ const SubmitPlanner = ({ planId, onPlanSubmitted, onClose, onShowToast }) => {
           </>
         )}
       </button>
-
-      {submitError && (
-        <div className="alert alert-danger mt-2" role="alert">
-          {submitError}
-        </div>
-      )}
     </form>
   );
 };

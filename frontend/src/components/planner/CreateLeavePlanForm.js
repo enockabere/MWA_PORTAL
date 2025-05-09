@@ -3,14 +3,13 @@ import axios from "axios";
 import premium from "../../../static/img/bg/premium.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
-import { toast } from "react-toastify";
 import { Bars } from "react-loader-spinner";
+import Swal from "sweetalert2";
 
 const CreateLeavePlanForm = ({ onCodeRetrieved, retrievedCode, myAction }) => {
   const [formData, setFormData] = useState({
     myAction: myAction || "insert",
     plannerNo: retrievedCode || "",
-    plannerType: "", // Start with no selection
   });
 
   const [loading, setLoading] = useState(false);
@@ -19,7 +18,6 @@ const CreateLeavePlanForm = ({ onCodeRetrieved, retrievedCode, myAction }) => {
     setFormData({
       myAction: myAction || "insert",
       plannerNo: retrievedCode || "",
-      plannerType: "",
     });
   }, [retrievedCode, myAction]);
 
@@ -34,19 +32,12 @@ const CreateLeavePlanForm = ({ onCodeRetrieved, retrievedCode, myAction }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!formData.plannerType) {
-      toast.error("Please select a planner type before submitting.");
-      return;
-    }
-
     setLoading(true);
 
     try {
       const data = new FormData();
       data.append("plannerNo", formData.plannerNo);
       data.append("myAction", formData.myAction);
-      data.append("plannerType", formData.plannerType);
 
       const response = await axios.post("/selfservice/LeavePlanner/", data, {
         headers: {
@@ -56,15 +47,27 @@ const CreateLeavePlanForm = ({ onCodeRetrieved, retrievedCode, myAction }) => {
       });
 
       if (response.status === 200 && response.data.code) {
-        toast.success("Plan added successfully!");
-        setFormData({ myAction: "insert", plannerNo: "", plannerType: "" });
+        await Swal.fire({
+          icon: "success",
+          title: "Plan Created",
+          text: "Your leave planner has been initialized successfully.",
+        });
+        setFormData({ myAction: "insert", plannerNo: "" });
         onCodeRetrieved(response.data.code);
       } else {
-        toast.error("Failed to retrieve code. Please try again.");
+        await Swal.fire({
+          icon: "error",
+          title: "Code Retrieval Failed",
+          text: "Failed to retrieve a planner code. Please try again.",
+        });
       }
     } catch (error) {
-      toast.error("Error retrieving code.");
       console.error("Error:", error);
+      await Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Something went wrong while creating the planner.",
+      });
     } finally {
       setLoading(false);
     }
@@ -79,7 +82,6 @@ const CreateLeavePlanForm = ({ onCodeRetrieved, retrievedCode, myAction }) => {
       <input type="hidden" name="myAction" value={formData.myAction} />
       <input type="hidden" name="plannerNo" value={formData.plannerNo} />
 
-      {/* Premium Image */}
       <div
         className="col-md-6 wow bounceInLeft mt-0"
         style={{ visibility: "visible", animationName: "bounceInLeft" }}
@@ -89,7 +91,6 @@ const CreateLeavePlanForm = ({ onCodeRetrieved, retrievedCode, myAction }) => {
         </div>
       </div>
 
-      {/* Text Section */}
       <div
         className="col-md-6 wow bounceInRight mt-0"
         style={{ visibility: "visible", animationName: "bounceInRight" }}
@@ -104,7 +105,6 @@ const CreateLeavePlanForm = ({ onCodeRetrieved, retrievedCode, myAction }) => {
         </div>
       </div>
 
-      {/* Submit Button */}
       <div className="col-xl-12 text-end">
         {loading && (
           <div className="loader-container card-loading d-flex justify-content-center align-items-center">
