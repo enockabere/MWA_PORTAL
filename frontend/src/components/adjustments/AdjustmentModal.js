@@ -28,7 +28,6 @@ const AdjustmentModal = ({
         }
 
         const formattedData = linesArray.map((item) => {
-          console.log("Mapping item:", item); // Log each item being mapped
           return {
             Name: item.EmployeeName,
             LeaveType: item.LeaveCode,

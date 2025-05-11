@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import Swal from "sweetalert2";
 
 const SubmitAdjustment = ({ Id, onApplicationSubmitted, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -15,13 +14,16 @@ const SubmitAdjustment = ({ Id, onApplicationSubmitted, onClose }) => {
     setIsSubmitting(true);
 
     if (!csrfToken) {
-      toast.error("CSRF token not found. Unable to submit.");
+      await Swal.fire({
+        icon: "error",
+        title: "CSRF Error",
+        text: "CSRF token not found. Unable to submit.",
+      });
       setIsSubmitting(false);
       return;
     }
 
     try {
-      // Make the POST request to submit the adjustment
       const response = await axios.post(
         `/selfservice/FnRequestLeaveAdjustmentApproval/${Id}/`,
         null,
@@ -32,24 +34,34 @@ const SubmitAdjustment = ({ Id, onApplicationSubmitted, onClose }) => {
         }
       );
 
-      // Handle response
       if (response.status === 200 || response.status === 201) {
-        toast.success("Submitted successfully!");
-        if (onApplicationSubmitted) onApplicationSubmitted(); // Call parent callback if provided
-        if (onClose) onClose(); // Close modal if provided
+        await Swal.fire({
+          icon: "success",
+          title: "Submitted",
+          text: "Submitted successfully!",
+        });
+        if (onApplicationSubmitted) onApplicationSubmitted();
+        if (onClose) onClose();
       } else {
         const errorMsg = response.data?.error || "Unexpected server response.";
-        toast.error(errorMsg);
+        await Swal.fire({
+          icon: "error",
+          title: "Submission Failed",
+          text: errorMsg,
+        });
       }
     } catch (error) {
-      // Handle network or server errors
       const errorMsg =
         error.response?.data?.error ||
         "Error submitting the adjustment. Please try again.";
-      toast.error(errorMsg); // Error toast
+      await Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: errorMsg,
+      });
       console.error("Error details:", error);
     } finally {
-      setIsSubmitting(false); // Reset the submitting state
+      setIsSubmitting(false);
     }
   };
 
@@ -63,8 +75,8 @@ const SubmitAdjustment = ({ Id, onApplicationSubmitted, onClose }) => {
         >
           {isSubmitting ? (
             <span
-              className="spinner-border spinner-border-sm"
-              style={{ marginRight: "8px" }}
+              className="spinner-border spinner-border-sm me-2"
+              role="status"
             ></span>
           ) : (
             "Request For Approval"

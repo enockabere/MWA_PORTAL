@@ -1369,7 +1369,7 @@ class AdjustmentApproversView(UserObjectMixins, View):
 
                 response = await asyncio.gather(task_get__approvers)
 
-                Approvers = [x for x in response[0] if x["Status"] == "Open"]
+                Approvers = [x for x in response[0]]
 
             return JsonResponse(Approvers, safe=False)
         except Exception as e:

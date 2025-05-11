@@ -4,7 +4,7 @@ import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import axios from "axios";
-import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 
 const AdjustmentHeader = ({ onApplicationNoRetrieved }) => {
   const [errors, setErrors] = useState({});
@@ -43,7 +43,9 @@ const AdjustmentHeader = ({ onApplicationNoRetrieved }) => {
       setLoading(false);
       return;
     }
+
     const plainText = formData.richText.replace(/<[^>]+>/g, "");
+
     try {
       const response = await axios.post(
         "/selfservice/LeaveAdjustments/",
@@ -57,16 +59,29 @@ const AdjustmentHeader = ({ onApplicationNoRetrieved }) => {
       );
 
       if (response.status === 200 && response.data.applicationNo) {
-        toast.success("Application submitted successfully!");
+        await Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: "Application submitted successfully!",
+        });
+
         if (onApplicationNoRetrieved) {
           onApplicationNoRetrieved(response.data.applicationNo);
         }
       } else {
-        toast.error("Submission failed. Please try again.");
+        await Swal.fire({
+          icon: "error",
+          title: "Submission Failed",
+          text: "Submission failed. Please try again.",
+        });
       }
     } catch (error) {
-      toast.error("Error submitting application.");
       console.error("Submission error:", error);
+      await Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Error submitting application.",
+      });
     } finally {
       setLoading(false);
     }
@@ -104,10 +119,8 @@ const AdjustmentHeader = ({ onApplicationNoRetrieved }) => {
                 "undo",
                 "redo",
               ],
-              // Set custom height in config
-              height: "300px", // Increase this value as needed
+              height: "300px",
             }}
-            style={{ height: "300px" }} // Optionally add inline style
           />
           {errors.richText && (
             <div className="text-danger">{errors.richText}</div>
@@ -123,7 +136,7 @@ const AdjustmentHeader = ({ onApplicationNoRetrieved }) => {
               ></span>
             ) : (
               <>
-                Start Your Leave Adjustment
+                Start Your Leave Adjustment{" "}
                 <FontAwesomeIcon
                   icon={faArrowRight}
                   style={{ marginRight: "5px" }}

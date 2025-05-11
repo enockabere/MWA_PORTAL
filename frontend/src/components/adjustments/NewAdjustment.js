@@ -160,7 +160,11 @@ const NewAdjustment = () => {
                         >
                           <div className="row g-3">
                             <div className="col-md-12">
-                              <AdjustmentLinesForm pk={retrievedCode} />
+                              <AdjustmentLinesForm
+                                pk={retrievedCode}
+                                onFetchLines={setLines}
+                              />
+
                               <div className="mt-3">
                                 <AdjustmentLinesTable lines={lines} />
                               </div>

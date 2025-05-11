@@ -162,9 +162,9 @@ const Profile = () => {
                   </div>
                 </div>
               </div>
-              <div className="card-footer text-end">
+              {/* <div className="card-footer text-end">
                 <NextOfKin />
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 
 const CancelApproval = ({ Id, onCancelSubmission, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState(null); // For error message
+  const [submitError, setSubmitError] = useState(null);
 
   const csrfToken = document
     .querySelector('meta[name="csrf-token"]')
@@ -13,10 +13,9 @@ const CancelApproval = ({ Id, onCancelSubmission, onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setSubmitError(null); // Reset error before submission
+    setSubmitError(null);
 
     try {
-      // Making the post request to submit the plan
       await axios.post(
         `/selfservice/FnCancelLeaveAdjustmentApproval/${Id}/`,
         null,
@@ -27,15 +26,29 @@ const CancelApproval = ({ Id, onCancelSubmission, onClose }) => {
         }
       );
 
-      toast.success("Canceled successfully!");
-      onCancelSubmission(); // Call parent callback to update plan status
-      onClose();
+      await Swal.fire({
+        icon: "success",
+        title: "Cancelled",
+        text: "Request for approval was successfully cancelled.",
+      });
+
+      if (onCancelSubmission) onCancelSubmission();
+      if (onClose) onClose();
     } catch (error) {
-      setSubmitError("Error submitting the leave. Please try again.");
-      toast.error("Error submitting the leave. Please try again.");
+      const errorMsg =
+        error.response?.data?.error ||
+        "Error submitting the leave. Please try again.";
+      setSubmitError(errorMsg);
+
+      await Swal.fire({
+        icon: "error",
+        title: "Submission Failed",
+        text: errorMsg,
+      });
+
       console.error("Error details:", error);
     } finally {
-      setIsSubmitting(false); // Reset submitting state
+      setIsSubmitting(false);
     }
   };
 
@@ -44,8 +57,8 @@ const CancelApproval = ({ Id, onCancelSubmission, onClose }) => {
       <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
         {isSubmitting ? (
           <span
-            className="spinner-border spinner-border-sm"
-            style={{ marginRight: "8px" }}
+            className="spinner-border spinner-border-sm me-2"
+            role="status"
           ></span>
         ) : (
           "Cancel Request for Approval"

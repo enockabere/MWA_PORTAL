@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
 const ProjectSummary = ({ projects }) => {
-  const [loading, setLoading] = useState(true); // Loading state
+  const [loading, setLoading] = useState(true);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -32,53 +32,53 @@ const ProjectSummary = ({ projects }) => {
   };
 
   useEffect(() => {
-    if (projects && projects.length > 0) {
-      setLoading(false); // Set loading to false once projects are available
-    }
+    setLoading(false);
   }, [projects]);
+
+  if (loading) {
+    return (
+      <div className="text-center">
+        <FontAwesomeIcon icon={faSpinner} spin size="3x" />
+        <p>Loading projects...</p>
+      </div>
+    );
+  }
+
+  if (!projects || projects.length === 0) {
+    return (
+      <div className="text-center mt-3">
+        <p>No projects assigned.</p>
+      </div>
+    );
+  }
 
   return (
     <div>
       <h5>Project Summary</h5>
-      {loading ? (
-        <div className="text-center">
-          <FontAwesomeIcon icon={faSpinner} spin size="3x" />
-          <p>Loading projects...</p>
-        </div>
-      ) : (
-        <div className="table-responsive mt-3">
-          <table className="table table-bordered">
-            <thead>
-              <tr>
-                <th>Project</th>
-                <th>Start Date</th>
-                <th>End Date</th>
-                <th>% Allocation</th>
-                <th>Supervisor</th>
+      <div className="table-responsive mt-3">
+        <table className="table table-bordered">
+          <thead>
+            <tr>
+              <th>Project</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>% Allocation</th>
+              <th>Supervisor</th>
+            </tr>
+          </thead>
+          <tbody>
+            {projects.map((project, index) => (
+              <tr key={index}>
+                <td>{project.ProjectTask}</td>
+                <td>{formatDate(project.ProjectStartDate)}</td>
+                <td>{formatDate(project.ProjectEndDate)}</td>
+                <td>{project.Allocation}%</td>
+                <td>{project.SupervisorName}</td>
               </tr>
-            </thead>
-            <tbody>
-              {projects.length > 0 ? (
-                projects.map((project, index) => (
-                  <tr key={index}>
-                    <td>{project.ProjectTask}</td>
-                    <td>{formatDate(project.ProjectStartDate)}</td>
-                    <td>{formatDate(project.ProjectEndDate)}</td>
-                    <td>{project.Allocation}%</td>
-                    <td>{project.SupervisorName}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="5" className="text-center">
-                    No projects assigned.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

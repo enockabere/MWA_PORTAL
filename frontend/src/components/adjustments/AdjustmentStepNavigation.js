@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faArrowRight } from "@fortawesome/free-solid-svg-icons";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import Swal from "sweetalert2";
 
 const AdjustmentStepNavigation = ({
   handleNextStep,
@@ -18,7 +17,11 @@ const AdjustmentStepNavigation = ({
 
   const handleSubmit = async () => {
     if (!csrfToken) {
-      toast.error("CSRF token not found.");
+      await Swal.fire({
+        icon: "error",
+        title: "CSRF Error",
+        text: "CSRF token not found.",
+      });
       return;
     }
 
@@ -37,7 +40,12 @@ const AdjustmentStepNavigation = ({
       );
 
       if (response.ok) {
-        toast.success("Adjustment request submitted successfully.");
+        await Swal.fire({
+          icon: "success",
+          title: "Submitted",
+          text: "Adjustment request submitted successfully.",
+        });
+
         const approversResponse = await fetch(
           `/selfservice/AdjustmentApprovers/${pk}/`,
           {
@@ -53,26 +61,36 @@ const AdjustmentStepNavigation = ({
           if (onFetchApprovers) {
             onFetchApprovers(approversData);
           }
-          toast.success("Approvers fetched successfully.");
+
+          await Swal.fire({
+            icon: "success",
+            title: "Approvers Loaded",
+            text: "Approvers fetched successfully.",
+          });
         } else {
-          toast.error("Failed to fetch leave approvers.");
+          await Swal.fire({
+            icon: "warning",
+            title: "Approvers Fetch Failed",
+            text: "Failed to fetch leave approvers.",
+          });
         }
 
-        if (onStartCountdown) {
-          onStartCountdown(20);
-        }
-
+        if (onStartCountdown) onStartCountdown(20);
         handleNextStep("successful-wizard");
       } else {
         const errorData = await response.json();
-        toast.error(
-          `Failed to submit adjustment: ${errorData.error || "Unknown error"}.`
-        );
+        await Swal.fire({
+          icon: "error",
+          title: "Submission Failed",
+          text: `Failed to submit adjustment: ${errorData.error || "Unknown error"}.`,
+        });
       }
     } catch (error) {
-      toast.error(
-        `An error occurred while submitting the adjustment: ${error.message}`
-      );
+      await Swal.fire({
+        icon: "error",
+        title: "Network Error",
+        text: `An error occurred while submitting the adjustment: ${error.message}`,
+      });
     } finally {
       setLoading(false);
     }
@@ -105,7 +123,7 @@ const AdjustmentStepNavigation = ({
               Submit Adjustment
               <FontAwesomeIcon
                 icon={faArrowRight}
-                style={{ marginLeft: "5px" }} // Align icon correctly after text
+                style={{ marginLeft: "5px" }}
               />
             </>
           )}

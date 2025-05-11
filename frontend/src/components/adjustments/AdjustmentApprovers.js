@@ -1,16 +1,28 @@
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserCircle, faTimes } from "@fortawesome/free-solid-svg-icons";
-import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
 const AdjustmentApprovers = ({ approvers, pk }) => {
   const navigate = useNavigate();
   const csrfToken = document
     .querySelector('meta[name="csrf-token"]')
-    .getAttribute("content");
+    ?.getAttribute("content");
 
   const cancelSubmit = async () => {
+    const confirm = await Swal.fire({
+      title: "Are you sure?",
+      text: "This will cancel the approval request.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, cancel it!",
+    });
+
+    if (!confirm.isConfirmed) return;
+
     try {
       const response = await fetch(
         `/selfservice/FnCancelLeaveAdjustmentApproval/${pk}/`,
@@ -25,24 +37,30 @@ const AdjustmentApprovers = ({ approvers, pk }) => {
       );
 
       if (response.ok) {
-        toast.success("Cancel request submitted successfully!", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
+        await Swal.fire({
+          icon: "success",
+          title: "Request Cancelled",
+          text: "Your approval request has been cancelled successfully.",
         });
         navigate("/selfservice/dashboard");
       } else {
         console.error("Cancel request failed.");
-        toast.error("Cancel request failed. Please try again.");
+        await Swal.fire({
+          icon: "error",
+          title: "Failed",
+          text: "Cancel request failed. Please try again.",
+        });
       }
     } catch (error) {
       console.error("Cancel request failed:", error);
-      toast.error("Cancel request failed. Please try again.");
+      await Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Cancel request failed. Please try again.",
+      });
     }
   };
+
   return (
     <div className="card card-mb-faq">
       <div className="card-body faq-body">
