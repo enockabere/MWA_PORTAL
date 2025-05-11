@@ -179,17 +179,7 @@ const ApprovalModal = ({
       <Modal.Header
         closeButton
         style={{ border: "none" }}
-        className={
-          selectedApplication?.Status === "Open"
-            ? "bg-primary text-white"
-            : selectedApplication?.Status === "Canceled"
-            ? "bg-secondary text-white"
-            : selectedApplication?.Status === "Approved"
-            ? "bg-success text-white"
-            : selectedApplication?.Status === "Rejected"
-            ? "bg-danger text-white"
-            : "bg-primary text-white"
-        }
+        className="bg-primary text-white"
       >
         <Modal.Title>
           <h5 className="text-white">
@@ -220,31 +210,9 @@ const ApprovalModal = ({
               <div className="row default-according style-1 faq-accordion">
                 <div className="col-xl-12 col-lg-12 col-md-12">
                   <div
-                    className={
-                      selectedApplication?.Status === "Open"
-                        ? "card border border-primary"
-                        : selectedApplication?.Status === "Canceled"
-                        ? "card border border-secondary"
-                        : selectedApplication?.Status === "Approved"
-                        ? "card border border-success"
-                        : selectedApplication?.Status === "Rejected"
-                        ? "card border border-danger"
-                        : "card border border-primary"
-                    }
+                    className="card border border-primary"
                   >
-                    <div
-                      className={
-                        selectedApplication?.Status === "Open"
-                          ? "card-header text-white bg-primary"
-                          : selectedApplication?.Status === "Canceled"
-                          ? "card-header text-white bg-secondary"
-                          : selectedApplication?.Status === "Approved"
-                          ? "card-header text-white bg-success"
-                          : selectedApplication?.Status === "Rejected"
-                          ? "card-header text-white bg-danger"
-                          : "card-header text-white bg-primary"
-                      }
-                    >
+                    <div className="card-header text-white bg-primary">
                       <h6 className="mb-0">
                         <Button
                           className="btn btn-link ps-0 text-white"

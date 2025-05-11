@@ -4,50 +4,33 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faFolderOpen,
   faCheckCircle,
+  faTimesCircle,
   faEye,
 } from "@fortawesome/free-solid-svg-icons";
-import Pagination from "../Layout/Pagination";
 import ApprovalModal from "./ApprovalModal";
 import Preloader from "../Layout/Preloader";
-import { Modal, Button } from "react-bootstrap"; // Import React Bootstrap components
+import DataTable from "react-data-table-component";
 
 const AllApprovals = () => {
-  const itemsPerPage = 3;
   const [activeTab, setActiveTab] = useState("open");
-  const [currentPage, setCurrentPage] = useState(1);
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [applications, setApplications] = useState({
     open: [],
     approved: [],
     rejected: [],
   });
-  const [showModal, setShowModal] = useState(false); // State to control modal visibility
-
+  const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [paginationLoading, setPaginationLoading] = useState(false);
-  const [tabLoading, setTabLoading] = useState(false);
 
   const fetchApplications = async () => {
     try {
       const response = await fetch("/selfservice/Approve/");
       const data = await response.json();
-
-      const sortedApplications = data.reverse();
-      const openApplications = sortedApplications.filter(
-        (application) => application.Status === "Open"
-      );
-      const approvedApplications = sortedApplications.filter(
-        (application) => application.Status === "Approved"
-      );
-
-      const rejectedApplications = sortedApplications.filter(
-        (application) => application.Status === "Rejected"
-      );
-
+      const sorted = data.reverse();
       setApplications({
-        open: openApplications,
-        approved: approvedApplications,
-        rejected: rejectedApplications,
+        open: sorted.filter((app) => app.Status === "Open"),
+        approved: sorted.filter((app) => app.Status === "Approved"),
+        rejected: sorted.filter((app) => app.Status === "Rejected"),
       });
       setLoading(false);
     } catch (error) {
@@ -60,35 +43,13 @@ const AllApprovals = () => {
     fetchApplications();
   }, []);
 
-  const currentItems = applications[activeTab].slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const handleTabClick = (tab) => {
-    setTabLoading(true);
-    setTimeout(() => {
-      setActiveTab(tab);
-      setCurrentPage(1);
-      setTabLoading(false);
-    }, 500);
-  };
-
-  const handlePageChange = (newPage) => {
-    setPaginationLoading(true);
-    setTimeout(() => {
-      setCurrentPage(newPage);
-      setPaginationLoading(false);
-    }, 500);
-  };
-
   const handleItemClick = (item) => {
-    setSelectedApplication(item || null);
-    setShowModal(true); // Show the modal
+    setSelectedApplication(item);
+    setShowModal(true);
   };
 
   const handleModalClose = () => {
-    setShowModal(false); // Hide the modal
+    setShowModal(false);
     setSelectedApplication(null);
   };
 
@@ -96,150 +57,129 @@ const AllApprovals = () => {
     fetchApplications();
   };
 
-  // Date formatting function
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr);
     const day = date.getDate();
+    const suffix = (d) =>
+      d > 3 && d < 21 ? "th" : ["th", "st", "nd", "rd"][d % 10] || "th";
     const month = date.toLocaleString("default", { month: "short" });
     const year = date.getFullYear();
-
-    // Determine the suffix (st, nd, rd, th)
-    const suffix = (day) => {
-      if (day > 3 && day < 21) return "th"; // Catch 4th-20th
-      switch (day % 10) {
-        case 1:
-          return "st";
-        case 2:
-          return "nd";
-        case 3:
-          return "rd";
-        default:
-          return "th";
-      }
-    };
-
-    const formattedDate = `${date.toLocaleString("default", {
+    return `${date.toLocaleString("default", {
       weekday: "short",
     })}, ${day}${suffix(day)} ${month}, ${year}`;
-    return formattedDate;
   };
+
+  const getStatusBadge = (status) => {
+    const badgeMap = {
+      Open: "warning",
+      Approved: "success",
+      Rejected: "danger",
+    };
+    return (
+      <span className={`badge bg-${badgeMap[status] || "secondary"}`}>
+        {status}
+      </span>
+    );
+  };
+
+  const columns = [
+    {
+      name: "Document No.",
+      selector: (row) => row.DocumentNo || "-",
+      sortable: true,
+    },
+    {
+      name: "Document Type",
+      selector: (row) => row.DocumentType,
+      sortable: true,
+    },
+    { name: "Status", cell: (row) => getStatusBadge(row.Status) },
+    { name: "Sender Name", selector: (row) => row.Sender_Name },
+    { name: "Due Date", selector: (row) => formatDate(row.Due_Date) },
+    {
+      name: "Last Modified",
+      selector: (row) => formatDate(row.Last_Date_Time_Modified),
+    },
+    {
+      name: "Action",
+      cell: (row) => (
+        <button
+          className="btn btn-sm btn-primary"
+          onClick={() => handleItemClick(row)}
+        >
+          <FontAwesomeIcon icon={faEye} className="me-1" /> View
+        </button>
+      ),
+    },
+  ];
 
   return (
     <div>
       <Breadcrumb pageTitle="Document Approvals" breadcrumb="Approvals" />
       <div className="container-fluid">
         <div className="row project-cards">
-          <div className="col-md-12 project-list">
-            <div className="card">
-              <div className="row">
-                <div className="col-md-6 p-0">
-                  <ul
-                    className="nav nav-tabs border-tab d-flex"
-                    id="top-tab"
-                    role="tablist"
-                  >
-                    <li className="nav-item">
-                      <a
-                        className={`nav-link ${
-                          activeTab === "open" ? "active" : ""
-                        }`}
-                        onClick={() => handleTabClick("open")}
-                      >
-                        <FontAwesomeIcon icon={faFolderOpen} /> Open (
-                        {applications.open.length})
-                      </a>
-                    </li>
-                    <li className="nav-item">
-                      <a
-                        className={`nav-link ${
-                          activeTab === "approved" ? "active" : ""
-                        }`}
-                        onClick={() => handleTabClick("approved")}
-                      >
-                        <FontAwesomeIcon icon={faCheckCircle} /> Approved (
-                        {applications.approved.length})
-                      </a>
-                    </li>
-                    <li className="nav-item">
-                      <a
-                        className={`nav-link ${
-                          activeTab === "rejected" ? "active" : ""
-                        }`}
-                        onClick={() => handleTabClick("rejected")}
-                      >
-                        <FontAwesomeIcon icon={faCheckCircle} /> Rejected (
-                        {applications.rejected.length})
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
           <div className="col-sm-12">
             <div className="card">
               <div className="card-body">
+                {/* Tabs inside card */}
+                <ul className="nav nav-tabs mb-3">
+                  <li className="nav-item">
+                    <button
+                      className={`nav-link ${
+                        activeTab === "open" ? "active" : ""
+                      }`}
+                      onClick={() => setActiveTab("open")}
+                    >
+                      <FontAwesomeIcon icon={faFolderOpen} className="me-1" />
+                      Open ({applications.open.length})
+                    </button>
+                  </li>
+                  <li className="nav-item">
+                    <button
+                      className={`nav-link ${
+                        activeTab === "approved" ? "active" : ""
+                      }`}
+                      onClick={() => setActiveTab("approved")}
+                    >
+                      <FontAwesomeIcon icon={faCheckCircle} className="me-1" />
+                      Approved ({applications.approved.length})
+                    </button>
+                  </li>
+                  <li className="nav-item">
+                    <button
+                      className={`nav-link ${
+                        activeTab === "rejected" ? "active" : ""
+                      }`}
+                      onClick={() => setActiveTab("rejected")}
+                    >
+                      <FontAwesomeIcon icon={faTimesCircle} className="me-1" />
+                      Rejected ({applications.rejected.length})
+                    </button>
+                  </li>
+                </ul>
+
+                {/* Table inside same card */}
                 {loading ? (
                   <Preloader message="Loading page, please wait..." />
-                ) : tabLoading ? (
-                  <Preloader message="Loading tab, please wait..." />
-                ) : paginationLoading ? (
-                  <Preloader message="Loading page, please wait..." />
                 ) : (
-                  <table className="table table-striped my-3">
-                    <thead>
-                      <tr>
-                        <th>Document Type</th>
-                        <th>Status</th>
-                        <th>Sender Name</th>
-                        <th>Due Date</th>
-                        <th>Last Modified</th>
-                        <th>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {currentItems.map((item) => (
-                        <tr key={item.Entry_No_}>
-                          <td>{item.DocumentType}</td>
-                          <td>{item.Status}</td>
-                          <td>{item.Sender_Name}</td>
-                          <td>{formatDate(item.Due_Date)}</td>
-                          <td>{formatDate(item.Last_Date_Time_Modified)}</td>
-                          <td>
-                            <button
-                              className="btn btn-primary"
-                              onClick={() => handleItemClick(item)}
-                            >
-                              <FontAwesomeIcon
-                                icon={faEye}
-                                style={{ marginRight: "3px" }}
-                              />{" "}
-                              View
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <DataTable
+                    columns={columns}
+                    data={applications[activeTab]}
+                    pagination
+                    striped
+                    highlightOnHover
+                    responsive
+                  />
                 )}
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={Math.ceil(
-                    applications[activeTab].length / itemsPerPage
-                  )}
-                  onPageChange={handlePageChange}
-                />
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* React Bootstrap Modal */}
       <ApprovalModal
-        show={showModal} // Pass the show state
-        onHide={handleModalClose} // Pass the function to hide the modal
+        show={showModal}
+        onHide={handleModalClose}
         selectedApplication={selectedApplication}
         onApplicationSubmitted={refreshApplications}
         onCancelSubmission={refreshApplications}

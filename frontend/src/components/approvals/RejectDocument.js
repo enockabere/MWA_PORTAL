@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
@@ -45,13 +45,8 @@ const RejectDocument = ({
     setIsSubmitting(true);
     setErrors({});
 
-    const newErrors = {};
     if (!formData.approvalComment) {
-      newErrors.approvalComment = "Reason for rejection is required.";
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+      setErrors({ approvalComment: "Reason for rejection is required." });
       setIsSubmitting(false);
       return;
     }
@@ -60,7 +55,11 @@ const RejectDocument = ({
 
     try {
       if (!csrfToken) {
-        toast.error("CSRF token not found. Please refresh the page.");
+        await Swal.fire(
+          "Error",
+          "CSRF token not found. Please refresh the page.",
+          "error"
+        );
         return;
       }
 
@@ -76,20 +75,30 @@ const RejectDocument = ({
       );
 
       if (response.status === 200) {
-        toast.success("Approved successfully!");
-        onCancelSubmission(); // Notify parent of success
+        await Swal.fire(
+          "Success",
+          "Document rejected successfully!",
+          "success"
+        );
+        onCancelSubmission(); // Notify parent
         navigate("/selfservice/dashboard");
       } else {
-        toast.error("Submission failed. Please try again.");
+        await Swal.fire(
+          "Error",
+          "Submission failed. Please try again.",
+          "error"
+        );
       }
     } catch (error) {
-      toast.error(
-        error.response?.data?.error || "Error submitting the document."
-      );
       console.error("Error details:", error);
+      await Swal.fire(
+        "Error",
+        error.response?.data?.error || "Something went wrong.",
+        "error"
+      );
     } finally {
       setIsSubmitting(false);
-      setShowModal(false); // Close modal on submission
+      setShowModal(false);
     }
   };
 
@@ -108,13 +117,11 @@ const RejectDocument = ({
 
   return (
     <>
-      {/* Button to trigger modal */}
       <Button variant="danger" onClick={() => setShowModal(true)}>
         {getButtonText()}{" "}
         <FontAwesomeIcon icon={faTimes} style={{ marginLeft: "8px" }} />
       </Button>
 
-      {/* Modal */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>

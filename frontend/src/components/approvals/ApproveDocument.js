@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
@@ -15,7 +15,6 @@ const ApproveDocument = ({
   onApplicationSubmitted,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const navigate = useNavigate();
 
   const csrfToken = document
@@ -41,18 +40,28 @@ const ApproveDocument = ({
         },
       });
 
-      toast.success("Approved successfully!");
-      onApplicationSubmitted(); // Notify parent of success
+      await Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Approved successfully!",
+        confirmButtonColor: "#3085d6",
+      });
+
+      if (onApplicationSubmitted) onApplicationSubmitted();
       navigate("/selfservice/dashboard");
     } catch (error) {
-      toast.error("Error submitting the document. Please try again.");
       console.error("Error details:", error);
+      await Swal.fire({
+        icon: "error",
+        title: "Submission Failed",
+        text: "Error submitting the document. Please try again.",
+        confirmButtonColor: "#d33",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Determine the button text dynamically based on DocumentType
   const getButtonText = () => {
     switch (DocumentType) {
       case "LeaveApplication":
