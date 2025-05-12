@@ -1,8 +1,7 @@
 import React from "react";
-
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
-import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 import axios from "axios";
 import { useDashboard } from "../context/DashboardContext";
 
@@ -17,8 +16,19 @@ const RelieverList = ({ relievers, onDeleteReliever, pk }) => {
     profileImage &&
     `data:image/${profileImage.image_format};base64,${profileImage.encoded_string}`;
 
-  // Function to handle deletion
   const handleDelete = async (staffNo) => {
+    const confirm = await Swal.fire({
+      title: "Are you sure?",
+      text: "Do you really want to delete this reliever?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Yes, delete",
+    });
+
+    if (!confirm.isConfirmed) return;
+
     try {
       const response = await axios.post(
         `/selfservice/FnLeaveReliever/${pk}/`,
@@ -35,15 +45,22 @@ const RelieverList = ({ relievers, onDeleteReliever, pk }) => {
       );
 
       if (response.status === 200) {
-        toast.success("Reliever deleted successfully!");
-        // Call parent handler to refresh the list
+        await Swal.fire(
+          "Deleted!",
+          "Reliever deleted successfully!",
+          "success"
+        );
         onDeleteReliever(pk);
       } else {
-        toast.error("Failed to delete reliever.");
+        await Swal.fire("Error", "Failed to delete reliever.", "error");
       }
     } catch (error) {
-      toast.error("Error deleting reliever. Please try again.");
       console.error("Error deleting reliever:", error);
+      await Swal.fire(
+        "Error",
+        "Error deleting reliever. Please try again.",
+        "error"
+      );
     }
   };
 
@@ -63,10 +80,10 @@ const RelieverList = ({ relievers, onDeleteReliever, pk }) => {
           </div>
           <FontAwesomeIcon
             icon={faTrash}
-            className="text-danger ms-3" // Add spacing and color
+            className="text-danger ms-3"
             onClick={() => handleDelete(reliever.StaffNo)}
-            style={{ cursor: "pointer" }} // Show pointer cursor on hover
-            title="Delete" // Tooltip for accessibility
+            style={{ cursor: "pointer" }}
+            title="Delete"
           />
         </div>
       ))}

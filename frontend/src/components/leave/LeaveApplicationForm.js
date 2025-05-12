@@ -3,8 +3,7 @@ import { CSSTransition } from "react-transition-group";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import axios from "axios";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import Swal from "sweetalert2";
 
 const LeaveApplicationForm = ({ onApplicationNoRetrieved }) => {
   const [leaveTypes, setLeaveTypes] = useState([]);
@@ -36,7 +35,6 @@ const LeaveApplicationForm = ({ onApplicationNoRetrieved }) => {
         setLeaveTypes(response.data); // Store the response data in state
       } catch (error) {
         console.error("Error fetching leave types:", error);
-        toast.error("Failed to fetch leave types.");
       }
     };
 
@@ -51,7 +49,6 @@ const LeaveApplicationForm = ({ onApplicationNoRetrieved }) => {
         setLeavePlanners(response.data || []); // Use an empty array as fallback
       } catch (error) {
         console.error("Error fetching leave planners:", error);
-        toast.error("Failed to fetch leave planners.");
       }
     };
 
@@ -151,22 +148,28 @@ const LeaveApplicationForm = ({ onApplicationNoRetrieved }) => {
       });
 
       if (response.status === 200 && response.data.applicationNo) {
-        toast.success("Application submitted successfully!");
+        await Swal.fire(
+          "Success",
+          "Application submitted successfully!",
+          "success"
+        );
         onApplicationNoRetrieved(response.data.applicationNo);
       } else if (response.data.error) {
-        // Display the error returned by Django
-        toast.error(response.data.error);
+        await Swal.fire("Error", response.data.error, "error");
       } else {
-        toast.error("Submission failed. Please try again.");
+        await Swal.fire(
+          "Error",
+          "Submission failed. Please try again.",
+          "error"
+        );
       }
     } catch (error) {
-      // Check if the error response contains a message
-      if (error.response && error.response.data && error.response.data.error) {
-        toast.error(error.response.data.error);
-      } else {
-        // Default error message for unexpected errors
-        toast.error("An unexpected error occurred. Please try again.");
-      }
+      const message =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        error.message ||
+        "An unexpected error occurred.";
+      await Swal.fire("Error", message, "error");
     } finally {
       setLoading(false);
     }
@@ -220,7 +223,6 @@ const LeaveApplicationForm = ({ onApplicationNoRetrieved }) => {
       });
     } catch (error) {
       console.error("Error fetching planned days:", error);
-      toast.error("Failed to fetch leave balance.");
     }
   };
 

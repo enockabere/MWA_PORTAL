@@ -1,17 +1,15 @@
 import React, { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 import "./DropzoneFileUpload.css";
 
 const DropzoneFileUpload = ({ pk, onFetchAttachments }) => {
   const [files, setFiles] = useState([]);
 
-  // Callback function to handle dropped files
   const onDrop = useCallback((acceptedFiles) => {
     setFiles(acceptedFiles);
   }, []);
 
-  // Fetch the list of attachments from the backend
   const fetchAttachments = async () => {
     try {
       const response = await fetch(`/selfservice/FileUploadView/${pk}/`);
@@ -21,18 +19,25 @@ const DropzoneFileUpload = ({ pk, onFetchAttachments }) => {
           onFetchAttachments(data);
         }
       } else {
-        toast.error("Failed to fetch attachments.");
+        Swal.fire("Error", "Failed to fetch attachments.", "error");
       }
     } catch (error) {
-      toast.error("Error fetching attachments. Please try again.");
+      Swal.fire(
+        "Error",
+        "Error fetching attachments. Please try again.",
+        "error"
+      );
       console.error("Error:", error);
     }
   };
 
-  // Send files to the backend
   const handleUpload = async () => {
     if (files.length === 0) {
-      toast.error("Please select a file to upload.");
+      Swal.fire(
+        "No File Selected",
+        "Please select a file to upload.",
+        "warning"
+      );
       return;
     }
 
@@ -48,20 +53,19 @@ const DropzoneFileUpload = ({ pk, onFetchAttachments }) => {
         method: "POST",
         body: formData,
         headers: {
-          "X-CSRFToken": csrfToken, // Add CSRF token to headers
+          "X-CSRFToken": csrfToken,
         },
       });
 
       if (response.ok) {
-        toast.success("File(s) uploaded successfully!");
-        setFiles([]); // Clear files after successful upload
-        // Fetch attachments after successful file upload
+        Swal.fire("Success", "File(s) uploaded successfully!", "success");
+        setFiles([]);
         fetchAttachments();
       } else {
-        toast.error("Failed to upload files.");
+        Swal.fire("Upload Failed", "Failed to upload files.", "error");
       }
     } catch (error) {
-      toast.error("Error uploading files. Please try again.");
+      Swal.fire("Error", "Error uploading files. Please try again.", "error");
       console.error("Error:", error);
     }
   };

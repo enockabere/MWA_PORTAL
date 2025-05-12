@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import Swal from "sweetalert2";
 
 const ApplicationHeader = ({ selectedApplication }) => {
   const [formData, setFormData] = useState({
@@ -19,8 +18,6 @@ const ApplicationHeader = ({ selectedApplication }) => {
 
   const [isLoading, setIsLoading] = useState(false);
   const isEditable = selectedApplication?.Status === "Open";
-
-  // Update form data when selectedApplication changes
   useEffect(() => {
     if (selectedApplication) {
       const plannerDate = selectedApplication.Planner_Start_Date || "";
@@ -32,7 +29,7 @@ const ApplicationHeader = ({ selectedApplication }) => {
         leaveBalance: selectedApplication.Leave_balance || "",
         basedOnPlanner: selectedApplication.Use_Planner ? "True" : "False",
         plannerStartDate: plannerDate,
-        leaveStartDate: plannerDate, // ✅ Also assign same planner date
+        leaveStartDate: plannerDate,
         returnSameDay: selectedApplication.Return_same_day ? "True" : "False",
         daysApplied: selectedApplication.Days_Applied || "",
         halfOfDay: selectedApplication.Half_Of_Day || "0",
@@ -52,7 +49,7 @@ const ApplicationHeader = ({ selectedApplication }) => {
         return {
           ...prev,
           plannerStartDate: value,
-          leaveStartDate: value, // ✅ Keep in sync
+          leaveStartDate: value,
         };
       }
 
@@ -68,9 +65,13 @@ const ApplicationHeader = ({ selectedApplication }) => {
     setIsLoading(true);
 
     try {
-      toast.info("Updating leave application...", {
-        autoClose: false,
-        closeButton: false,
+      Swal.fire({
+        title: "Updating...",
+        text: "Updating leave application...",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
       });
 
       const response = await axios.post("/selfservice/Leave/", formData, {
@@ -79,23 +80,25 @@ const ApplicationHeader = ({ selectedApplication }) => {
           "Content-Type": "application/json",
         },
       });
-
-      // ✅ Display Django response messages
       const resData = response.data;
 
       if (response.status === 200 && resData.status === "success") {
-        toast.dismiss();
-        toast.success(resData.message || "Application updated successfully!");
+        Swal.fire(
+          "Success",
+          resData.message || "Application updated successfully!",
+          "success"
+        );
       } else if (resData.status === "error") {
-        toast.dismiss();
-        toast.error(resData.message || "Update failed.");
+        Swal.fire("Error", resData.message || "Update failed.", "error");
       } else {
-        toast.dismiss();
-        toast.error("Unexpected response from server.");
+        Swal.fire("Error", "Unexpected response from server.", "error");
       }
     } catch (error) {
-      toast.dismiss();
-      toast.error("An unexpected error occurred. Please try again.");
+      Swal.fire(
+        "Error",
+        "An unexpected error occurred. Please try again.",
+        "error"
+      );
       console.error("Submission error:", error);
     } finally {
       setIsLoading(false);

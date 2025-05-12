@@ -1,13 +1,23 @@
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
-import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 
 const AttachmentsTable = ({ attachments, selectedApplication }) => {
-  // Function to handle file deletion
   const handleDelete = (id) => {
-    // Perform delete operation here (e.g., send a DELETE request)
-    toast.success(`Attachment with ID ${id} deleted.`);
+    Swal.fire({
+      title: "Are you sure?",
+      text: `You are about to delete attachment with ID ${id}.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Swal.fire("Deleted!", "Attachment has been deleted.", "success");
+      }
+    });
   };
 
   return (
@@ -15,7 +25,7 @@ const AttachmentsTable = ({ attachments, selectedApplication }) => {
       {attachments && attachments.length > 0 ? (
         attachments.map((attachment) => (
           <div
-            className="d-flex b-r-1  border-primary align-items-center files-list my-3" // Added margin-bottom for spacing
+            className="d-flex b-r-1 border-primary align-items-center files-list my-3"
             key={attachment.ID}
           >
             <div className="flex-shrink-0 file-left">
@@ -31,12 +41,11 @@ const AttachmentsTable = ({ attachments, selectedApplication }) => {
               </p>
             </div>
             <div className="flex-shrink-0 ms-2">
-              {" "}
               <FontAwesomeIcon
                 icon={faTrash}
-                className="text-danger f-15" // Added text-danger for red color and f-22 for size
+                className="text-danger f-15"
                 onClick={() => handleDelete(attachment.ID)}
-                style={{ cursor: "pointer" }} // Optional: To show pointer on hover
+                style={{ cursor: "pointer" }}
               />
             </div>
           </div>

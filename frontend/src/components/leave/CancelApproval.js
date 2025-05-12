@@ -1,21 +1,32 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 
 const CancelApproval = ({ Id, refreshApplications, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Get CSRF token from meta tag
   const csrfToken = document
     .querySelector('meta[name="csrf-token"]')
     ?.getAttribute("content");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const confirmation = await Swal.fire({
+      title: "Are you sure?",
+      text: "Do you want to cancel this approval request?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Yes, cancel it!",
+    });
+
+    if (!confirmation.isConfirmed) return;
+
     setIsSubmitting(true);
 
     try {
-      // Making the POST request to cancel approval
       const response = await axios.post(
         `/selfservice/LeaveCancel/${Id}/`,
         null,
@@ -27,30 +38,23 @@ const CancelApproval = ({ Id, refreshApplications, onClose }) => {
       );
 
       if (response.status === 200 || response.status === 201) {
-        // Success toast
-        toast.success("Canceled successfully!");
-        refreshApplications(); // Call parent callback to update plan status
-        onClose(); // Close the modal or dialog
+        await Swal.fire("Success", "Canceled successfully!", "success");
       } else {
-        // Handle unexpected status codes
         const errorMsg = response.data?.error || "Unexpected server response.";
-        toast.error(errorMsg); // Error toast
-        refreshApplications(); // Call parent callback to update plan status
-        onClose();
+        await Swal.fire("Error", errorMsg, "error");
       }
     } catch (error) {
-      // Extract real error message from the response
       const errorMsg =
-        error.response?.data?.error || // Check if server returned an error message
-        error.response?.data?.message || // Fallback to another key
-        error.message || // Network or Axios error
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        error.message ||
         "An unknown error occurred.";
-      toast.error(errorMsg); // Display real error message in toast
       console.error("Error details:", error);
-      refreshApplications(); // Call parent callback to update plan status
-      onClose();
+      await Swal.fire("Error", errorMsg, "error");
     } finally {
-      setIsSubmitting(false); // Reset submitting state
+      setIsSubmitting(false);
+      refreshApplications();
+      onClose();
     }
   };
 

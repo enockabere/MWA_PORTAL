@@ -6,6 +6,7 @@ import { ToastContainer } from "react-toastify";
 import DataTable from "react-data-table-component";
 import ApplicationModal from "./ApplicationModal";
 import Preloader from "../Layout/Preloader";
+import { faEye } from "@fortawesome/free-solid-svg-icons";
 
 const Applications = () => {
   const [activeTab, setActiveTab] = useState("open");
@@ -104,9 +105,10 @@ const Applications = () => {
       name: "Action",
       cell: (row) => (
         <button
-          className="btn btn-sm btn-outline-primary"
+          className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1"
           onClick={() => handleItemClick(row)}
         >
+          <FontAwesomeIcon icon={faEye} />
           View
         </button>
       ),
@@ -160,7 +162,6 @@ const Applications = () => {
           </div>
         </div>
       </div>
-
       <ApplicationModal
         selectedApplication={selectedApplication}
         onClose={handleModalClose}

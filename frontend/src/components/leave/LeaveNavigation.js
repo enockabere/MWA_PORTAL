@@ -1,11 +1,9 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faArrowRight } from "@fortawesome/free-solid-svg-icons";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import Swal from "sweetalert2";
 
 const LeaveNavigation = ({ handleNextStep, pk, onFetchApprovers }) => {
-  // Fetch the CSRF token from the meta tag
   const [loading, setLoading] = useState(false);
   const csrfToken = document
     .querySelector('meta[name="csrf-token"]')
@@ -18,22 +16,17 @@ const LeaveNavigation = ({ handleNextStep, pk, onFetchApprovers }) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken, // Include the CSRF token in the headers
+          "X-CSRFToken": csrfToken,
         },
-        body: JSON.stringify({
-          /* Add any additional data needed */
-        }),
+        body: JSON.stringify({}),
       });
 
       if (response.ok) {
-        toast.success("Leave request submitted successfully!", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
+        await Swal.fire(
+          "Success",
+          "Leave request submitted successfully!",
+          "success"
+        );
 
         // Fetch the leave approvers
         const approversResponse = await fetch(
@@ -55,20 +48,25 @@ const LeaveNavigation = ({ handleNextStep, pk, onFetchApprovers }) => {
           console.error("Failed to fetch leave approvers.");
         }
 
-        // Move to the "successful-wizard" tab on successful submission
         handleNextStep("successful-wizard");
       } else {
         const errorData = await response.json();
-        console.error("Server error:", errorData);
-        toast.error(
-          `Failed to submit leave: ${errorData.error || "Unknown error"}.`
+        await Swal.fire(
+          "Error",
+          errorData.error || "Failed to submit leave.",
+          "error"
         );
       }
     } catch (error) {
       console.error("An error occurred while submitting the plan:", error);
-      toast.error("An error occurred. Please try again.");
+      await Swal.fire(
+        "Error",
+        "An unexpected error occurred. Please try again.",
+        "error"
+      );
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -101,7 +99,7 @@ const LeaveNavigation = ({ handleNextStep, pk, onFetchApprovers }) => {
               <FontAwesomeIcon
                 icon={faArrowRight}
                 style={{ marginRight: "5px" }}
-              />{" "}
+              />
             </>
           )}
         </button>

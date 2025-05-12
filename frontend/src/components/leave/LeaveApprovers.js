@@ -1,7 +1,7 @@
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserCircle, faTimes } from "@fortawesome/free-solid-svg-icons";
-import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 
 const LeaveApprovers = ({ approvers, pk }) => {
@@ -11,6 +11,18 @@ const LeaveApprovers = ({ approvers, pk }) => {
     .getAttribute("content");
 
   const cancelSubmit = async () => {
+    const confirm = await Swal.fire({
+      title: "Are you sure?",
+      text: "Do you really want to cancel this approval request?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Yes, cancel it",
+    });
+
+    if (!confirm.isConfirmed) return;
+
     try {
       const response = await fetch(`/selfservice/LeaveCancel/${pk}/`, {
         method: "POST",
@@ -22,24 +34,30 @@ const LeaveApprovers = ({ approvers, pk }) => {
       });
 
       if (response.ok) {
-        toast.success("Cancel request submitted successfully!", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
+        await Swal.fire(
+          "Canceled!",
+          "Your approval request has been canceled.",
+          "success"
+        );
         navigate("/selfservice/dashboard");
       } else {
         console.error("Cancel request failed.");
-        toast.error("Cancel request failed. Please try again.");
+        await Swal.fire(
+          "Error",
+          "Cancel request failed. Please try again.",
+          "error"
+        );
       }
     } catch (error) {
       console.error("Cancel request failed:", error);
-      toast.error("Cancel request failed. Please try again.");
+      await Swal.fire(
+        "Error",
+        "Cancel request failed. Please try again.",
+        "error"
+      );
     }
   };
+
   return (
     <div className="card card-mb-faq">
       <div className="card-body faq-body">

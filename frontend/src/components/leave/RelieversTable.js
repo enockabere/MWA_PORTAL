@@ -3,7 +3,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faEdit } from "@fortawesome/free-solid-svg-icons";
 import { Modal, Button, Form } from "react-bootstrap";
 import axios from "axios";
-import { toast } from "react-toastify";
+import Swal from "sweetalert2";
+import DataTable from "react-data-table-component";
 
 const RelieversTable = ({ data, selectedApplication, onRelieverAdded }) => {
   const [showModal, setShowModal] = useState(false);
@@ -12,26 +13,13 @@ const RelieversTable = ({ data, selectedApplication, onRelieverAdded }) => {
   const [loading, setLoading] = useState(false);
   const [editingReliever, setEditingReliever] = useState(null);
 
-  const baseColumns = [
-    { name: "StaffNo", label: "Staff No." },
-    { name: "LeaveCode", label: "Leave Code" },
-    { name: "StaffName", label: "Staff Name" },
-    { name: "Section", label: "Section" },
-  ];
-
-  // Add action column only when status is "Open"
-  const columns =
-    selectedApplication?.Status === "Open"
-      ? [...baseColumns, { name: "action", label: "Action" }]
-      : baseColumns;
-
   const fetchEmployees = async () => {
     try {
       const response = await axios.get("/selfservice/get_leave_employees/");
       setEmployees(response.data);
     } catch (error) {
       console.error("Error fetching employees:", error);
-      toast.error("Failed to load employees");
+      await Swal.fire("Error", "Failed to load employees", "error");
     }
   };
 
@@ -56,7 +44,7 @@ const RelieversTable = ({ data, selectedApplication, onRelieverAdded }) => {
   const handleSubmitReliever = async (e) => {
     e.preventDefault();
     if (!selectedReliever) {
-      toast.error("Please select a reliever");
+      await Swal.fire("Warning", "Please select a reliever", "warning");
       return;
     }
 
@@ -81,23 +69,64 @@ const RelieversTable = ({ data, selectedApplication, onRelieverAdded }) => {
         }
       );
 
-      toast.success(
+      await Swal.fire(
+        "Success",
         editingReliever
           ? "Reliever updated successfully!"
-          : "Reliever added successfully!"
+          : "Reliever added successfully!",
+        "success"
       );
 
       if (onRelieverAdded) {
         onRelieverAdded();
       }
+
       handleCloseModal();
     } catch (error) {
       console.error("Error saving reliever:", error);
-      toast.error(`Failed to ${editingReliever ? "update" : "add"} reliever`);
+      await Swal.fire(
+        "Error",
+        `Failed to ${editingReliever ? "update" : "add"} reliever`,
+        "error"
+      );
     } finally {
       setLoading(false);
     }
   };
+
+  const columns = [
+    {
+      name: "Staff No.",
+      selector: (row) => row.StaffNo,
+      sortable: true,
+    },
+    {
+      name: "Leave Code",
+      selector: (row) => row.LeaveCode,
+    },
+    {
+      name: "Staff Name",
+      selector: (row) => row.StaffName,
+    },
+    {
+      name: "Section",
+      selector: (row) => row.Section,
+    },
+  ];
+
+  if (selectedApplication?.Status === "Open") {
+    columns.push({
+      name: "Action",
+      cell: (row) => (
+        <button
+          onClick={() => handleShowModal(row)}
+          className="btn btn-sm btn-outline-primary"
+        >
+          Edit <FontAwesomeIcon icon={faEdit} />
+        </button>
+      ),
+    });
+  }
 
   return (
     <div className="p-3">
@@ -113,36 +142,15 @@ const RelieversTable = ({ data, selectedApplication, onRelieverAdded }) => {
         )}
       </div>
 
-      <table className="table">
-        <thead>
-          <tr>
-            {columns.map((column) => (
-              <th key={column.name}>{column.label}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((row, index) => (
-            <tr key={index}>
-              <td>{row.StaffNo}</td>
-              <td>{row.LeaveCode}</td>
-              <td>{row.StaffName}</td>
-              <td>{row.Section}</td>
-              {selectedApplication?.Status === "Open" && (
-                <td>
-                  <button
-                    onClick={() => handleShowModal(row)}
-                    className="btn btn-sm btn-outline-primary"
-                    title="Edit Reliever"
-                  >
-                    Edit <FontAwesomeIcon icon={faEdit} />
-                  </button>
-                </td>
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <DataTable
+        columns={columns}
+        data={data}
+        pagination
+        striped
+        highlightOnHover
+        responsive
+        noDataComponent={<p className="text-center mb-0">No relievers found</p>}
+      />
 
       {/* Add/Edit Reliever Modal */}
       <Modal show={showModal} onHide={handleCloseModal}>

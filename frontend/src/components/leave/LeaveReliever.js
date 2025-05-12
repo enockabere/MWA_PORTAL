@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
-import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 
 const LeaveReliever = ({ pk, onFetchRelievers }) => {
   const [formData, setFormData] = useState({
@@ -37,18 +37,20 @@ const LeaveReliever = ({ pk, onFetchRelievers }) => {
     e.preventDefault();
 
     if (!formData.selectedReliever) {
-      toast.error("Please select a reliever.");
+      await Swal.fire(
+        "Missing Selection",
+        "Please select a reliever.",
+        "warning"
+      );
       return;
     }
 
     setLoading(true);
     try {
-      // Set up FormData
       const data = new FormData();
       data.append("reliever", formData.selectedReliever);
       data.append("myAction", formData.myAction);
 
-      // POST request to add the reliever
       await axios.post(`/selfservice/FnLeaveReliever/${pk}/`, data, {
         headers: {
           "X-CSRFToken": csrfToken,
@@ -56,10 +58,9 @@ const LeaveReliever = ({ pk, onFetchRelievers }) => {
         },
       });
 
-      toast.success("Reliever added successfully!");
+      await Swal.fire("Success", "Reliever added successfully!", "success");
       setFormData((prevData) => ({ ...prevData, selectedReliever: "" }));
 
-      // GET request to fetch updated list of relievers
       const relieversResponse = await axios.get(
         `/selfservice/FnLeaveReliever/${pk}/`,
         {
@@ -67,16 +68,18 @@ const LeaveReliever = ({ pk, onFetchRelievers }) => {
         }
       );
 
-      if (relieversResponse.status === 200) {
-        if (onFetchRelievers) {
-          onFetchRelievers(relieversResponse.data);
-        }
+      if (relieversResponse.status === 200 && onFetchRelievers) {
+        onFetchRelievers(relieversResponse.data);
       } else {
-        toast.error("Failed to fetch relievers list.");
+        await Swal.fire("Error", "Failed to fetch relievers list.", "error");
       }
     } catch (error) {
-      toast.error("Error sending data. Please try again.");
       console.error("Error adding reliever:", error);
+      await Swal.fire(
+        "Error",
+        "Error sending data. Please try again.",
+        "error"
+      );
     } finally {
       setLoading(false);
     }
@@ -84,10 +87,8 @@ const LeaveReliever = ({ pk, onFetchRelievers }) => {
 
   return (
     <form onSubmit={handleAddReliever} className="row g-3">
-      {/* Hidden Input for myAction */}
       <input type="hidden" name="myAction" value={formData.myAction} />
 
-      {/* Dropdown for selecting reliever */}
       <div className="col-12">
         <label className="form-label" htmlFor="selectedReliever">
           Select Reliever
@@ -107,7 +108,6 @@ const LeaveReliever = ({ pk, onFetchRelievers }) => {
         </select>
       </div>
 
-      {/* Submit Button */}
       <div className="col-12 text-end">
         <button
           type="submit"

@@ -1,11 +1,10 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 
 const SubmitLeave = ({ Id, refreshApplications, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Get CSRF token from meta tag
   const csrfToken = document
     .querySelector('meta[name="csrf-token"]')
     ?.getAttribute("content");
@@ -15,7 +14,6 @@ const SubmitLeave = ({ Id, refreshApplications, onClose }) => {
     setIsSubmitting(true);
 
     try {
-      // Making the POST request to submit the plan
       const response = await axios.post(
         `/selfservice/LeaveApprove/${Id}/`,
         null,
@@ -27,28 +25,25 @@ const SubmitLeave = ({ Id, refreshApplications, onClose }) => {
       );
 
       if (response.status === 200 || response.status === 201) {
-        // Success toast
-        toast.success("Submitted successfully!");
-        refreshApplications(); // Call parent callback to update plan status
+        await Swal.fire("Success", "Submitted successfully!", "success");
+        refreshApplications();
         onClose();
       } else {
-        // Handle unexpected status codes
-        const errorMsg = response.data?.error || "Unexpected server response.";
-        toast.error(errorMsg); // Error toast
+        const errorMsg = response?.data?.error || "Unexpected server response.";
+        await Swal.fire("Error", errorMsg, "error");
         refreshApplications();
         onClose();
       }
     } catch (error) {
-      // Handle network or server errors
       const errorMsg =
         error.response?.data?.error ||
         "Error submitting the leave. Please try again.";
-      toast.error(errorMsg); // Error toast
       console.error("Error details:", error);
+      await Swal.fire("Error", errorMsg, "error");
       refreshApplications();
       onClose();
     } finally {
-      setIsSubmitting(false); // Reset submitting state
+      setIsSubmitting(false);
     }
   };
 
