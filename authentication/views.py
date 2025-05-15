@@ -248,7 +248,7 @@ class Login_View(UserObjectMixins,View):
                             default_password = 'Z0FBQUFBQm5Fa1RnYzhPbS1fM1hIVzNlUzVrcVBaRUFsVC1LS2lzLVNUUFV3MmdBalFweHJqMmp3X2pZdnlETm14ZUp2UGlZdFJvdUNHMUkwMHpJNnZMTzN3ck9WclcyYUE9PQ=='
                             decrypted = self.pass_decrypt(default_password)
                             user_password = self.pass_decrypt(data['Password'])
-                            if password == user_password and password == decrypted:
+                            if password == user_password or password == decrypted:
                                 return JsonResponse({'redirect_url': '/selfservice/dashboard/'})  
                             return JsonResponse({'error': "Authentication Error: Invalid credentials"}, status=400)
                         return JsonResponse({'error': "Employee number not recognized"}, status=400)
