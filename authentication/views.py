@@ -53,7 +53,6 @@ class Login_View(UserObjectMixins,View):
                     )
                 )
                 user_response = await asyncio.gather(task_get_user_setup)
-                print(user_response)
                 if user_response[0]["status_code"] == 200:
                     for data in user_response[0]["data"]:
                         missing_keys = [
@@ -162,8 +161,6 @@ class Login_View(UserObjectMixins,View):
                             await sync_to_async(request.session.__setitem__)(
                                 "First_Name", data.get("First_Name", "None")
                             )
-
-                            # Set Middle_Name
                             middle_name = data.get("Middle_Name", "")
                             if middle_name == "":
                                 middle_name = "None"
@@ -246,24 +243,18 @@ class Login_View(UserObjectMixins,View):
                                 image_format = imghdr.what(None,binary_data)
                                 cache.set("encoded_string", get_profile_display)
                                 cache.set("image_format", image_format)
-                                
                             except Exception as e:
-                                print(e)
-                                    
+                                print(e)   
                             default_password = 'Z0FBQUFBQm5Fa1RnYzhPbS1fM1hIVzNlUzVrcVBaRUFsVC1LS2lzLVNUUFV3MmdBalFweHJqMmp3X2pZdnlETm14ZUp2UGlZdFJvdUNHMUkwMHpJNnZMTzN3ck9WclcyYUE9PQ=='
                             decrypted = self.pass_decrypt(default_password)
-                            print(decrypted)
                             user_password = self.pass_decrypt(data['Password'])
                             if password == user_password and password == decrypted:
                                 return JsonResponse({'redirect_url': '/selfservice/dashboard/'})  
-                            elif password == user_password and password != decrypted :
-                                return JsonResponse({'redirect_url': '/selfservice/dashboard/'})
-                            else:
-                                return JsonResponse({'error': "Authentication Error: Invalid credentials"}, status=400)
+                            return JsonResponse({'error': "Authentication Error: Invalid credentials"}, status=400)
                         return JsonResponse({'error': "Employee number not recognized"}, status=400)
                     return JsonResponse({'error': "User ID not recognized"}, status=400)
                 return JsonResponse({'error': "Authentication Error: Invalid credentials"}, status=400)
-
+        
 def send_otps(request):
     if request.method == 'GET':
         email = request.GET.get('email') 
@@ -276,9 +267,7 @@ def send_otps(request):
 
 def resend_otp(request):
     if request.method == 'POST':
-        # Simulate OTP being resent
         return JsonResponse({'status': 'success', 'message': 'OTP resent successfully!'})
-
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
 
