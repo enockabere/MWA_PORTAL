@@ -12,11 +12,9 @@ import {
   faSignOutAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import dashboard from "../../../../static/img/logo/dashboard.png";
-import { useDashboard } from "../context/DashboardContext";
 
 const SidebarMenu = ({ activeMenu, setActiveMenu, dashboardData }) => {
   const [openSubmenu, setOpenSubmenu] = useState(null);
-  const { dashboardData } = useDashboard();
 
   return (
     <nav className="sidebar-main">
