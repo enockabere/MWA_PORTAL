@@ -7,3 +7,4 @@ staticfiles/
 dist/
 aad.config.json
 env.sample
+MSF_ESS

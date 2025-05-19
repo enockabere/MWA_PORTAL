@@ -28,6 +28,7 @@ const SidebarMenu = ({ activeMenu, setActiveMenu }) => {
       <div className="left-arrow" id="left-arrow">
         <i className="fa fa-arrow-left" />
       </div>
+
       <div id="sidebar-menu">
         <ul className="sidebar-links" id="simple-bar">
           <li className="back-btn">
@@ -59,6 +60,7 @@ const SidebarMenu = ({ activeMenu, setActiveMenu }) => {
           </li>
 
           <SidebarItem
+            key="dashboard"
             icon={faHouse}
             label="Dashboard"
             path="/selfservice/dashboard"
@@ -69,8 +71,9 @@ const SidebarMenu = ({ activeMenu, setActiveMenu }) => {
           />
 
           {showLeaveMenus && (
-            <>
+            <React.Fragment key="leave-menus">
               <SidebarItem
+                key="leave-planner"
                 icon={faCalendar}
                 label="Leave Planner"
                 path="/selfservice/dashboard/leave-planner"
@@ -91,6 +94,7 @@ const SidebarMenu = ({ activeMenu, setActiveMenu }) => {
               />
 
               <SidebarItem
+                key="leave-request"
                 icon={faEnvelope}
                 label="Leave Request"
                 path="/selfservice/dashboard/leave-dashboard"
@@ -123,6 +127,7 @@ const SidebarMenu = ({ activeMenu, setActiveMenu }) => {
               />
 
               <SidebarItem
+                key="adjustments"
                 icon={faEdit}
                 label="Adjustments"
                 path="/selfservice/dashboard/new-adjustment"
@@ -141,10 +146,11 @@ const SidebarMenu = ({ activeMenu, setActiveMenu }) => {
                   },
                 ]}
               />
-            </>
+            </React.Fragment>
           )}
 
           <SidebarItem
+            key="reports"
             icon={faFileAlt}
             label="Reports"
             path="/selfservice/dashboard/leave-reports"
@@ -161,6 +167,7 @@ const SidebarMenu = ({ activeMenu, setActiveMenu }) => {
           />
 
           <SidebarItem
+            key="approvals"
             icon={faCheckCircle}
             label="Approvals"
             path="/selfservice/dashboard/approvals"
@@ -172,6 +179,7 @@ const SidebarMenu = ({ activeMenu, setActiveMenu }) => {
           />
 
           <SidebarItem
+            key="timesheets"
             icon={faBook}
             label="Timesheets"
             path="/selfservice/dashboard/timesheet-entries"
@@ -192,6 +200,7 @@ const SidebarMenu = ({ activeMenu, setActiveMenu }) => {
           />
 
           <SidebarItem
+            key="profile"
             icon={faUser}
             label="Profile"
             path="/selfservice/dashboard/profile"
@@ -202,6 +211,7 @@ const SidebarMenu = ({ activeMenu, setActiveMenu }) => {
           />
 
           <SidebarItem
+            key="logout"
             icon={faSignOutAlt}
             label="Logout"
             path="/selfservice/logout"
