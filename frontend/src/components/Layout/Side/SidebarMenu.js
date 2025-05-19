@@ -12,23 +12,17 @@ import {
   faSignOutAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import dashboard from "../../../../static/img/logo/dashboard.png";
-import { useDashboard } from "../../context/DashboardContext";
+import { useDashboard } from "../context/DashboardContext";
 
-const SidebarMenu = ({ activeMenu, setActiveMenu }) => {
+const SidebarMenu = ({ activeMenu, setActiveMenu, dashboardData }) => {
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const { dashboardData } = useDashboard();
-
-  const user = dashboardData?.user_data || {};
-  const approvalsCount = dashboardData?.open_approvals?.length || 0;
-  const showLeaveMenus =
-    user.sectionCode !== "USA" || user.Employee_No_ === "MWAK 123";
 
   return (
     <nav className="sidebar-main">
       <div className="left-arrow" id="left-arrow">
         <i className="fa fa-arrow-left" />
       </div>
-
       <div id="sidebar-menu">
         <ul className="sidebar-links" id="simple-bar">
           <li className="back-btn">
@@ -60,7 +54,6 @@ const SidebarMenu = ({ activeMenu, setActiveMenu }) => {
           </li>
 
           <SidebarItem
-            key="dashboard"
             icon={faHouse}
             label="Dashboard"
             path="/selfservice/dashboard"
@@ -70,87 +63,77 @@ const SidebarMenu = ({ activeMenu, setActiveMenu }) => {
             setOpenSubmenu={setOpenSubmenu}
           />
 
-          {showLeaveMenus && (
-            <React.Fragment key="leave-menus">
-              <SidebarItem
-                key="leave-planner"
-                icon={faCalendar}
-                label="Leave Planner"
-                path="/selfservice/dashboard/leave-planner"
-                activeMenu={activeMenu}
-                setActiveMenu={setActiveMenu}
-                openSubmenu={openSubmenu}
-                setOpenSubmenu={setOpenSubmenu}
-                submenus={[
-                  {
-                    label: "New Planner",
-                    path: "/selfservice/dashboard/leave-planner",
-                  },
-                  {
-                    label: "My Plans",
-                    path: "/selfservice/dashboard/my-plans",
-                  },
-                ]}
-              />
-
-              <SidebarItem
-                key="leave-request"
-                icon={faEnvelope}
-                label="Leave Request"
-                path="/selfservice/dashboard/leave-dashboard"
-                activeMenu={activeMenu}
-                setActiveMenu={setActiveMenu}
-                openSubmenu={openSubmenu}
-                setOpenSubmenu={setOpenSubmenu}
-                submenus={[
-                  {
-                    label: "Leave Dashboard",
-                    path: "/selfservice/dashboard/leave-dashboard",
-                  },
-                  {
-                    label: "New Application",
-                    path: "/selfservice/dashboard/new-leave",
-                  },
-                  {
-                    label: "My Applications",
-                    path: "/selfservice/dashboard/my-applications",
-                  },
-                  ...(user.HumanResourceManager || user.HOD_User
-                    ? [
-                        {
-                          label: "Leave Balances",
-                          path: "/selfservice/dashboard/balances",
-                        },
-                      ]
-                    : []),
-                ]}
-              />
-
-              <SidebarItem
-                key="adjustments"
-                icon={faEdit}
-                label="Adjustments"
-                path="/selfservice/dashboard/new-adjustment"
-                activeMenu={activeMenu}
-                setActiveMenu={setActiveMenu}
-                openSubmenu={openSubmenu}
-                setOpenSubmenu={setOpenSubmenu}
-                submenus={[
-                  {
-                    label: "New Adjustment",
-                    path: "/selfservice/dashboard/new-adjustment",
-                  },
-                  {
-                    label: "My Adjustments",
-                    path: "/selfservice/dashboard/my-adjustments",
-                  },
-                ]}
-              />
-            </React.Fragment>
-          )}
+          <SidebarItem
+            icon={faCalendar}
+            label="Leave Planner"
+            path="/selfservice/dashboard/leave-planner"
+            activeMenu={activeMenu}
+            setActiveMenu={setActiveMenu}
+            openSubmenu={openSubmenu}
+            setOpenSubmenu={setOpenSubmenu}
+            submenus={[
+              {
+                label: "New Planner",
+                path: "/selfservice/dashboard/leave-planner",
+              },
+              { label: "My Plans", path: "/selfservice/dashboard/my-plans" },
+            ]}
+          />
 
           <SidebarItem
-            key="reports"
+            icon={faEnvelope}
+            label="Leave Request"
+            path="/selfservice/dashboard/leave-dashboard"
+            activeMenu={activeMenu}
+            setActiveMenu={setActiveMenu}
+            openSubmenu={openSubmenu}
+            setOpenSubmenu={setOpenSubmenu}
+            submenus={[
+              {
+                label: "Leave Dashboard",
+                path: "/selfservice/dashboard/leave-dashboard",
+              },
+              {
+                label: "New Application",
+                path: "/selfservice/dashboard/new-leave",
+              },
+              {
+                label: "My Applications",
+                path: "/selfservice/dashboard/my-applications",
+              },
+              ...(dashboardData?.user_data?.HumanResourceManager ||
+              dashboardData?.user_data?.HOD_User
+                ? [
+                    {
+                      label: "Leave Balances",
+                      path: "/selfservice/dashboard/balances",
+                    },
+                  ]
+                : []),
+            ]}
+          />
+
+          <SidebarItem
+            icon={faEdit}
+            label="Adjustments"
+            path="/selfservice/dashboard/new-adjustment"
+            activeMenu={activeMenu}
+            setActiveMenu={setActiveMenu}
+            openSubmenu={openSubmenu}
+            setOpenSubmenu={setOpenSubmenu}
+            submenus={[
+              {
+                label: "New Adjustment",
+                path: "/selfservice/dashboard/new-adjustment",
+              },
+              {
+                label: "My Adjustments",
+                path: "/selfservice/dashboard/my-adjustments",
+              },
+            ]}
+          />
+
+          <SidebarItem
             icon={faFileAlt}
             label="Reports"
             path="/selfservice/dashboard/leave-reports"
@@ -167,7 +150,6 @@ const SidebarMenu = ({ activeMenu, setActiveMenu }) => {
           />
 
           <SidebarItem
-            key="approvals"
             icon={faCheckCircle}
             label="Approvals"
             path="/selfservice/dashboard/approvals"
@@ -175,11 +157,9 @@ const SidebarMenu = ({ activeMenu, setActiveMenu }) => {
             setActiveMenu={setActiveMenu}
             openSubmenu={openSubmenu}
             setOpenSubmenu={setOpenSubmenu}
-            badgeCount={approvalsCount > 0 ? approvalsCount : undefined}
           />
 
           <SidebarItem
-            key="timesheets"
             icon={faBook}
             label="Timesheets"
             path="/selfservice/dashboard/timesheet-entries"
@@ -200,7 +180,16 @@ const SidebarMenu = ({ activeMenu, setActiveMenu }) => {
           />
 
           <SidebarItem
-            key="profile"
+            icon={faBook}
+            label="Documentation"
+            path="/selfservice/dashboard/documentation"
+            activeMenu={activeMenu}
+            setActiveMenu={setActiveMenu}
+            openSubmenu={openSubmenu}
+            setOpenSubmenu={setOpenSubmenu}
+          />
+
+          <SidebarItem
             icon={faUser}
             label="Profile"
             path="/selfservice/dashboard/profile"
@@ -211,7 +200,6 @@ const SidebarMenu = ({ activeMenu, setActiveMenu }) => {
           />
 
           <SidebarItem
-            key="logout"
             icon={faSignOutAlt}
             label="Logout"
             path="/selfservice/logout"
