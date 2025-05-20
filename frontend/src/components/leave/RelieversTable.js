@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faEdit } from "@fortawesome/free-solid-svg-icons";
-import { Modal, Button, Form } from "react-bootstrap";
 import axios from "axios";
 import Swal from "sweetalert2";
 import DataTable from "react-data-table-component";
@@ -77,10 +76,7 @@ const RelieversTable = ({ data, selectedApplication, onRelieverAdded }) => {
         "success"
       );
 
-      if (onRelieverAdded) {
-        onRelieverAdded();
-      }
-
+      if (onRelieverAdded) onRelieverAdded();
       handleCloseModal();
     } catch (error) {
       console.error("Error saving reliever:", error);
@@ -95,23 +91,10 @@ const RelieversTable = ({ data, selectedApplication, onRelieverAdded }) => {
   };
 
   const columns = [
-    {
-      name: "Staff No.",
-      selector: (row) => row.StaffNo,
-      sortable: true,
-    },
-    {
-      name: "Leave Code",
-      selector: (row) => row.LeaveCode,
-    },
-    {
-      name: "Staff Name",
-      selector: (row) => row.StaffName,
-    },
-    {
-      name: "Section",
-      selector: (row) => row.Section,
-    },
+    { name: "Staff No.", selector: (row) => row.StaffNo, sortable: true },
+    { name: "Leave Code", selector: (row) => row.LeaveCode },
+    { name: "Staff Name", selector: (row) => row.StaffName },
+    { name: "Section", selector: (row) => row.Section },
   ];
 
   if (selectedApplication?.Status === "Open") {
@@ -151,52 +134,68 @@ const RelieversTable = ({ data, selectedApplication, onRelieverAdded }) => {
         responsive
         noDataComponent={<p className="text-center mb-0">No relievers found</p>}
       />
-
-      {/* Add/Edit Reliever Modal */}
-      <Modal show={showModal} onHide={handleCloseModal}>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            {editingReliever ? "Edit Reliever" : "Add Reliever"}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form onSubmit={handleSubmitReliever}>
-            <Form.Group className="mb-3">
-              <Form.Label>Select Reliever</Form.Label>
-              <Form.Select
-                value={selectedReliever}
-                onChange={(e) => setSelectedReliever(e.target.value)}
-                required
-              >
-                <option value="">Choose a reliever</option>
-                {employees.map((employee) => (
-                  <option key={employee.No_} value={employee.No_}>
-                    {employee.First_Name} {employee.Last_Name}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-            <div className="d-flex justify-content-end">
-              <Button
-                variant="secondary"
-                onClick={handleCloseModal}
-                className="me-2"
-              >
-                Cancel
-              </Button>
-              <Button variant="primary" type="submit" disabled={loading}>
-                {loading
-                  ? editingReliever
-                    ? "Updating..."
-                    : "Adding..."
-                  : editingReliever
-                  ? "Update Reliever"
-                  : "Add Reliever"}
-              </Button>
+      {showModal && (
+        <div
+          className="modal fade show d-block"
+          tabIndex="-1"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="modal-dialog modal-dialog-centered" role="document">
+            <div className="modal-content rounded-3 shadow">
+              <div className="modal-header">
+                <h5 className="modal-title  w-100 fw-semibold">
+                  {editingReliever ? "Edit Reliever" : "Add Reliever"}
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={handleCloseModal}
+                  aria-label="Close"
+                ></button>
+              </div>
+              <div className="modal-body pt-2">
+                <form onSubmit={handleSubmitReliever}>
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold">
+                      Select Reliever
+                    </label>
+                    <select
+                      className="form-select"
+                      value={selectedReliever}
+                      onChange={(e) => setSelectedReliever(e.target.value)}
+                      required
+                    >
+                      <option value="">Choose a reliever</option>
+                      {employees.map((employee) => (
+                        <option key={employee.No_} value={employee.No_}>
+                          {employee.First_Name} {employee.Last_Name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </form>
+              </div>
+              <div className="modal-footer border-0 pt-0 d-flex justify-content-end text-center">
+                <button
+                  type="submit"
+                  className="btn btn-primary text-center"
+                  disabled={loading}
+                >
+                  {loading
+                    ? editingReliever
+                      ? "Updating..."
+                      : "Adding..."
+                    : editingReliever
+                    ? "Update Reliever"
+                    : "Add Reliever"}
+                </button>
+              </div>
             </div>
-          </Form>
-        </Modal.Body>
-      </Modal>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,0 +1,11 @@
+.modal-content {
+  border-radius: 12px;
+}
+
+.modal-title {
+  font-size: 1.25rem;
+}
+
+.modal-body {
+  padding-top: 0.25rem;
+}
