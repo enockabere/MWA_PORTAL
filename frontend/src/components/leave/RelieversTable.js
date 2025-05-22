@@ -1,17 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faEdit } from "@fortawesome/free-solid-svg-icons";
-import { Modal, Button, Form } from "react-bootstrap";
+import { faEdit, faSave } from "@fortawesome/free-solid-svg-icons";
 import axios from "axios";
 import Swal from "sweetalert2";
 import DataTable from "react-data-table-component";
 
 const RelieversTable = ({ data, selectedApplication, onRelieverAdded }) => {
-  const [showModal, setShowModal] = useState(false);
   const [selectedReliever, setSelectedReliever] = useState("");
   const [employees, setEmployees] = useState([]);
+  const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [editingReliever, setEditingReliever] = useState(null);
 
   const fetchEmployees = async () => {
     try {
@@ -23,26 +21,11 @@ const RelieversTable = ({ data, selectedApplication, onRelieverAdded }) => {
     }
   };
 
-  const handleShowModal = (reliever = null) => {
+  useEffect(() => {
     fetchEmployees();
-    setShowModal(true);
-    if (reliever) {
-      setEditingReliever(reliever);
-      setSelectedReliever(reliever.StaffNo);
-    } else {
-      setEditingReliever(null);
-      setSelectedReliever("");
-    }
-  };
+  }, []);
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setSelectedReliever("");
-    setEditingReliever(null);
-  };
-
-  const handleSubmitReliever = async (e) => {
-    e.preventDefault();
+  const handleSubmitReliever = async () => {
     if (!selectedReliever) {
       await Swal.fire("Warning", "Please select a reliever", "warning");
       return;
@@ -52,11 +35,11 @@ const RelieversTable = ({ data, selectedApplication, onRelieverAdded }) => {
     try {
       const csrfToken = document
         .querySelector('meta[name="csrf-token"]')
-        .getAttribute("content");
+        ?.getAttribute("content");
 
       const formData = new FormData();
       formData.append("reliever", selectedReliever);
-      formData.append("myAction", editingReliever ? "modify" : "insert");
+      formData.append("myAction", data.length > 0 ? "modify" : "insert");
 
       await axios.post(
         `/selfservice/FnLeaveReliever/${selectedApplication.Application_No}/`,
@@ -71,24 +54,19 @@ const RelieversTable = ({ data, selectedApplication, onRelieverAdded }) => {
 
       await Swal.fire(
         "Success",
-        editingReliever
+        data.length > 0
           ? "Reliever updated successfully!"
           : "Reliever added successfully!",
         "success"
       );
 
-      if (onRelieverAdded) {
-        onRelieverAdded();
-      }
+      setSelectedReliever("");
+      setEditing(false);
 
-      handleCloseModal();
+      if (onRelieverAdded) onRelieverAdded();
     } catch (error) {
       console.error("Error saving reliever:", error);
-      await Swal.fire(
-        "Error",
-        `Failed to ${editingReliever ? "update" : "add"} reliever`,
-        "error"
-      );
+      await Swal.fire("Error", "Failed to save reliever", "error");
     } finally {
       setLoading(false);
     }
@@ -117,10 +95,10 @@ const RelieversTable = ({ data, selectedApplication, onRelieverAdded }) => {
   if (selectedApplication?.Status === "Open") {
     columns.push({
       name: "Action",
-      cell: (row) => (
+      cell: () => (
         <button
-          onClick={() => handleShowModal(row)}
           className="btn btn-sm btn-outline-primary"
+          onClick={() => setEditing(true)}
         >
           Edit <FontAwesomeIcon icon={faEdit} />
         </button>
@@ -130,73 +108,52 @@ const RelieversTable = ({ data, selectedApplication, onRelieverAdded }) => {
 
   return (
     <div className="p-3">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h5>Leave Relievers</h5>
-        {selectedApplication?.Status === "Open" && (
+      <h5 className="mb-3">Leave Relievers</h5>
+
+      {editing || data.length === 0 ? (
+        <div className="border rounded p-3 mb-3 bg-light">
+          <div className="mb-3">
+            <label className="form-label fw-semibold">Select Reliever</label>
+            <select
+              className="form-select"
+              value={selectedReliever}
+              onChange={(e) => setSelectedReliever(e.target.value)}
+              disabled={loading}
+            >
+              <option value="">-- Choose a reliever --</option>
+              {employees.map((emp) => (
+                <option key={emp.No_} value={emp.No_}>
+                  {emp.First_Name} {emp.Last_Name}
+                </option>
+              ))}
+            </select>
+          </div>
           <button
-            onClick={() => handleShowModal()}
-            className="btn btn-primary btn-sm ms-auto"
+            className="btn btn-primary"
+            onClick={handleSubmitReliever}
+            disabled={loading}
           >
-            <FontAwesomeIcon icon={faPlus} /> Add Reliever
+            <FontAwesomeIcon icon={faSave} />{" "}
+            {loading
+              ? "Saving..."
+              : data.length > 0
+              ? "Update Reliever"
+              : "Add Reliever"}
           </button>
-        )}
-      </div>
+        </div>
+      ) : null}
 
-      <DataTable
-        columns={columns}
-        data={data}
-        pagination
-        striped
-        highlightOnHover
-        responsive
-        noDataComponent={<p className="text-center mb-0">No relievers found</p>}
-      />
-
-      {/* Add/Edit Reliever Modal */}
-      <Modal show={showModal} onHide={handleCloseModal}>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            {editingReliever ? "Edit Reliever" : "Add Reliever"}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form onSubmit={handleSubmitReliever}>
-            <Form.Group className="mb-3">
-              <Form.Label>Select Reliever</Form.Label>
-              <Form.Select
-                value={selectedReliever}
-                onChange={(e) => setSelectedReliever(e.target.value)}
-                required
-              >
-                <option value="">Choose a reliever</option>
-                {employees.map((employee) => (
-                  <option key={employee.No_} value={employee.No_}>
-                    {employee.First_Name} {employee.Last_Name}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-            <div className="d-flex justify-content-end">
-              <Button
-                variant="secondary"
-                onClick={handleCloseModal}
-                className="me-2"
-              >
-                Cancel
-              </Button>
-              <Button variant="primary" type="submit" disabled={loading}>
-                {loading
-                  ? editingReliever
-                    ? "Updating..."
-                    : "Adding..."
-                  : editingReliever
-                  ? "Update Reliever"
-                  : "Add Reliever"}
-              </Button>
-            </div>
-          </Form>
-        </Modal.Body>
-      </Modal>
+      {data.length > 0 && (
+        <DataTable
+          columns={columns}
+          data={data}
+          pagination
+          striped
+          highlightOnHover
+          responsive
+          noHeader
+        />
+      )}
     </div>
   );
 };
