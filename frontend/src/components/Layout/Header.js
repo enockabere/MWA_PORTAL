@@ -184,7 +184,7 @@ const Header = ({ notificationCount, toggleSidebar, isSidebarOpen }) => {
                 <li>
                   <Link to="/selfservice/dashboard/profile">
                     <i data-feather="user"></i>
-                    <span>Account </span>
+                    <span>Account</span>
                   </Link>
                 </li>
                 <li>
@@ -193,6 +193,19 @@ const Header = ({ notificationCount, toggleSidebar, isSidebarOpen }) => {
                     <span>Inbox</span>
                   </Link>
                 </li>
+
+                {/* 🚀 New Documentation link */}
+                <li>
+                  <a
+                    href="https://mwawater.sharepoint.com/sites/it/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2Fit%2FShared%20Documents%2F04%2E%20Trainings%2FESS%20Documentation&viewid=b6bd8dd7%2D5e9c%2D4517%2Dba6e%2Db219b83c5640&p=true&ct=1748281369003&or=OWA%2DNT%2DMail&cid=ad86994f%2D4252%2D3485%2Db4bc%2D13b48c786f42&ga=1&LOF=1"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <i data-feather="book"></i>
+                    <span>Documentation</span>
+                  </a>
+                </li>
+
                 <li>
                   <Link to="/selfservice/logout">
                     <i data-feather="log-in"></i>

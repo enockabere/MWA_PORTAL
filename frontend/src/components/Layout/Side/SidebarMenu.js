@@ -176,17 +176,6 @@ const SidebarMenu = ({ activeMenu, setActiveMenu, dashboardData }) => {
               },
             ]}
           />
-
-          <SidebarItem
-            icon={faBook}
-            label="Documentation"
-            path="/selfservice/dashboard/documentation"
-            activeMenu={activeMenu}
-            setActiveMenu={setActiveMenu}
-            openSubmenu={openSubmenu}
-            setOpenSubmenu={setOpenSubmenu}
-          />
-
           <SidebarItem
             icon={faUser}
             label="Profile"
